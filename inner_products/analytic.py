@@ -274,7 +274,7 @@ def S4(Pj, Pk, Hj, Hk):
 
 
 if __name__ == '__main__':
-    from params.params import QGParams
-    params = QGParams()
+    from params.params import QgParams
+    params = QgParams()
     params.set_max_modes(2, 2)
     aip = AtmosphericInnerProducts(params)

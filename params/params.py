@@ -1,19 +1,9 @@
 import numpy as np
 
 
-class QGParams(object):
+class QgParams(object):
 
     def __init__(self, dic=None):
-
-        # -----------------------------------------------------------
-        # Integration parameters
-        # -----------------------------------------------------------
-
-        self.t_trans = 10  # transient period (e.g. 1.e7)
-        self.t_run = 10  # length of trajectory on the attractor (e.g. 5.e8)
-        self.dt = 1.e-2  # the time step
-        self.writeout = True  # write out all variables every tw time units
-        self.tw = 10.0  # the time step of writing
 
         # -----------------------------------------------------------
         # Scale parameters for the ocean and the atmosphere
@@ -52,6 +42,9 @@ class QGParams(object):
         if dic is not None:
             self.set_params(dic)
 
+        self.var_string = list()
+        self.time_unit = 'days'
+
     def set_params(self, dic):
 
         for key, val in zip(dic.keys(), dic.values()):
@@ -84,6 +77,9 @@ class QGParams(object):
         self.hk = np.zeros(nmod)
         self.thetas = np.zeros(nmod)
 
+        self.hk[1] = 0.1
+        self.thetas[0] = 0.1
+
     def set_max_modes(self, nxmax, nymax):
         res = np.zeros((nxmax * nymax, 2))
         i = 0
@@ -94,5 +90,26 @@ class QGParams(object):
                 i += 1
 
         self.ablocks = res
+
+        self.var_string = list()
+        for i in range(self.nmod):
+            self.var_string.append('psi_' + str(i + 1))
+        for i in range(self.nmod):
+            self.var_string.append('theta_' + str(i + 1))
+
+    @property
+    def latex_var_string(self):
+        l = list()
+        for var in self.var_string:
+            l.append(r'{\ '[0:-1] + var + r'}')
+
+        return l
+
+    @property
+    def dimensional_time(self):
+        c = 24 * 3600
+        if self.time_unit == 'days':
+            c = 24 * 3600
+        return 1 / (self.f0 * c)
 
 

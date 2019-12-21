@@ -508,6 +508,8 @@ if __name__ == "__main__":
     #         plt.plot(bttt2, bfm_irkt2[i, j], ls='', marker='D', color=c)
     #         plt.plot(bttt3, bfm_irkt3[i, j], ls='', marker='*', color=c)
 
+
+
     vec = np.random.randn(3)
     vec = vec/np.linalg.norm(vec)
     for i in range(1,13):

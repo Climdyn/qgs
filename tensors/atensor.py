@@ -13,6 +13,7 @@ class AtmosphericTensor(object):
         self.inner_products = inner_products
         self.params = self.inner_products.params
         self.tensor = list()
+        self.jacobian_tensor = list()
 
         self.compute_tensor()
 
@@ -40,7 +41,7 @@ class AtmosphericTensor(object):
                                                  - (par.kd * kronecker_delta((i - 1), (j - 1))) / 2 \
                                                  - (ips.g[(i - 1), (j - 1), :] @ par.hk) / (2 * ips.a[(i - 1), (i - 1)])
 
-                t[self.theta(i), self.psi(j), 0] = (ips.a[(i - 1), (j - 1)] * par.kd * par.sig0)\
+                t[self.theta(i), self.psi(j), 0] = (ips.a[(i - 1), (j - 1)] * par.kd * par.sig0) \
                                                    / (-2 + 2 * ips.a[(i - 1), (i - 1)] * par.sig0) \
                                                    + (ips.g[(i - 1), (j - 1), :] @ par.hk) / (2 * ips.a[(i - 1), (i - 1)])
 
@@ -48,24 +49,24 @@ class AtmosphericTensor(object):
                                                    + (ips.g[(i - 1), (j - 1), :] @ par.hk) / (2 * ips.a[(i - 1), (i - 1)])
 
                 t[self.theta(i), self.theta(j), 0] = - (par.sig0*(2*ips.c[(i - 1), (j - 1)] * par.betp
-                                                                  + ips.a[(i - 1), (j - 1)] * (par.kd + 4. * par.kdp)))\
+                                                                  + ips.a[(i - 1), (j - 1)] * (par.kd + 4. * par.kdp))) \
                                                      / (-2. + 2. * ips.a[(i - 1), (i - 1)] * par.sig0) \
                                                      - (ips.g[(i - 1), (j - 1), :] @ par.hk) / (2 * ips.a[(i - 1), (i - 1)]) \
                                                      + (par.hpp * kronecker_delta((i - 1), (j - 1))) / (par.sig0 * ips.a[(i - 1), (i - 1)])
 
                 for k in range(1, nmod + 1):
 
-                    t[self.psi(i), self.psi(j), self.psi(k)] = - ips.b[(i - 1), (j - 1), (k - 1)]\
+                    t[self.psi(i), self.psi(j), self.psi(k)] = - ips.b[(i - 1), (j - 1), (k - 1)] \
                                                                / ips.a[(i - 1), (i - 1)]
 
-                    t[self.psi(i), self.theta(j), self.theta(k)] = - ips.b[(i - 1), (j - 1), (k - 1)]\
+                    t[self.psi(i), self.theta(j), self.theta(k)] = - ips.b[(i - 1), (j - 1), (k - 1)] \
                                                                    / ips.a[(i - 1), (i - 1)]
 
                     t[self.theta(i), self.psi(j), self.theta(k)] = (ips.g[(i - 1), (j - 1), (k - 1)]
                                                                     - ips.b[(i - 1), (j - 1), (k - 1)] * par.sig0) / \
                                                                    (-1 + ips.a[(i - 1), (i - 1)] * par.sig0)
 
-                    t[self.theta(i), self.theta(j), self.psi(k)] = (ips.b[(i - 1), (j - 1), (k - 1)] * par.sig0)\
+                    t[self.theta(i), self.theta(j), self.psi(k)] = (ips.b[(i - 1), (j - 1), (k - 1)] * par.sig0) \
                                                                    / (1 - ips.a[(i - 1), (i - 1)] * par.sig0)
 
         simplify(t)
@@ -73,6 +74,10 @@ class AtmosphericTensor(object):
         for i in range(0, ndim + 1):
             X = csr_matrix(t[i])
             self.tensor.append(X)
+
+        for i in range(0, ndim + 1):
+            X = csr_matrix(t[i]+t[i].T)
+            self.jacobian_tensor.append(X)
 
 
 def simplify(t):
@@ -95,11 +100,11 @@ def kronecker_delta(i, j):
 
 
 if __name__ == '__main__':
-    from params.params import QGParams
+    from params.params import QgParams
     from inner_products.analytic import AtmosphericInnerProducts
     from tensors.cootensor import from_csr_mat_list
 
-    params = QGParams()
+    params = QgParams()
     params.set_max_modes(2, 2)
     params.hk[1] = 0.2
     params.thetas[0] = 0.1
