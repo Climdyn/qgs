@@ -1,4 +1,6 @@
 
+# TODO : - test the provided functions with try before proceeding
+
 from numba import njit
 import numpy as np
 from functions.util import reverse
@@ -140,6 +142,8 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
     if tg_ic is None:
         tg_ic = np.eye(ic.shape[1])
 
+    tg_ic_sav = tg_ic.copy()
+
     if len(tg_ic.shape) == 1:
         tg_ic = tg_ic.reshape((1, -1, 1))
         ict = tg_ic.copy()
@@ -151,10 +155,14 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
             tg_ic = tg_ic[..., np.newaxis]
         else:
             tg_ic = tg_ic[np.newaxis, ...]
+            tg_ic = np.swapaxes(tg_ic, 1, 2)
             ict = tg_ic.copy()
             for i in range(n_traj-1):
                 ict = np.concatenate((ict, tg_ic))
             tg_ic = ict
+    elif len(tg_ic.shape) == 3:
+        if tg_ic.shape[1] != ic.shape[1]:
+            tg_ic = np.swapaxes(tg_ic, 1, 2)
 
     # Default is RK4
     if a is None and b is None and c is None:
@@ -191,6 +199,15 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         recorded_traj, recorded_fmatrix = integrate_runge_kutta_tgls_jit3(f, fjac, time, ic, tg_ic,
                                                                           time_direction, write_steps,
                                                                           b, c, a, adjoint, inv, boundary)
+
+    if len(tg_ic_sav.shape) == 2:
+        if recorded_fmatrix.shape[1:3] != tg_ic_sav.shape:
+            recorded_fmatrix = np.swapaxes(recorded_fmatrix, 1, 2)
+
+    elif len(tg_ic_sav.shape) == 3:
+        if tg_ic_sav.shape[1] != ic.shape[1]:
+            if recorded_fmatrix.shape[:3] != tg_ic_sav.shape:
+                recorded_fmatrix = np.swapaxes(recorded_fmatrix, 1, 2)
 
     if write_steps > 0:
         if forward:
@@ -391,7 +408,91 @@ def integrate_runge_kutta_tgls_jit3(f, fjac, time, ic, tg_ic, time_direction, wr
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
 
+    a = 0.25
+    F = 16.
+    G = 3.
+    b = 6.
+
+
+    @njit
+    def DfL84(t, x):
+        return np.array([[     -a        , -2. * x[1], -2. * x[2]],
+                         [x[1] - b * x[2], -1. + x[0], -b * x[0]],
+                         [b * x[1] + x[2],  b * x[0], -1. + x[0]]])
+
+    @njit
+    def fL84(t, x):
+        xx = -x[1] ** 2 - x[2] ** 2 - a * x[0] + a * F
+        yy = x[0] * x[1] - b * x[0] * x[2] - x[1] + G
+        zz = b * x[0] * x[1] + x[0] * x[2] - x[2]
+        return np.array([xx, yy, zz])
+
+    # Testing interfaces
+
+    print('1 ic, no tg_ic')
+    ic = 0.1 * np.random.randn(3)
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('4 ic, no tg_ic')
+    ic = 0.1 * np.random.randn(4, 3)
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('1 ic, 1 tg_ic')
+    ic = 0.1 * np.random.randn(3)
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    tg_ic = 0.001 * np.random.randn(3)
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, tg_ic=tg_ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('4 ic, 1 tg_ic')
+    ic = 0.1 * np.random.randn(4, 3)
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    tg_ic = 0.001 * np.random.randn(3)
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, tg_ic=tg_ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('1 ic, 4 tg_ic')
+    ic = 0.1 * np.random.randn(3)
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    tg_ic = 0.001 * np.random.randn(4, 3)
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, tg_ic=tg_ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('2 ic, same 4 tg_ic')
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    ic = 0.1 * np.random.randn(2, 3)
+    tg_ic = 0.001 * np.random.randn(4, 3)
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, tg_ic=tg_ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+    print('2 ic, 4 different tg_ic')
+    tt, traj = integrate_runge_kutta(fL84, 0., 10., 0.01, ic=ic, write_steps=1)
+    print(traj.shape)
+
+    ic = 0.1 * np.random.randn(2, 3)
+    tg_ic = 0.001 * np.random.randn(2, 4, 3)
+    tt, traj, dtraj = integrate_runge_kutta_tgls(fL84, DfL84, 0., 10., 0.01, ic=ic, tg_ic=tg_ic, write_steps=1)
+    print(traj.shape, dtraj.shape)
+
+if False:
     import matplotlib.pyplot as plt
     from scipy.integrate import odeint
 

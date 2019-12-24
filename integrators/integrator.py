@@ -644,7 +644,7 @@ if __name__ == "__main__":
     integrator.set_func(fL84)
     integrator.integrate(0., 10000., 0.01, write_steps=0)
     tt, traj = integrator.get_trajectories()
-    integrator.integrate(0.,20.,0.01,ic=traj,write_steps=10)
+    integrator.integrate(0.,20.,0.01,ic=traj, write_steps=10)
     tt, traj = integrator.get_trajectories()
     integrator.integrate(0.,20.,0.01,ic=traj[:,-1],write_steps=10, forward=False)
     ttb, trajb = integrator.get_trajectories()
