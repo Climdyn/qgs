@@ -11,3 +11,15 @@ def sparse_mul3(coo, value, vec):
         res[coo[n, 0]] += vec[coo[n, 1]] * vec[coo[n, 2]] * value[n]
     res[0] = 1.
     return res
+
+
+@njit
+def sparse_mul_jac(coo, value, vec):
+
+    res = np.zeros((len(vec), len(vec)))
+
+    for n in range(coo.shape[0]):
+        res[coo[n, 0], coo[n, 1]] += vec[coo[n, 2]] * value[n]
+
+    return res
+

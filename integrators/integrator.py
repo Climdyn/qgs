@@ -444,6 +444,8 @@ class RungeKuttaTglsIntegrator(object):
         if tg_ic is None:
             tg_ic = np.eye(self.ic.shape[1])
 
+        tg_ic_sav = tg_ic.copy()
+
         if len(tg_ic.shape) == 1:
             tg_ic = tg_ic.reshape((1, -1, 1))
             ict = tg_ic.copy()
@@ -455,10 +457,14 @@ class RungeKuttaTglsIntegrator(object):
                 self.tg_ic = tg_ic[..., np.newaxis]
             else:
                 tg_ic = tg_ic[np.newaxis, ...]
+                tg_ic = np.swapaxes(tg_ic, 1, 2)
                 ict = tg_ic.copy()
                 for i in range(self.n_traj-1):
                     ict = np.concatenate((ict, tg_ic))
                 self.tg_ic = ict
+        elif len(tg_ic.shape) == 3:
+            if tg_ic.shape[1] != self.n_dim:
+                self.tg_ic = np.swapaxes(tg_ic, 1, 2)
 
         if forward:
             self.time_direction = 1
@@ -497,6 +503,15 @@ class RungeKuttaTglsIntegrator(object):
             args = self.traj_queue.get()
             self.recorded_traj[args[0]] = args[1]
             self.recorded_fmatrix[args[0]] = args[2]
+
+        if len(tg_ic_sav.shape) == 2:
+            if self.recorded_fmatrix.shape[1:3] != tg_ic_sav.shape:
+                self.recorded_fmatrix = np.swapaxes(self.recorded_fmatrix, 1, 2)
+
+        elif len(tg_ic_sav.shape) == 3:
+            if tg_ic_sav.shape[1] != self.n_dim:
+                if self.recorded_fmatrix.shape[:3] != tg_ic_sav.shape:
+                    self.recorded_fmatrix = np.swapaxes(self.recorded_fmatrix, 1, 2)
 
     def get_trajectories(self):
 
