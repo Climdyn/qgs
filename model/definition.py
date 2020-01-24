@@ -2,20 +2,32 @@
 import numpy as np
 from numba import njit
 
-from inner_products.analytic import AtmosphericInnerProducts
-from tensors.atensor import AtmosphericTensor
+from inner_products.analytic import AtmosphericInnerProducts, OceanicInnerProducts
+from tensors.qgtensor import QgsTensor
 from tensors.cootensor import from_csr_mat_list
 from functions.sparse import sparse_mul3, sparse_mul_jac
 
 
 def create_tendencies(params):
 
-    aip= AtmosphericInnerProducts(params)
-    atensor = AtmosphericTensor(aip)
-    coo_atensor = from_csr_mat_list(atensor.tensor)
+    if params.ablocks is not None:
+        aip = AtmosphericInnerProducts(params)
+    else:
+        aip = None
 
-    coo = coo_atensor.coo
-    val = coo_atensor.value
+    if params.oblocks is not None:
+        oip = OceanicInnerProducts(params)
+    else:
+        oip = None
+
+    if aip is not None and oip is not None:
+        aip.connect_to_ocean(oip)
+
+    tensor = QgsTensor(aip, oip)
+    coo_tensor = from_csr_mat_list(tensor.tensor)
+
+    coo = coo_tensor.coo
+    val = coo_tensor.value
 
     @njit
     def f(t, x):
@@ -29,12 +41,24 @@ def create_tendencies(params):
 
 def create_linearized_tendencies(params):
 
-    aip= AtmosphericInnerProducts(params)
-    atensor = AtmosphericTensor(aip)
-    jcoo_atensor = from_csr_mat_list(atensor.jacobian_tensor)
+    if params.ablocks is not None:
+        aip = AtmosphericInnerProducts(params)
+    else:
+        aip = None
 
-    jcoo = jcoo_atensor.coo
-    jval = jcoo_atensor.value
+    if params.oblocks is not None:
+        oip = OceanicInnerProducts(params)
+    else:
+        oip = None
+
+    if aip is not None and oip is not None:
+        aip.connect_to_ocean(oip)
+
+    tensor = QgsTensor(aip, oip)
+    jcoo_tensor = from_csr_mat_list(tensor.jacobian_tensor)
+
+    jcoo = jcoo_tensor.coo
+    jval = jcoo_tensor.value
 
     @njit
     def Df(t, x):

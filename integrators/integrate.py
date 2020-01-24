@@ -1,5 +1,5 @@
 
-# TODO : - test the provided functions with try before proceeding
+# TODO : - model_test the provided functions with try before proceeding
 
 from numba import njit
 import numpy as np
