@@ -1,11 +1,51 @@
+"""
+    The model's parameters module
+    =============================
 
-# TODO : - ...
-#        - load and save function
+    This module defines and contains the main classes holding the model configuration parameters.
+    The parameters are typically specified as :class:`~params.parameter.Parameter` objects.
+
+    There are five types of parameters arranged in classes:
+
+    * :class:`ScaleParams` to hold the model scale parameters. These parameters are used to scale and
+      `nondimentionalize`_ the :class:`~params.parameter.Parameter` of the other parameters classes according to
+      their :attr:`~params.parameter.Parameter.units` attribute.
+    * :class:`AtmosphericParams` containing the atmospheric dynamical parameters.
+    * :class:`AtmosphericTemperatureParams` containing the atmosphere's temperature and heat-exchange parameters.
+    * :class:`OceanicParams` containing the oceanic dynamical parameters.
+    * :class:`OceanicTemperatureParams` containing the ocean's temperature and heat-exchange parameters.
+
+    These parameters classes are regrouped into a global structure :class:`QgParams` which also contains
+
+    * spectral modes definition of the model
+    * physical constants
+    * derived parameters (from the user ones)
+    * helper functions to initialize and parameterize the model
+
+    This global parameters structure is used by the other modules to construct the model's ordinary differential
+    equations.
+
+    Description of the classes
+    --------------------------
+
+    .. _nondimentionalize: https://en.wikipedia.org/wiki/Nondimensionalization
+"""
+
+# TODO : - load and save function (pickle)
+#        -
 
 import numpy as np
+from params.parameter import Parameter
 
 
 class Params(object):
+    """Base class for a model's parameters container.
+
+    Parameters
+    ----------
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+    """
 
     _name = ""
 
@@ -14,22 +54,53 @@ class Params(object):
         self.set_params(dic)
 
     def set_params(self, dic):
+        """Set the specified parameters values.
+
+        Parameters
+        ----------
+        dic: dict(float or Parameter)
+            A dictionary with the parameters names and values to be assigned.
+        """
         if dic is not None:
             for key, val in zip(dic.keys(), dic.values()):
                 if key in self.__dict__.keys():
-                    self.__dict__[key] = val
+                    if isinstance(self.__dict__[key], Parameter):
+                        if isinstance(val, Parameter):
+                            self.__dict__[key] = val
+                        else:
+                            d = self.__dict__[key].__dict__
+                            self.__dict__[key] = Parameter(val, input_dimensional=d['_input_dimensional'],
+                                                           units=d['_units'],
+                                                           description=d['_description'],
+                                                           scale_object=d['_scale_object'],
+                                                           return_dimensional=d['_return_dimensional'])
+                    else:
+                        self.__dict__[key] = val
 
     def __str__(self):
         s = ""
         for key, val in zip(self.__dict__.keys(), self.__dict__.values()):
             if 'params' not in key and key[0] != '_':
-                s += "'"+key+"': "+str(val)+",\n"
+                if isinstance(val, Parameter):
+                    if val.input_dimensional:
+                        units = val.units
+                        efval = val.dimensional_value
+                    else:
+                        efval = val.nondimensional_value
+                        if val.nondimensional_value == val.dimensional_value:
+                            units = ""
+                        else:
+                            units = "[nondim]"
+                    s += "'" + key + "': " + str(efval) + "  " + units + "  (" + val.description + "),\n"
+                else:
+                    s += "'"+key+"': "+str(val)+",\n"
         return s
 
     def _list_params(self):
         return self._name+" Parameters:\n"+self.__str__()
 
     def print_params(self):
+        """Print the parameters contained in the container."""
         print(self._list_params())
 
     def __repr__(self):
@@ -38,7 +109,30 @@ class Params(object):
 
 
 class ScaleParams(Params):
+    """Class containing the model scales parameters.
 
+    Parameters
+    ----------
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+
+    Attributes
+    ----------
+    scale: Parameter
+        The characteristic meridional space scale, :math:`L_y = \pi \, L`, in meters [:math:`m`].
+    f0: Parameter
+        Coriolis parameter, in [:math:`s^{-1}`].
+    n: Parameter
+        Model domain aspect ratio, :math:`n = 2 L_y/L_x` .
+    rra: Parameter
+        Earth radius, in meters [:math:`m`].
+    phi0_npi: Parameter
+        Latitude exprimed in fraction of :math:`\pi` .
+    hk: ~numpy.ndarray(float)
+        Orography coefficients, a array of shape (:attr:`~QgParams.nmod` [0],).
+    deltap: Parameter
+        Difference of pressure between the center of the two atmospheric layers, in [:math:`Pa`].
+    """
     _name = "Scale"
 
     def __init__(self, dic=None):
@@ -49,112 +143,303 @@ class ScaleParams(Params):
         # Scale parameters for the ocean and the atmosphere
         # -----------------------------------------------------------
 
-        self.scale = 5.e6  # the characteristic space scale, L*pi
-        self.f0 = 1.032e-4  # Coriolis parameter at 45 degrees latitude
-        self.n = 1.3e0  # aspect ratio (n = 2Ly/Lx ; Lx = 2*pi*L/n; Ly = pi*L)
-        self.rra = 6370.e3  # earth radius
-        self.phi0_npi = 0.25e0  # latitude exprimed in fraction of pi
+        self.scale = Parameter(5.e6, units='[m]', description="characteristic space scale (L*pi)",
+                               return_dimensional=True)
+        self.f0 = Parameter(1.032e-4, units='[s^-1]', description="Coriolis parameter at the middle of the domain",
+                            return_dimensional=True)
+        self.n = Parameter(1.3e0, input_dimensional=False, description="aspect ratio (n = 2 L_y / L_x)")
+        self.rra = Parameter(6370.e3, units='[m]', description="earth radius", return_dimensional=True)
+        self.phi0_npi = Parameter(0.25e0, input_dimensional=False, description="latitude exprimed in fraction of pi")
+        self.deltap = Parameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
+                                return_dimensional=True)
 
         self.hk = None  # orography coefficients
 
         self.set_params(dic)
 
-    # -----------------------------------------------------------
-    # Some general parameters (Domain, beta, friction, orography)
-    # -----------------------------------------------------------
+    # ----------------------------------------
+    # Some derived parameters (Domain, beta)
+    # ----------------------------------------
 
     @property
     def L(self):
-        return self.scale / np.pi
+        """Parameter: Typical length scale :math:`L`  of the model, in meters [:math:`m`]."""
+        return Parameter(self.scale / np.pi, units=self.scale.units, description='Typical length scale L',
+                         return_dimensional=True)
+
+    @property
+    def L_y(self):
+        """Parameter: The meridional extent :math:`L_y = \pi \, L` of the model's domain, in meters [:math:`m`]."""
+        return Parameter(self.scale, units=self.scale.units, description='The meridional extent of the model domain',
+                         return_dimensional=True)
+
+    @property
+    def L_x(self):
+        """Parameter: The zonal extent :math:`L_x = 2 \pi \, L / n` of the model's domain, in meters [:math:`m`]."""
+        return Parameter(2 * self.scale / self.n, units=self.scale.units,
+                         description='The zonal extent of the model domain',
+                         return_dimensional=True)
 
     @property
     def phi0(self):
-        return self.phi0_npi * np.pi
+        """Parameter: The reference latitude :math:`\phi_0` at the center of the domain, expressed in radians [:math:`rad`]."""
+        return Parameter(self.phi0_npi * np.pi, units='[rad]',
+                         description="The reference latitude of the center of the domain",
+                         return_dimensional=True)
 
     @property
-    def betp(self):
-        return self.L / self.rra * np.cos(self.phi0) / np.sin(self.phi0)
+    def beta(self):
+        """Parameter: The meridional gradient of the Coriolis parameter at :math:`\phi_0`, expressed in [:math:`m^{-1} s^{-1}`]. """
+        return Parameter(self.L / self.rra * np.cos(self.phi0) / np.sin(self.phi0), input_dimensional=False,
+                         units='[m^-1][s^-1]', scale_object=self,
+                         description="Meridional gradient of the Coriolis parameter at phi_0")
 
 
 class AtmosphericParams(Params):
+    """Class containing the atmospheric parameters.
+
+    Parameters
+    ----------
+    scale_params: ScaleParams
+        The scale parameters object of the model.
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+
+    Attributes
+    ----------
+    k: Parameter
+        Atmosphere bottom friction coefficient.
+    kp: Parameter
+        Atmosphere internal friction coefficient.
+    sigma: Parameter
+        Static stability of the atmosphere.
+    """
 
     _name = "Atmospheric"
 
-    def __init__(self, dic=None):
+    def __init__(self, scale_params, dic=None):
 
         Params.__init__(self, dic)
 
+        self._scale_params = scale_params
+
         # Parameters for the atmosphere
-        self.k = 0.05  # atmosphere bottom friction coefficient
-        self.kp = 0.01  # atmosphere internal friction coefficient
-        self.sig0 = 0.1e0  # static stability of the atmosphere
+        self.k = Parameter(0.05, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
+                           description="atmosphere bottom friction coefficient")
+        self.kp = Parameter(0.01, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
+                            description="atmosphere internal friction coefficient")
+        self.sigma = Parameter(0.2e0, input_dimensional=False, scale_object=scale_params, units='[m^2][s^-2][Pa^-2]',
+                               description="static stability of the atmosphere")
 
         self.set_params(dic)
 
+    # -----------------------------------------------
+    # Some derived parameters (friction, orography)
+    # -----------------------------------------------
     @property
     def kd(self):
-        return self.k * 2
+        """Parameter: 2 * atmosphere bottom friction coefficient"""
+        return Parameter(self.k * 2, input_dimensional=False, scale_object=self._scale_params, units='[s^-1]',
+                         description="2 * atmosphere bottom friction coefficient")
 
     @property
     def kdp(self):
-        return self.kp
+        """Parameter: atmosphere internal friction coefficient"""
+        return Parameter(self.kp, input_dimensional=False, scale_object=self._scale_params, units='[s^-1]',
+                         description="atmosphere internal friction coefficient")
+
+    @property
+    def sig0(self):
+        """Parameter: 0.5 * static stability of the atmosphere"""
+        return Parameter(self.sigma / 2, input_dimensional=False, scale_object=self._scale_params, units='[m^2][s^-2][Pa^-2]',
+                         description="0.5 * static stability of the atmosphere")
 
 
 class AtmosphericTemperatureParams(Params):
+    """Class containing the atmospheric temperature parameters.
 
+    Parameters
+    ----------
+    scale_params: ScaleParams
+        The scale parameters object of the model.
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+
+    Attributes
+    ----------
+    hd: Parameter
+        Newtonian cooling coefficient.
+        Used if an orography is provided.
+    thetas: ~numpy.ndarray(float)
+        Spatial Newtonian cooling coefficients (adimensional).
+    gamma: Parameter
+        Specific heat capacity of the atmosphere
+    C: Parameter
+        Constant short-wave radiation of the atmosphere
+    eps: Parameter
+        Emissivity coefficient for the grey-body atmosphere
+    T0: Parameter
+        Stationary solution for the 0-th order atmospheric temperature [:math:`K`].
+    sc: Parameter
+        Ratio of surface to atmosphere temperature
+    hlambda: Parameter
+        Sensible + turbulent heat exchange between ocean and atmosphere
+    """
     _name = "Atmospheric Temperature"
 
-    def __init__(self, dic=None):
+    def __init__(self, scale_params, dic=None):
 
         Params.__init__(self, dic)
 
-        self.hpp = 0.045  # Newtonian cooling coefficient
-        self.thetas = None  # Newtonian cooling coefficients
+        self._scale_params = scale_params
 
-        self.G = 1.e7  # Specific heat capacity of the atmosphere
-        self.C = 100.e0  # Constant short-wave radiation of the atmosphere
-        self.eps = 0.76e0  # Emissivity coefficient for the grey-body atmosphere
-        self.T0 = 270.0  # Stationary solution for the 0-th order atmospheric temperature
+        self.hd = Parameter(0.09, input_dimensional=False, units='[s]', scale_object=scale_params,
+                            description="Newtonian cooling coefficient")
+        self.thetas = None  # Radiative equilibrium mean temperature decomposition on the model's modes
 
-        self.sc = 1.  # Ratio of surface to atmosphere temperature
-        self.hlambda = 20.00  # Sensible+turbulent heat exchange between oc and atm
+        self.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=scale_params,
+                               description='specific heat capacity of the atmosphere', return_dimensional=True)
+        self.C = Parameter(100.e0, units='[W][m^-2]', scale_object=scale_params,
+                           description="constant short-wave radiation of the atmosphere", return_dimensional=True)
+        self.eps = Parameter(0.76e0, input_dimensional=False,
+                             description="emissivity coefficient for the grey-body atmosphere")
+        self.T0 = Parameter(270.0, units='[K]', scale_object=scale_params, return_dimensional=True,
+                            description="stationary solution for the 0-th order atmospheric temperature")
+
+        self.sc = Parameter(1., input_dimensional=False, description="ratio of surface to atmosphere temperature")
+        self.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=scale_params, return_dimensional=True,
+                                 description="sensible+turbulent heat exchange between ocean and atmosphere")
 
         self.set_params(dic)
 
+    @property
+    def hpp(self):
+        """Parameter: Newtonian cooling coefficients constants."""
+        return Parameter(self.hd / 2, input_dimensional=False, units='[s]', scale_object=self._scale_params,
+                         return_dimensional=False, description="Newtonian cooling coefficient")
+
 
 class OceanicParams(Params):
+    """Class containing the oceanic parameters
 
+    Parameters
+    ----------
+    scale_params: ScaleParams
+        The scale parameters object of the model.
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+
+    Attributes
+    ----------
+    gp: Parameter
+        Reduced gravity in [:math:`m \, s^{-2}`].
+    r: Parameter
+        Friction coefficient at the bottom of the ocean in [:math:`s^{-1}`].
+    h: Parameter
+        Depth of the water layer of the ocean, in meters [:math:`m`].
+    d: Parameter
+        The strength of the ocean-atmosphere mechanical coupling in [:math:`s^{-1}`].
+    """
     _name = "Oceanic"
 
-    def __init__(self, dic=None):
+    def __init__(self, scale_params, dic=None):
 
         Params.__init__(self, dic)
 
-        self.gp = 3.1e-2  # reduced gravity
-        self.r = 1.e-8  # frictional coefficient at the bottom of the ocean
-        self.h = 5.e2  # depth of the water layer of the ocean
-        self.d = 1.e-8  # the coupling parameter (should be divided by f0 to be adim)
+        self._scale_params = scale_params
+
+        self.gp = Parameter(3.1e-2, units='[m][s^-2]', return_dimensional=True, scale_object=scale_params,
+                            description='reduced gravity')
+        self.r = Parameter(1.e-8, units='[s^-1]', scale_object=scale_params,
+                           description="frictional coefficient at the bottom of the ocean")
+        self.h = Parameter(5.e2, units='[m]', return_dimensional=True, scale_object=scale_params,
+                           description="depth of the water layer of the ocean")
+        self.d = Parameter(1.e-8, units='[s^-1]', scale_object=scale_params,
+                           description="strength of the ocean-atmosphere mechanical coupling")
 
         self.set_params(dic)
 
 
 class OceanicTemperatureParams(Params):
+    """Class containing the oceanic temperature parameters
+
+    Parameters
+    ----------
+    scale_params: ScaleParams
+        The scale parameters object of the model.
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+
+    Attributes
+    ----------
+    gamma: Parameter
+        Specific heat capacity of the ocean
+    C: Parameter
+        Constant short-wave radiation of the ocean
+    T0: Parameter
+        Stationary solution for the 0-th order oceanic temperature [:math:`K`].
+    """
 
     _name = "Oceanic Temperature"
 
-    def __init__(self, dic=None):
+    def __init__(self, scale_params, dic=None):
 
         Params.__init__(self, dic)
 
-        self.G = 2.e8  # Specific heat capacity of the ocean (50m layer)
-        self.C = 350  # Constant short-wave radiation of the ocean
-        self.T0 = 285.0  # Stationary solution for the 0-th order ocean temperature
+        self._scale_params = scale_params
+
+        self.gamma = Parameter(2.e8, units='[J][m^-2][K^-1]', scale_object=scale_params, return_dimensional=True,
+                               description='specific heat capacity of the ocean')
+        self.C = Parameter(350.e0, units='[W][m^-2]', scale_object=scale_params, return_dimensional=True,
+                           description="constant short-wave radiation of the atmosphere")
+        self.T0 = Parameter(285.0, units='[K]', scale_object=scale_params, return_dimensional=True,
+                            description="stationary solution for the 0-th order atmospheric temperature")
 
         self.set_params(dic)
 
 
 class QgParams(Params):
+    """General qgs parameters container
 
+    Parameters
+    ----------
+    dic: dict(float or Parameter), optional
+        A dictionary with the parameters names and values to be assigned.
+    scale_params: ScaleParams
+        Scale parameters instance.
+    atmospheric_params: AtmosphericParams
+        Atmospheric parameters instance.
+    atemperature_params: AtmosphericTemperatureParams
+        Atmospheric temperature parameters instance.
+    oceanic_params: OceanicParams
+         Oceanic parameters instance.
+    otemperature_params: OceanicTemperatureParams
+         Oceanic temperature parameters instance.
+
+    Attributes
+    ----------
+    scale_params: ScaleParams
+        Scale parameters instance.
+    atmospheric_params: AtmosphericParams
+        Atmospheric parameters instance.
+    atemperature_params: AtmosphericTemperatureParams
+        Atmospheric temperature parameters instance.
+    oceanic_params: OceanicParams
+         Oceanic parameters instance.
+    otemperature_params: OceanicTemperatureParams
+         Oceanic temperature parameters instance.
+    time_unit: float
+        Dimensional unit of time to be used to represent the data.
+    rr: Parameter
+        `Gas constant`_ of `dry air`_ in [:math:`J \, kg^{-1} \, K^{-1}`].
+    sb: float
+        `Stefan-Boltzmann constant`_ in [:math:`J \, m^{-2} \, s^{-1} \, K^{-4}`]
+
+
+    .. _Gas constant: https://en.wikipedia.org/wiki/Gas_constant
+    .. _dry air: https://en.wikipedia.org/wiki/Gas_constant#Specific_gas_constant
+    .. _Stefan-Boltzmann constant: https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_constant
+    """
     _name = "General"
 
     def __init__(self, dic=None, scale_params=None,
@@ -171,23 +456,23 @@ class QgParams(Params):
 
         # Atmospheric parameters object
         if atmospheric_params is True:
-            self.atmospheric_params = AtmosphericParams(dic)
+            self.atmospheric_params = AtmosphericParams(self.scale_params, dic=dic)
         else:
             self.atmospheric_params = atmospheric_params
 
         # Atmospheric temperature parameters object
         if atmospheric_params is True:
-            self.atemperature_params = AtmosphericTemperatureParams(dic)
+            self.atemperature_params = AtmosphericTemperatureParams(self.scale_params, dic=dic)
         else:
             self.atemperature_params = atemperature_params
 
         if oceanic_params is True:
-            self.oceanic_params = OceanicParams(dic)
+            self.oceanic_params = OceanicParams(self.scale_params, dic)
         else:
             self.oceanic_params = oceanic_params
 
         if otemperature_params is True:
-            self.otemperature_params = OceanicTemperatureParams(dic)
+            self.otemperature_params = OceanicTemperatureParams(self.scale_params, dic)
         else:
             self.otemperature_params = otemperature_params
 
@@ -197,14 +482,18 @@ class QgParams(Params):
         self._ams = None
         self._oms = None
 
+        self._atmospheric_latex_var_string = list()
         self._atmospheric_var_string = list()
+        self._oceanic_latex_var_string = list()
         self._oceanic_var_string = list()
         self.time_unit = 'days'
 
         # Physical constants
 
-        self.rr = 287.058e0  # Gas constant of dry air
-        self.sb = 5.67e-8  # Stefan-Boltzmann constant
+        self.rr = Parameter(287.058e0, return_dimensional=True, units='[J][kg^-1][K^-1]',
+                            scale_object=self.scale_params, description="gas constant of dry air")
+        self.sb = Parameter(5.67e-8, return_dimensional=True, units='[J][m^-2][s^-1][K^-4]',
+                            scale_object=self.scale_params, description="Stefan-Boltzmann constant")
 
         self.set_params(dic)
 
@@ -230,29 +519,11 @@ class QgParams(Params):
             return None
 
     @property
-    def rp(self):
-        op = self.oceanic_params
-        scp = self.scale_params
-        if op is not None:
-            return op.r / scp.f0
-        else:
-            return None
-
-    @property
-    def dp(self):
-        op = self.oceanic_params
-        scp = self.scale_params
-        if op is not None:
-            return op.d / scp.f0
-        else:
-            return None
-
-    @property
     def Cpo(self):
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
-            return otp.C / (otp.G * scp.f0) * self.rr / (scp.f0 ** 2 * scp.L ** 2)
+            return otp.C / (otp.gamma * scp.f0) * self.rr / (scp.f0 ** 2 * scp.L ** 2)
         else:
             return None
 
@@ -262,7 +533,7 @@ class QgParams(Params):
         otp = self.otemperature_params
         scp = self.scale_params
         if atp is not None and otp is not None:
-            return atp.hlambda / (otp.G * scp.f0)
+            return atp.hlambda / (otp.gamma * scp.f0)
         else:
             return None
 
@@ -272,7 +543,7 @@ class QgParams(Params):
         atp = self.atemperature_params
         scp = self.scale_params
         if atp is not None and atp.hpp == 0:
-            return atp.C / (atp.G * scp.f0) * self.rr / (scp.f0 ** 2 * scp.L ** 2) / 2
+            return atp.C / (atp.gamma * scp.f0) * self.rr / (scp.f0 ** 2 * scp.L ** 2) / 2
         else:
             return None
 
@@ -281,54 +552,60 @@ class QgParams(Params):
         atp = self.atemperature_params
         scp = self.scale_params
         if atp is not None and atp.hpp == 0:
-            return atp.hlambda / (atp.G * scp.f0)
+            return atp.hlambda / (atp.gamma * scp.f0)
         else:
             return None
 
-    # long wave radiation lost by ocean to atmosphere space :
     @property
     def sbpo(self):
+        """float: Long wave radiation lost by ocean to atmosphere space."""
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
-            return 4 * self.sb * otp.T0 ** 3 / (otp.G * scp.f0)
+            return 4 * self.sb * otp.T0 ** 3 / (otp.gamma * scp.f0)
         else:
             return None
 
-    # long wave radiation from atmosphere absorbed by ocean
     @property
     def sbpa(self):
+        """float: Long wave radiation from atmosphere absorbed by ocean."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None and atp is not None:
-            return 8 * atp.eps * self.sb * atp.T0 ** 3 / (otp.G * scp.f0)
+            return 8 * atp.eps * self.sb * atp.T0 ** 3 / (otp.gamma * scp.f0)
         else:
             return None
 
-    # long wave radiation from ocean absorbed by atmosphere
     @property
     def LSBpo(self):
+        """float: Long wave radiation from ocean absorbed by atmosphere."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
         if atp is not None and otp is not None:
-            return 2 * atp.eps * self.sb * otp.T0 ** 3 / (atp.G * scp.f0)
+            return 2 * atp.eps * self.sb * otp.T0 ** 3 / (atp.gamma * scp.f0)
         else:
             return None
 
-    # long wave radiation lost by atmosphere to space & ocean
     @property
     def LSBpa(self):
+        """float: Long wave radiation lost by atmosphere to space & ocean."""
         atp = self.atemperature_params
         scp = self.scale_params
         if atp is not None and atp.hpp == 0:
-            return 8 * atp.eps * self.sb * atp.T0 ** 3 / (atp.G * scp.f0)
+            return 8 * atp.eps * self.sb * atp.T0 ** 3 / (atp.gamma * scp.f0)
         else:
             return None
 
     def set_params(self, dic):
+        """Set the specified parameters values.
 
+        Parameters
+        ----------
+        dic: dict(float or Parameter)
+            A dictionary with the parameters names and values to be assigned.
+        """
         if dic is not None:
             for key, val in zip(dic.keys(), dic.values()):
                 if key in self.__dict__.keys():
@@ -353,6 +630,7 @@ class QgParams(Params):
                     self.otemperature_params.set_params(dic)
 
     def print_params(self):
+        """Print all the parameters in the container."""
         s = self._list_params()+"\n"
         if 'scale_params' in self.__dict__.keys():
             s += self.scale_params._list_params()+"\n"
@@ -378,14 +656,18 @@ class QgParams(Params):
 
     @property
     def ndim(self):
+        """int: Total number of variables of the model."""
         return self._number_of_dimensions
 
     @property
     def nmod(self):
+        """(int, int): Atmospheric and oceanic number of modes."""
         return [self._number_of_atmospheric_modes, self._number_of_oceanic_modes]
 
     @property
     def ablocks(self):
+        """~numpy.ndarray(int): Spectral blocks detailing the model's atmospheric modes x- and y-wavenumber.
+         Array of shape (:attr:`~QgParams.nmod` [0], 2)."""
         return self._ams
 
     @ablocks.setter
@@ -410,6 +692,8 @@ class QgParams(Params):
 
     @property
     def oblocks(self):
+        """~numpy.ndarray(int): Spectral blocks detailing the model's oceanic modes x- and y-wavenumber.
+         Array of shape (:attr:`~QgParams.nmod` [1], 2)."""
         return self._oms
 
     @oblocks.setter
@@ -423,9 +707,33 @@ class QgParams(Params):
         self.scale_params.hk = np.zeros(self.nmod[0])
         if self.atemperature_params is not None:
             self.atemperature_params.thetas = np.zeros(self.nmod[0])
-            self.atemperature_params.hpp = 0
+            self.atemperature_params.hd = Parameter(0.0, input_dimensional=False)
 
     def set_max_atmospheric_modes(self, nxmax, nymax, auto=False):
+        """Function to automatically or not configure spectrally contiguous blocks of atmospheric modes.
+
+        Parameters
+        ----------
+        nxmax: int
+            Maximum x-wavenumber to fill the spectral block up to.
+        nymax: int
+            Maximum y-wavenumber to fill the spectral block up to.
+        auto: bool
+            Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
+            Default is False.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> q = QgParams()
+        >>> q.set_max_atmospheric_modes(2,2)
+        >>> q.ablocks
+        array([[1, 1],
+               [1, 2],
+               [2, 1],
+               [2, 2]])
+        """
         res = np.zeros((nxmax * nymax, 2), dtype=np.int)
         i = 0
         for nx in range(1, nxmax + 1):
@@ -436,19 +744,50 @@ class QgParams(Params):
 
         self.ablocks = res
 
+        self._atmospheric_latex_var_string = list()
         self._atmospheric_var_string = list()
         for i in range(self.nmod[0]):
-            self._atmospheric_var_string.append(r'psi_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_latex_var_string.append(r'psi_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_var_string.append(r'psi_a_' + str(i + 1))
         for i in range(self.nmod[0]):
-            self._atmospheric_var_string.append(r'theta_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_latex_var_string.append(r'theta_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_var_string.append(r'theta_a_' + str(i + 1))
 
         if auto:
             if self.atemperature_params is None:
-                self.atemperature_params = AtmosphericTemperatureParams()
+                self.atemperature_params = AtmosphericTemperatureParams(self.scale_params)
             if self.atmospheric_params is None:
-                self.atmospheric_params = AtmosphericParams()
+                self.atmospheric_params = AtmosphericParams(self.scale_params)
 
     def set_max_oceanic_modes(self, nxmax, nymax, auto=True):
+        """Function to automatically configure spectrally contiguous blocks of oceanic modes.
+
+        Parameters
+        ----------
+        nxmax: int
+            Maximum x-wavenumber to fill the spectral block up to.
+        nymax: int
+            Maximum y-wavenumber to fill the spectral block up to.
+        auto: bool
+            Automatically instantiate or not the parameters container needed to describe the oceanic models parameters.
+            Default is True.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> q = QgParams()
+        >>> q.set_max_oceanic_modes(2,4)
+        >>> q.oblocks
+        array([[1, 1],
+               [1, 2],
+               [1, 3],
+               [1, 4],
+               [2, 1],
+               [2, 2],
+               [2, 3],
+               [2, 4]])
+        """
         res = np.zeros((nxmax * nymax, 2), dtype=np.int)
         i = 0
         for nx in range(1, nxmax + 1):
@@ -459,20 +798,24 @@ class QgParams(Params):
 
         self.oblocks = res
 
+        self._oceanic_latex_var_string = list()
         self._oceanic_var_string = list()
         for i in range(self.nmod[1]):
-            self._oceanic_var_string.append(r'psi_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_latex_var_string.append(r'psi_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_var_string.append(r'psi_o_' + str(i + 1))
         for i in range(self.nmod[1]):
-            self._oceanic_var_string.append(r'theta_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_latex_var_string.append(r'theta_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_var_string.append(r'theta_o_' + str(i + 1))
 
         if auto:
             if self.otemperature_params is None:
-                self.otemperature_params = OceanicTemperatureParams()
+                self.otemperature_params = OceanicTemperatureParams(self.scale_params)
             if self.oceanic_params is None:
-                self.oceanic_params = OceanicParams()
+                self.oceanic_params = OceanicParams(self.scale_params)
 
     @property
     def var_string(self):
+        """list(str): List of model's variable names."""
         l = list()
         for var in self._atmospheric_var_string:
             l.append(var)
@@ -483,17 +826,22 @@ class QgParams(Params):
 
     @property
     def latex_var_string(self):
+        """list(str): List of model's variable names, ready for use in latex."""
         l = list()
-        for var in self.var_string:
+        for var in self._atmospheric_latex_var_string+self._oceanic_latex_var_string:
             l.append(r'{\ '[0:-1] + var + r'}')
 
         return l
 
     @property
     def dimensional_time(self):
+        """float: Return the conversion factor between the adimensional time and the dimensional time unit specified
+        in :attr:`.time_unit`"""
         c = 24 * 3600
         if self.time_unit == 'days':
             c = 24 * 3600
+        if self.time_unit == 'years':
+            c = 24 * 3600 * 365
         return 1 / (self.scale_params.f0 * c)
 
 

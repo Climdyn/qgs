@@ -2,3 +2,5 @@
 __pycache__
 notebooks/.ipynb_checkpoints/
 *.val
+*.dat
+documentation/build/
