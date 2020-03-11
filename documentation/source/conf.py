@@ -94,3 +94,8 @@ mathjax_path = r"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?
 # autosection label option
 
 autosectionlabel_prefix_document = True
+
+# ----- conversion script
+
+
+os.system('cd .. && ./generate_examples.sh')
