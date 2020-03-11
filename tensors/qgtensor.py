@@ -79,12 +79,12 @@ class QgsTensor(object):
         return i
 
     def theta(self, i):
-        """Transform the :math:`\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's coordinate.
+        """Transform the :math:`\\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's coordinate.
 
         Parameters
         ----------
         i: int
-            The :math:`i`-th coefficients of :math:`\theta_{\mathrm a}`
+            The :math:`i`-th coefficients of :math:`\\theta_{\mathrm a}`
 
         Returns
         -------
@@ -186,7 +186,7 @@ class QgsTensor(object):
             if i == 1 and par.Cpa is not None:
                 t[0, 0] = par.Cpa / (1 - aips.a[0, 0] * ap.sig0)
 
-            t[0, 0] -= atp.hpp * atp.thetas[(i - 1)] / (ap.sig0 * aips.a[(i - 1), (i - 1)])
+            t[0, 0] += atp.hd * atp.thetas[(i - 1)] / (1. - ap.sig0 * aips.a[(i - 1), (i - 1)])
             for j in range(1, namod + 1):
 
                 t[self.psi_a(j), 0] = (aips.a[(i - 1), (j - 1)] * ap.kd * ap.sig0) \
@@ -200,11 +200,11 @@ class QgsTensor(object):
                 t[self.theta(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
                                                      * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
                                        + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0) \
-                                      + (atp.hpp * _kronecker_delta((i - 1), (j - 1))) / (
-                                              ap.sig0 * aips.a[(i - 1), (i - 1)])
+                                      + (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (
+                                              ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
 
                 if np.any(scp.hk != 0):
-                    oro = (aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)])
+                    oro = (ap.sig0 * aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
                     t[self.theta(j), 0] -= oro
                     t[self.psi_a(j), 0] += oro
 
@@ -287,7 +287,7 @@ class QgsTensor(object):
     def simplify_matrix(matrix):
         """Routine that simplifies the component of the 3D tensors :math:`\mathcal{T}`.
         For each index :math:`i`, it upper-triangularizes the
-        matrix :math:`\mathcal{T}_{i,j,k} \quad 0 \leq j,k \leq \mathrm{n\_dim}`.
+        matrix :math:`\mathcal{T}_{i,j,k} \quad 0 \leq j,k \leq \mathrm{ndim}`.
 
         Parameters
         ----------

@@ -18,6 +18,7 @@ It can have an orography or an ocean beneath.
    files/general_information
    files/model_description
    files/technical_description
+   files/examples
 
 Indices and tables
 ==================

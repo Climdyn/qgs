@@ -39,7 +39,7 @@ class TestAoTensor(TestBase):
         pars.set_max_oceanic_modes(2, 4)
 
         # Setting MAOOAM default parameters
-        pars.set_params({'k': 0.02, 'kp': 0.04, 'n': 1.5})
+        pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
 
         aip = analytic.AtmosphericInnerProducts(pars)
         oip = analytic.OceanicInnerProducts(pars)

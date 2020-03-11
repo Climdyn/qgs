@@ -4,7 +4,7 @@
 
     Module with the function to integrate the ordinary differential equations
 
-    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(\\boldsymbol{x})
+    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
     of the model and its linearized version.
 

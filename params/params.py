@@ -129,7 +129,7 @@ class ScaleParams(Params):
     phi0_npi: Parameter
         Latitude exprimed in fraction of :math:`\pi` .
     hk: ~numpy.ndarray(float)
-        Orography coefficients, a array of shape (:attr:`~QgParams.nmod` [0],).
+        Orography coefficients (non-dimensional), an array of shape (:attr:`~QgParams.nmod` [0],).
     deltap: Parameter
         Difference of pressure between the center of the two atmospheric layers, in [:math:`Pa`].
     """
@@ -224,33 +224,17 @@ class AtmosphericParams(Params):
         self._scale_params = scale_params
 
         # Parameters for the atmosphere
-        self.k = Parameter(0.05, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
-                           description="atmosphere bottom friction coefficient")
-        self.kp = Parameter(0.01, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
+        self.kd = Parameter(0.1, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
+                            description="atmosphere bottom friction coefficient")
+        self.kdp = Parameter(0.01, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
                             description="atmosphere internal friction coefficient")
         self.sigma = Parameter(0.2e0, input_dimensional=False, scale_object=scale_params, units='[m^2][s^-2][Pa^-2]',
                                description="static stability of the atmosphere")
 
         self.set_params(dic)
 
-    # -----------------------------------------------
-    # Some derived parameters (friction, orography)
-    # -----------------------------------------------
-    @property
-    def kd(self):
-        """Parameter: 2 * atmosphere bottom friction coefficient"""
-        return Parameter(self.k * 2, input_dimensional=False, scale_object=self._scale_params, units='[s^-1]',
-                         description="2 * atmosphere bottom friction coefficient")
-
-    @property
-    def kdp(self):
-        """Parameter: atmosphere internal friction coefficient"""
-        return Parameter(self.kp, input_dimensional=False, scale_object=self._scale_params, units='[s^-1]',
-                         description="atmosphere internal friction coefficient")
-
     @property
     def sig0(self):
-        """Parameter: 0.5 * static stability of the atmosphere"""
         return Parameter(self.sigma / 2, input_dimensional=False, scale_object=self._scale_params, units='[m^2][s^-2][Pa^-2]',
                          description="0.5 * static stability of the atmosphere")
 
@@ -271,7 +255,7 @@ class AtmosphericTemperatureParams(Params):
         Newtonian cooling coefficient.
         Used if an orography is provided.
     thetas: ~numpy.ndarray(float)
-        Spatial Newtonian cooling coefficients (adimensional).
+        Spatial Newtonian cooling coefficients (non-dimensional).
     gamma: Parameter
         Specific heat capacity of the atmosphere
     C: Parameter
@@ -293,7 +277,7 @@ class AtmosphericTemperatureParams(Params):
 
         self._scale_params = scale_params
 
-        self.hd = Parameter(0.09, input_dimensional=False, units='[s]', scale_object=scale_params,
+        self.hd = Parameter(0.045, input_dimensional=False, units='[s]', scale_object=scale_params,
                             description="Newtonian cooling coefficient")
         self.thetas = None  # Radiative equilibrium mean temperature decomposition on the model's modes
 
@@ -311,12 +295,6 @@ class AtmosphericTemperatureParams(Params):
                                  description="sensible+turbulent heat exchange between ocean and atmosphere")
 
         self.set_params(dic)
-
-    @property
-    def hpp(self):
-        """Parameter: Newtonian cooling coefficients constants."""
-        return Parameter(self.hd / 2, input_dimensional=False, units='[s]', scale_object=self._scale_params,
-                         return_dimensional=False, description="Newtonian cooling coefficient")
 
 
 class OceanicParams(Params):
@@ -503,6 +481,7 @@ class QgParams(Params):
 
     @property
     def LR(self):
+        """float: Reduced Rossby deformation radius."""
         op = self.oceanic_params
         scp = self.scale_params
         if op is not None:
@@ -512,6 +491,7 @@ class QgParams(Params):
 
     @property
     def G(self):
+        """float: The :math:`G = - L^2/L_R^2` parameter."""
         scp = self.scale_params
         if self.LR is not None:
             return -scp.L**2 / self.LR**2
@@ -520,6 +500,7 @@ class QgParams(Params):
 
     @property
     def Cpo(self):
+        """float: The :math:`C\'_{{\\rm o},i} = R C_{{\\rm o},i} /   (\\gamma_{\\rm o} L^2 f_0^3)` parameter."""
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
@@ -529,6 +510,7 @@ class QgParams(Params):
 
     @property
     def Lpo(self):
+        """float: The :math:`\\lambda\'_{{\rm o}} = \\lambda/(\\gamma_{\\rm o} f_0)` parameter."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -537,28 +519,29 @@ class QgParams(Params):
         else:
             return None
 
-    # Cpa acts on psi1-psi3, not on theta :
     @property
     def Cpa(self):
+        """float: The :math:`C\'_{{\\rm a},i} = R C_{{\\rm a},i} / (2 \\gamma_{\\rm a} L^2 f_0^3)` parameter."""
         atp = self.atemperature_params
         scp = self.scale_params
-        if atp is not None and atp.hpp == 0:
+        if atp is not None and atp.hd == 0:
             return atp.C / (atp.gamma * scp.f0) * self.rr / (scp.f0 ** 2 * scp.L ** 2) / 2
         else:
             return None
 
     @property
     def Lpa(self):
+        """float: The :math:`\\lambda\'_{\\rm a} = \\lambda / (\\gamma_{\\rm a} f_0)` parameter"""
         atp = self.atemperature_params
         scp = self.scale_params
-        if atp is not None and atp.hpp == 0:
+        if atp is not None and atp.hd == 0:
             return atp.hlambda / (atp.gamma * scp.f0)
         else:
             return None
 
     @property
     def sbpo(self):
-        """float: Long wave radiation lost by ocean to atmosphere space."""
+        """float: Long wave radiation lost by ocean to atmosphere space: :math:`s_{B,{\\rm o}} = 4\\,\\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
@@ -568,7 +551,7 @@ class QgParams(Params):
 
     @property
     def sbpa(self):
-        """float: Long wave radiation from atmosphere absorbed by ocean."""
+        """float: Long wave radiation from atmosphere absorbed by ocean: :math:`s_{B,{\\rm a}} = 4\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -579,7 +562,7 @@ class QgParams(Params):
 
     @property
     def LSBpo(self):
-        """float: Long wave radiation from ocean absorbed by atmosphere."""
+        """float: Long wave radiation from ocean absorbed by atmosphere: :math:`S_{B,{\\rm o}} = 2\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -590,10 +573,10 @@ class QgParams(Params):
 
     @property
     def LSBpa(self):
-        """float: Long wave radiation lost by atmosphere to space & ocean."""
+        """float: Long wave radiation lost by atmosphere to space & ocean: :math:`S_{B,{\\rm a}} = 8\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
         atp = self.atemperature_params
         scp = self.scale_params
-        if atp is not None and atp.hpp == 0:
+        if atp is not None and atp.hd == 0:
             return 8 * atp.eps * self.sb * atp.T0 ** 3 / (atp.gamma * scp.f0)
         else:
             return None
@@ -835,7 +818,7 @@ class QgParams(Params):
 
     @property
     def dimensional_time(self):
-        """float: Return the conversion factor between the adimensional time and the dimensional time unit specified
+        """float: Return the conversion factor between the non-dimensional time and the dimensional time unit specified
         in :attr:`.time_unit`"""
         c = 24 * 3600
         if self.time_unit == 'days':

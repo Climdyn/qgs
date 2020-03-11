@@ -2,8 +2,15 @@
     Inner products module (analytic)
     ================================
 
-    Inner products between the truncated set of basis functions for the ocean and atmosphere streamfunction
-    and temperature fields.
+    Inner products
+
+    .. math::
+
+        (S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} S(x,y)\\, G(x,y)\\, \\mathrm{d} x \\, \\mathrm{d} y
+
+
+    between the truncated set of basis functions :math:`\phi_i` for the ocean streamfunctions and
+    :math:`F_i` for the atmosphere streamfunction and temperature fields (see :ref:`files/model/oro_model:Projecting the equations on a function basis`).
 
     Notes
     -----
@@ -36,41 +43,41 @@ import numpy as np
 class WaveNumber(object):
     """Class to define model base functions wavenumber. The basis function available are:
 
-    * `'A'` for a function of the form :math:`F^A_{P} (x', y') =  \sqrt{2}\, \cos(P y') = \sqrt{2}\, \cos(n_y\, y')`
-    * `'K'` for a function of the form :math:`F^K_{M,P} (x', y') =  2\cos(M nx')\, \sin(P y') = 2\cos(n_x\,  n\, x')\, \sin(n_y\, y')`
-    * `'L'` for a function of the form :math:`F^L_{H,P} (x', y') = 2\sin(H nx')\, \sin(P y') = 2\sin(n_x\, n \,x')\, \sin(n_y\, y')`
+    * `'A'` for a function of the form :math:`F^A_{P} (x, y) =  \sqrt{2}\, \cos(P y) = \sqrt{2}\, \cos(n_y\, y)`
+    * `'K'` for a function of the form :math:`F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y) = 2\cos(n_x\,  n\, x)\, \sin(n_y\, y)`
+    * `'L'` for a function of the form :math:`F^L_{H,P} (x, y) = 2\sin(H nx)\, \sin(P y) = 2\sin(n_x\, n \,x)\, \sin(n_y\, y)`
 
-    where :math:`x'` and :math:`y'` are the nondimensional model's domain coordinates.
+    where :math:`x` and :math:`y` are the nondimensional model's domain coordinates (see :ref:`files/model/oro_model:Projecting the equations on a function basis`).
 
     Parameters
     ----------
     function_type: str
         One character string to define the type of basis function. It can be `'A'`, `'K'` or `'L'`.
     P: int
-        The :math:`y'` wavenumber integer.
+        The :math:`y` wavenumber integer.
     M: int
-        The :math:`x'` wavenumber integer.
+        The :math:`x` wavenumber integer.
     H: int
-        The :math:`x'` wavenumber integer.
+        The :math:`x` wavenumber integer.
     nx: float
-        The :math:`x'` wavenumber.
+        The :math:`x` wavenumber.
     ny: float
-        The :math:`y'` wavenumber.
+        The :math:`y` wavenumber.
 
     Attributes
     ----------
     function_type: str
         One character string to define the type of basis function. It can be `'A'`, `'K'` or `'L'`.
     P: int
-        The :math:`y'` wavenumber integer.
+        The :math:`y` wavenumber integer.
     M: int
-        The :math:`x'` wavenumber integer.
+        The :math:`x` wavenumber integer.
     H: int
-        The :math:`x'` wavenumber integer.
+        The :math:`x` wavenumber integer.
     nx: float
-        The :math:`x'` wavenumber.
+        The :math:`x` wavenumber.
     ny: float
-        The :math:`y'` wavenumber.
+        The :math:`y` wavenumber.
 
     """
 
@@ -124,11 +131,11 @@ class AtmosphericInnerProducts(object):
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0],
         :attr:`~params.params.QgParams.nmod` [0]).
     d: None or ~numpy.ndarray(float)
-        Forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \eta_j)`. \n
+        Forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`. \n
         Not defined if no ocean is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
     s: None or ~numpy.ndarray(float)
-        Forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \eta_j)`. \n
+        Forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`. \n
         Not defined if no ocean is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
     """
@@ -412,25 +419,25 @@ class OceanicInnerProducts(object):
     params: ~params.params.QgParams
         An instance of model's parameters object.
     M: ~numpy.ndarray(float)
-        Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\eta_i, \\nabla^2 \eta_j)`. \n
+        Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
     N: ~numpy.ndarray(float)
-        Beta term for the ocean: :math:`N_{i,j} = (\eta_i, \partial_x \eta_j)`.
+        Beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`.
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
     O: ~numpy.ndarray(float)
-        Temperature advection term (passive scalar): :math:`O_{i,j,k} = (\eta_i, J(\eta_j, \eta_k))`.
+        Temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`.
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
         :attr:`~params.params.QgParams.nmod` [1]).
     C: ~numpy.ndarray(float)
-        Tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\eta_i, J(\eta_j,\\nabla^2 \eta_k))`. \n
+        Tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
         :attr:`~params.params.QgParams.nmod` [1]).
     K: None or ~numpy.ndarray(float)
-        Forcing of the atmosphere on the ocean: :math:`K_{i,j} = (\eta_i, \\nabla^2 F_j)`.
+        Forcing of the atmosphere on the ocean: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`.
         Not defined if no atmosphere is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
     W: None or ~numpy.ndarray(float)
-        Short-wave radiative forcing of the ocean: :math: `W_{i,j} = (\eta_i, F_j)`. \n
+        Short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`. \n
         Not defined if no atmosphere is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
 

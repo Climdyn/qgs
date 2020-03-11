@@ -30,6 +30,24 @@ Presently it possesses two operation modes:
 The shallow-water ocean can in principle be used alone, but it is not implemented for the moment.
 More developments are yet to come, see the Forthcoming developments section below.
 
+Components description
+----------------------
+
+.. toctree::
+    :maxdepth: 2
+
+    model/atmosphere
+    model/ocean
+
+Model versions description
+--------------------------
+
+.. toctree::
+    :maxdepth: 2
+
+    model/oro_model
+    model/maooam_model
+
 .. _quasi-geostrophic: https://en.wikipedia.org/wiki/Quasi-geostrophic_equations
 .. _shallow-water: https://en.wikipedia.org/wiki/Shallow_water_equations
 .. _MAOOAM: https://github.com/Climdyn/MAOOAM

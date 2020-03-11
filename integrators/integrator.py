@@ -6,7 +6,7 @@
     Module with the classes of integrators to multi-thread the integration of
     an ordinary differential equations
 
-    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(\\boldsymbol{x})
+    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
     of the model and its linearized version.
 

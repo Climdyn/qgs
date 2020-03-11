@@ -4,3 +4,5 @@ notebooks/.ipynb_checkpoints/
 *.val
 *.dat
 documentation/build/
+documentation/source/files/examples/.ipynb_checkpoints/
+documentation/source/files/examples/*_files/

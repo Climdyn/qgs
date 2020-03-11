@@ -38,7 +38,7 @@ Once built, the documentation is available `here <../index.html>`_.
 Usage
 -----
 
-qgs can be used by editing and running the script found in the `main folder <./>`_: ::
+qgs can be used by editing and running the script found in the `main folder <../../../../>`_: ::
 
     python qgs_rp.py
 
@@ -50,7 +50,7 @@ Examples
 --------
 
 Another nice way is through the use of Jupyter notebooks.
-Simple examples can be found int the `notebooks folder <./notebooks>`_.
+Simple examples can be found int the `notebooks folder <../../../../notebooks>`_.
 For instance, running ::
 
     conda activate qgs
@@ -67,7 +67,7 @@ qgs needs mainly:
 * `Numpy`_ for numeric support
 * `Numba`_ for code acceleration
 
-Check the yaml file `environment.yml <./environment.yml>`_ for the full list of dependencies.
+Check the yaml file `environment.yml <../../../../environment.yml>`_ for the full list of dependencies.
 
 Forthcoming developments
 ------------------------
@@ -81,7 +81,7 @@ Forthcoming developments
   + Dynamical equilibrium temperature equations
   + Non-autonomous equation (seasonality, etc...)
   + Heat exchange schemes when using land model version
-    (using a model derived from MAOOAM in `Li et al. <https://doi.org/10.1007/s13351-018-8012-y>`_)
+    (using a model derived from MAOOAM in :cite:`gi-LHHBD2018`)
 
 * Technical mid-term developments
 
@@ -116,6 +116,12 @@ Non-exhaustive list:
 * `pyqg <https://github.com/pyqg/pyqg>`_: A pseudo-spectral python solver for quasi-geostrophic systems.
 * `Isca <https://execlim.github.io/IscaWebsite/index.html>`_: Research GCM written in Fortran and largely
   configured with Python scripts, with internal coding changes required for non-standard cases.
+
+References
+----------
+
+.. bibliography:: model/ref.bib
+    :keyprefix: gi-
 
 .. _quasi-geostrophic: https://en.wikipedia.org/wiki/Quasi-geostrophic_equations
 .. _shallow-water: https://en.wikipedia.org/wiki/Shallow_water_equations

@@ -12,3 +12,7 @@ dependencies:
   - scipy
   - sphinx
   - sphinx_rtd_theme
+  - pip
+  - pip:
+      - sphinxcontrib-bibtex
+
