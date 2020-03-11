@@ -18,8 +18,8 @@ Part of the code comes from the Python MAOOAM implementation by Maxime Tondeur a
 
 See [LICENSE.txt](./LICENSE.txt) for license information.
 
-Installation
-------------
+Installation and documentation
+------------------------------
 
 The easiest way to install is through [Anaconda](https://www.anaconda.com/).
 
@@ -64,11 +64,6 @@ For instance, running
     jupyter-notebook
     
 will lead you to your favorite browser where you can load and run the examples.
-
-Documentation
--------------
-
-Coming soon...
 
 Dependencies
 ------------
