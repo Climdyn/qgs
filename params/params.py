@@ -2,24 +2,24 @@
     The model's parameters module
     =============================
 
-    This module defines and contains the main classes holding the model configuration parameters.
+    This module defines the main classes containing the model configuration parameters.
     The parameters are typically specified as :class:`~params.parameter.Parameter` objects.
 
     There are five types of parameters arranged in classes:
 
-    * :class:`ScaleParams` to hold the model scale parameters. These parameters are used to scale and
+    * :class:`ScaleParams` contains the model scale parameters. These parameters are used to scale and
       `nondimentionalize`_ the :class:`~params.parameter.Parameter` of the other parameters classes according to
       their :attr:`~params.parameter.Parameter.units` attribute.
-    * :class:`AtmosphericParams` containing the atmospheric dynamical parameters.
+    * :class:`AtmosphericParams` contains the atmospheric dynamical parameters.
     * :class:`AtmosphericTemperatureParams` containing the atmosphere's temperature and heat-exchange parameters.
-    * :class:`OceanicParams` containing the oceanic dynamical parameters.
-    * :class:`OceanicTemperatureParams` containing the ocean's temperature and heat-exchange parameters.
+    * :class:`OceanicParams` contains the oceanic dynamical parameters.
+    * :class:`OceanicTemperatureParams` contains the ocean's temperature and heat-exchange parameters.
 
     These parameters classes are regrouped into a global structure :class:`QgParams` which also contains
 
     * spectral modes definition of the model
     * physical constants
-    * derived parameters (from the user ones)
+    * parameters derived from the ones provided by the user
     * helper functions to initialize and parameterize the model
 
     This global parameters structure is used by the other modules to construct the model's ordinary differential
@@ -481,7 +481,7 @@ class QgParams(Params):
 
     @property
     def LR(self):
-        """float: Reduced Rossby deformation radius."""
+        """float: Reduced Rossby deformation radius :math:`L_\\text{R} = \\sqrt{g' \\, h } / f_0` ."""
         op = self.oceanic_params
         scp = self.scale_params
         if op is not None:
@@ -500,7 +500,7 @@ class QgParams(Params):
 
     @property
     def Cpo(self):
-        """float: The :math:`C\'_{{\\rm o},i} = R C_{{\\rm o},i} /   (\\gamma_{\\rm o} L^2 f_0^3)` parameter."""
+        """float: The :math:`C\'_{{\\rm o},i} = R C_{{\\rm o},i} / (\\gamma_{\\rm o} L^2 f_0^3)` parameter."""
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
@@ -510,7 +510,7 @@ class QgParams(Params):
 
     @property
     def Lpo(self):
-        """float: The :math:`\\lambda\'_{{\rm o}} = \\lambda/(\\gamma_{\\rm o} f_0)` parameter."""
+        """float: The :math:`\\lambda\'_{{\\rm o}} = \\lambda/(\\gamma_{\\rm o} f_0)` parameter."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -531,7 +531,7 @@ class QgParams(Params):
 
     @property
     def Lpa(self):
-        """float: The :math:`\\lambda\'_{\\rm a} = \\lambda / (\\gamma_{\\rm a} f_0)` parameter"""
+        """float: The :math:`\\lambda\'_{\\rm a} = \\lambda / (\\gamma_{\\rm a} f_0)` parameter."""
         atp = self.atemperature_params
         scp = self.scale_params
         if atp is not None and atp.hd == 0:
@@ -541,7 +541,7 @@ class QgParams(Params):
 
     @property
     def sbpo(self):
-        """float: Long wave radiation lost by ocean to atmosphere space: :math:`s_{B,{\\rm o}} = 4\\,\\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
+        """float: Long wave radiation lost by ocean to the atmosphere :math:`s_{B,{\\rm o}} = 4\\,\\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
         otp = self.otemperature_params
         scp = self.scale_params
         if otp is not None:
@@ -551,7 +551,7 @@ class QgParams(Params):
 
     @property
     def sbpa(self):
-        """float: Long wave radiation from atmosphere absorbed by ocean: :math:`s_{B,{\\rm a}} = 4\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
+        """float: Long wave radiation from atmosphere absorbed by ocean :math:`s_{B,{\\rm a}} = 4\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm o} f_0)`."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -562,7 +562,7 @@ class QgParams(Params):
 
     @property
     def LSBpo(self):
-        """float: Long wave radiation from ocean absorbed by atmosphere: :math:`S_{B,{\\rm o}} = 2\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
+        """float: Long wave radiation from ocean absorbed by atmosphere :math:`S_{B,{\\rm o}} = 2\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
         atp = self.atemperature_params
         otp = self.otemperature_params
         scp = self.scale_params
@@ -573,7 +573,7 @@ class QgParams(Params):
 
     @property
     def LSBpa(self):
-        """float: Long wave radiation lost by atmosphere to space & ocean: :math:`S_{B,{\\rm a}} = 8\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
+        """float: Long wave radiation lost by atmosphere to space & ocean :math:`S_{B,{\\rm a}} = 8\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)`."""
         atp = self.atemperature_params
         scp = self.scale_params
         if atp is not None and atp.hd == 0:

@@ -4,7 +4,7 @@ Code Description
 
 Presently, the `ordinary differential equations`_ (ODEs) of the qgs model are at most bilinear
 in their variables :math:`\eta_i` (:math:`1\leq i\leq` :attr:`~params.params.QgParams.ndim`).
-This system of ODEs can therefore be most generically expressed as the sum of
+This system of ODEs can therefore be expressed as the sum of
 a constant, a matrix multiplication, and a tensor contraction:
 
 .. math::
@@ -23,7 +23,7 @@ merge :math:`c_i`, :math:`m_{i,j}`, and :math:`t_{i,j,k}` into the tensor
 
 The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
 Recasting the system of ordinary differential
-equations for $\eta_i$ in the form of a tensor contraction has certain
+equations for :math:`\eta_i` in the form of a tensor contraction has certain
 advantages. Indeed, the symmetry of the tensor contraction allows for a unique representation
 of :math:`\mathcal{T}_{i,j,k}`, if it is taken to be upper triangular in the last two
 indices (:math:`\mathcal{T}_{i,j,k} \equiv 0` if :math:`j > k`). Since

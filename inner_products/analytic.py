@@ -433,7 +433,7 @@ class OceanicInnerProducts(object):
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
         :attr:`~params.params.QgParams.nmod` [1]).
     K: None or ~numpy.ndarray(float)
-        Forcing of the atmosphere on the ocean: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`.
+        Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`.
         Not defined if no atmosphere is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
     W: None or ~numpy.ndarray(float)

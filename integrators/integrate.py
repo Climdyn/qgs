@@ -239,12 +239,11 @@ def _zeros_func(t, x):
 def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
                                forward=True, adjoint=False, inverse=False, boundary=None,
                                write_steps=1, b=None, c=None, a=None):
-    """
-    Integrate the tangent linear model associated to the ordinary differential equations (ODEs)
+    """Integrate simultaneously the ordinary differential equations (ODEs)
 
     .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
-    that is, integrate the linear ODEs
+    and its tangent linear model, i.e. the linearized ODEs
 
     .. math :: \dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}
 

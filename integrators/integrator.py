@@ -169,7 +169,7 @@ class RungeKuttaIntegrator(object):
         self.start()
 
     def set_bca(self, b=None, c=None, a=None, ic_init=True):
-        """Set the coefficient of the `Runge-Kutta method`_ and restart the integrator. s
+        """Set the coefficients of the `Runge-Kutta method`_ and restart the integrator. s
 
         .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
 
@@ -520,11 +520,11 @@ class TrajectoryProcess(multiprocessing.Process):
 
 
 class RungeKuttaTglsIntegrator(object):
-    """Class to integrate the tangent linear model associated to the ordinary differential equations (ODEs)
+    """Class to integrate simultaneously the ordinary differential equations (ODEs)
 
     .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
-    that is, integrate the linear ODEs
+    and its tangent linear model, i.e. the linearized ODEs
 
     .. math :: \dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}
 
@@ -698,7 +698,7 @@ class RungeKuttaTglsIntegrator(object):
         self.start()
 
     def set_bca(self, b=None, c=None, a=None, ic_init=True):
-        """Set the coefficient of the `Runge-Kutta method`_ and restart the integrator. s
+        """Set the coefficients of the `Runge-Kutta method`_ and restart the integrator. s
 
         .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
 
@@ -747,7 +747,7 @@ class RungeKuttaTglsIntegrator(object):
         reconvergence_time: None or float, optional
             Transient time for the subsequent trajectories after the first long `transient_time`.
         forward: bool, optional
-            Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
+            If true, integrate the ODEs forward in time, else, integrate backward in time. In case of backward integration, the
             initial condition `ic` becomes a final condition. Default to forward integration.
         number_of_trajectories: int
             Number of initial conditions to find. Default to 1.  Inactive if `ic` is provided.
@@ -889,11 +889,11 @@ class RungeKuttaTglsIntegrator(object):
             Default to `None`.
 
         forward: bool, optional
-            Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
+            If true, integrate the ODEs forward in time, else, integrate backward in time. In case of backward integration, the
             initial condition `ic` becomes a final condition. Default to forward integration.
         adjoint: bool, optional
-            Wheter to integrate the tangent :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}`
-            or the adjoint linear model :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}^T(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}`.
+            If true, integrate the tangent :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}` ,
+            else, integrate the adjoint linear model :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}^T(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}`.
             Integrate the tangent model by default.
         inverse: bool, optional
             Wheter or not to invert the Jacobian matrix

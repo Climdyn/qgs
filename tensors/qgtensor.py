@@ -64,7 +64,7 @@ class QgsTensor(object):
         self.compute_tensor()
 
     def psi_a(self, i):
-        """Transform the :math:`\psi_{\mathrm a}` :math:`i`-th coefficient into the effective model's coordinate.
+        """Transform the :math:`\psi_{\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
         ----------
@@ -74,12 +74,12 @@ class QgsTensor(object):
         Returns
         -------
         int
-            The effective model's coordinate.
+            The effective model's variable.
         """
         return i
 
     def theta(self, i):
-        """Transform the :math:`\\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's coordinate.
+        """Transform the :math:`\\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
         ----------
@@ -89,12 +89,12 @@ class QgsTensor(object):
         Returns
         -------
         int
-            The effective model's coordinate.
+            The effective model's variable.
         """
         return i + self.params.nmod[0]
 
     def psi_o(self, i):
-        """Transform the :math:`\psi_{\mathrm o}` :math:`i`-th coefficient into the effective model's coordinate.
+        """Transform the :math:`\psi_{\mathrm o}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
         ----------
@@ -104,12 +104,12 @@ class QgsTensor(object):
         Returns
         -------
         int
-            The effective model's coordinate.
+            The effective model's variable.
         """
         return i + 2 * self.params.nmod[0]
 
     def deltaT_o(self, i):
-        """Transform the :math:`\delta T_{\mathrm o}` :math:`i`-th coefficient into the effective model's coordinate.
+        """Transform the :math:`\delta T_{\mathrm o}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
         ----------
@@ -119,7 +119,7 @@ class QgsTensor(object):
         Returns
         -------
         int
-            The effective model's coordinate.
+            The effective model's variable.
         """
         return i + 2 * self.params.nmod[0] + self.params.nmod[1]
 

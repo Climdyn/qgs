@@ -5,7 +5,7 @@ Atmospheric component
 The atmospheric component is a two-layer `quasi-geostrophic`_ (QG) atmosphere in
 the `beta-plane`_ approximation. The atmospheric component is an extension of
 the QG model, first developed by :cite:`ac-CS1980` and further refined by
-:cite:`ac-RP1982`.
+:cite:`ac-RP1982` and :cite:`ac-CT1987`.
 
 .. figure:: figures/atmoro.png
     :scale: 70%
@@ -21,7 +21,7 @@ the vertical velocity :math:`\omega = \text{d}p/\text{d}t`, read
 
 .. math::
 
-    \frac{\partial}{\partial t}  \overbrace{\left(\nabla^2 \psi^1_{\rm a}\right) }^{\text{vorticity}}+ \overbrace{J(\psi^1_{\rm a}, \nabla^2 \psi^1_{\rm a})}^{\text{horizontal advection}} + \overbrace{\beta \frac{\partial \psi^1_{\rm a}}{\partial x}}^{\text{meridional advection} \\ \text{(Coriolis effect)}}
+    \frac{\partial}{\partial t}  \overbrace{\left(\nabla^2 \psi^1_{\rm a}\right) }^{\text{vorticity}}+ \overbrace{J(\psi^1_{\rm a}, \nabla^2 \psi^1_{\rm a})}^{\text{horizontal advection}} + \overbrace{\beta \frac{\partial \psi^1_{\rm a}}{\partial x}}^{\beta\text{-plane approximation} \\ \text{of the Coriolis force}}
     & = \overbrace{-k'_d \nabla^2 (\psi^1_{\rm a}-\psi^3_{\rm a})}^{\text{friction}} + \overbrace{\frac{f_0}{\Delta p} \omega}^{\text{vertical stretching}} \nonumber \\
     \frac{\partial}{\partial t} \left( \nabla^2 \psi^3_{\rm a} \right) + \, \ J(\psi^3_{\rm a}, \nabla^2 \psi^3_{\rm a}) \, \ + \qquad \beta \frac{\partial \psi^3_{\rm a}}{\partial x} \qquad
     & = +k'_d \nabla^2 (\psi^1_{\rm a}-\psi^3_{\rm a}) - \quad \ \frac{f_0}{\Delta p}  \omega \nonumber \\

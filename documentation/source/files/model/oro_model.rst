@@ -42,7 +42,7 @@ The equations governing the time evolution of the mean and shear streamfunctions
     & \qquad \qquad \qquad \qquad \qquad \qquad = - 2 \, k'_d \nabla^2 \theta_{\rm a} + \frac{k_d}{2} \nabla^2 (\psi_{\rm a} - \theta_{\rm a}) + \frac{f_0}{\Delta p}  \omega
 
 :math:`\psi_{\rm a}` and :math:`\theta_{\rm a}` are often referred to as respectively the `barotropic`_ and `baroclinic`_ streamfunctions.
-On the other hand, the thermodynamic equation governing the mean `potential temperature`_ :math:`T_{\rm a} = (\theta^1_{\rm a} + \theta^3_{\rm a})/2`, where :math:`\theta^1_{\rm a}` and :math:`\theta^3_{\rm a}` are the mean potential temperature in respectively the higher and lower layer, is given by :cite:`om-V2006`
+On the other hand, the thermodynamic equation governing the mean `potential temperature`_ :math:`T_{\rm a} = (T^1_{\rm a} + T^3_{\rm a})/2`, where :math:`T^1_{\rm a}` and :math:`T^3_{\rm a}` are the mean potential temperature in respectively the higher and lower layer, is given by :cite:`om-V2006`
 
 .. math::
 
@@ -56,7 +56,7 @@ The thermal wind relation
 
     \nabla^2 T_{\rm a} = A \, \nabla^2 \theta_{\rm a}
 
-where :math:`A` is a constant, relates the the baroclinic streamfunction and the potential temperature fields.
+where :math:`A` is a constant, relates the the baroclinic streamfunction and the temperature fields.
 Upon `nondimensionalization`_, both fields are identified with each other: :math:`\theta_{\rm a} \equiv T_{\rm a}` and
 :math:`\theta^\star \equiv T^\star`, and the equations above fully describe the system.
 
@@ -145,7 +145,6 @@ the vertical velocity :math:`\omega(x,y)` have also to be decomposed onto the ei
 These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~params.params.ScaleParams.hk`
 and :attr:`~params.params.AtmosphericTemperatureParams.thetas` (:math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
 :math:`\theta^\star` is scaled by :math:`A f_0^2 L^2` (see section below)).
-These spectral expansions of the fields involved in the `quasi-geostrophic`_ model give its name to the present implementation.
 
 Ordinary differential equations
 -------------------------------

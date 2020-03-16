@@ -27,7 +27,7 @@ The equations for the atmospheric and oceanic streamfunctions defined in the lin
 
 where :math:`\rho_{\rm o}` is the density of the ocean's fluid and :math:`h` is the depth of its layer (:attr:`~params.params.OceanicParams.h`).
 The rightmost term of the last equation represents the impact of the wind stress on the ocean, and is modulated
-by the drag coefficient of the mechanical ocean-atmosphere coupling, :math:`d = C/(\rho_{\rm o} h)` (:attr:`~params.params.OceanicParams.d`).
+by the coefficient of the mechanical ocean-atmosphere coupling, :math:`d = C/(\rho_{\rm o} h)` (:attr:`~params.params.OceanicParams.d`).
 
 As for the :ref:`files/model/oro_model:Model with an orography and a temperature profile`, we rewrite these equations in term of the `barotropic`_ streamfunction :math:`\psi_{\rm a}` and `baroclinic`_ streamfunction :math:`\theta_{\rm a}`:
 
@@ -74,12 +74,9 @@ R_\text{a}` and :math:`R_\text{o} = R_\text{o}^0 + \delta R_\text{o}`. It result
     \gamma_{\rm a} \Big( \frac{\partial \delta T_{\rm a}}{\partial t} + J(\psi_{\rm a}, \delta T_{\rm a} )- \sigma \omega \frac{\delta p}{R}\Big) &= -\lambda (\delta T_{\rm a}- \delta T_{\rm o}) +4 \sigma_B T_{{\rm o},0}^3 \delta T_{\rm o} - 8 \epsilon_{\rm a} \sigma_B T_{{\rm a},0}^3 \delta T_{\rm a} + \delta R_{\rm a} \nonumber \\
     \gamma_{\rm o} \Big( \frac{\partial \delta T_{\rm o}}{\partial t} + J(\psi_{\rm o}, \delta T_{\rm o})\Big) &= -\lambda (\delta T_{\rm o}- \delta T_{\rm a}) -4 \sigma_B T_{{\rm o},0}^3 \delta T_{\rm o} + 4 \epsilon_{\rm a} \sigma_B T_{{\rm a},0}^3 \delta T_{\rm a} + \delta R_{\rm o}. \nonumber
 
-
-
-
 The hydrostatic relation in pressure coordinates is :math:`(\partial \Phi/\partial p)
 = -1/\rho_\text{a}` with the geopotential height :math:`\Phi = f_0\;\psi_\text{a}` and :math:`\rho_\text{a}` the dry air density. The ideal gas relation :math:`p=\rho_\text{a} R T_\text{a}`
-allows then one to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` is
+and the vertical discretization of the hydrostatic relation at 500 hPa allows to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` is
 the ideal gas constant.
 
 .. figure:: figures/energy_balance.png
@@ -102,62 +99,7 @@ system of `ordinary differential equations`_ (ODE). This procedure is sometimes 
 This basis being finite, the resolution of the model is automatically truncated at the characteristic length of the
 highest-resolution function of the basis.
 
-The atmospheric basis of function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Both atmospheric fields :math:`\psi_{\rm a}` and :math:`\theta_{\rm a}` are defined in a zonally periodic channel with
-no-flux boundary conditions in the meridional direction (:math:`\partial \cdot_{\rm a} /\partial x \equiv 0` at the meridional boundaries).
-
-These fields are projected on Fourier modes respecting these boundary conditions:
-
-.. math::
-
-    &F^A_{P} (x, y)   =  \sqrt{2}\, \cos(P y) \\
-    &F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y) \\
-    &F^L_{H,P} (x, y) = 2\sin(H nx)\, \sin(P y)
-
-with integer values of :math:`M`, :math:`H`, :math:`P`.
-:math:`x` and :math:`y` are here the horizontal adimensionalized coordinates, rescaled
-by dividing the dimensional coordinates by the characteristic length :math:`L` (:attr:`~params.params.ScaleParams.L`).
-The model's domain is then defined by :math:`(0 \leq x \leq \frac{2\pi}{n}, 0 \leq y \leq \pi)`, with :math:`n` (:attr:`~params.params.ScaleParams.n`) the aspect ratio
-between its meridional and zonal extents :math:`L_y` (:attr:`~params.params.ScaleParams.L_y`) and :math:`L_x` (:attr:`~params.params.ScaleParams.L_x`).
-
-To manipulate easily these functions and the coefficients of the fields
-expansion, we number the basis functions along increasing values of :math:`M= H` and then :math:`P`. It allows to
-write the set as :math:`\left\{ F_i(x,y); 1 \leq i \leq n_\text{a}\right\}` where :math:`n_{\mathrm{a}}`
-(:attr:`~params.params.QgParams.nmod` [0]) is the number of modes of the spectral expansion in the atmosphere.
-
-For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`M, H \in \{1,2\}`; :math:`P \in \{1,2\}` and the basis of functions is
-
-.. math::
-
-    F_1(x,y) & = &  \sqrt{2}\, \cos(y), \nonumber \\
-    F_2(x,y) & = &  2\, \cos(n x)\, \sin(y), \nonumber \\
-    F_3(x,y) & = &  2\, \sin(n x)\, \sin(y), \nonumber \\
-    F_4(x,y) & = &  \sqrt{2}\, \cos(2y), \nonumber \\
-    F_5(x,y) & = &   2  \cos(n x) \sin(2y),  \nonumber \\
-    F_6(x,y) & = &   2 \sin(n x) \sin(2y), \nonumber \\
-    & \vdots & \nonumber
-
-such that
-
-.. math::
-
-    \nabla^2 F_i(x,y) = -a^2_i F_i(x,y)
-
-with eigenvalues :math:`a_i^2 = P_i^2 + n^2 \, M_i^2` or :math:`a_i^2 = P_i^2 + n^2 \, H_i^2`.
-These Fourier modes are orthonormal with respect to the inner product
-
-.. math::
-
-    \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, F_j(x,y)\, \mathrm{d} x \, \mathrm{d} y = \delta_{ij}
-
-where :math:`\delta_{ij}` is the `Kronecker delta`_.
-
-.. figure:: figures/visualise_basisfunctions_atmosphere.png
-    :align: center
-
-    The first 10 basis functions :math:`F_i` evaluated on the nondimensional domain of the model.
+The atmospheric basis of function :math:`F_i` is described in the section :ref:`files/model/oro_model:Projecting the equations on a function basis`.
 
 The oceanic basis of function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -229,7 +171,7 @@ The fields of the model can expanded on these basis according to
      \delta T_\text{o}(x,y) &= \sum_{j=1}^{n_\text{o}} \delta T_{\text{o},j} \; \phi_j(x,y).
 
 In the expansion for :math:`\psi_\text{o}`, a term :math:`\overline{\phi_j}` is added to the oceanic
-basis function :math:`\phi_j` in order to give it a vanishing spatial
+basis function :math:`\phi_j` in order to get a vanishing spatial
 average. This is required to guarantee mass conservation in the ocean, but otherwise does not affect the dynamics. Indeed,
 it can be added a posteriori when plotting the field
 :math:`\psi_\text{o}`. This term is non-zero for odd :math:`P_\text{o}` and
