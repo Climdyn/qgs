@@ -5,9 +5,10 @@ Quasi-Geostrophic Spectral model (qgs)
 General Information
 -------------------
 
-qgs is a Python 2-layer [quasi-geostrophic](https://en.wikipedia.org/wiki/Quasi-geostrophic_equations) channel model 
-on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane) for the atmosphere, coupled to a simple land or 
-[shallow-water](https://en.wikipedia.org/wiki/Shallow_water_equations) ocean component beneath.
+qgs is a Python implementation of an atmospheric model for midlatitudes.  It models the dynamics of
+a 2-layer [quasi-geostrophic](https://en.wikipedia.org/wiki/Quasi-geostrophic_equations) channel
+atmosphere on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane), coupled to a simple land or
+[shallow-water](https://en.wikipedia.org/wiki/Shallow_water_equations) ocean component. 
 
 About
 -----
@@ -20,10 +21,6 @@ See [LICENSE.txt](./LICENSE.txt) for license information.
 
 Installation and documentation
 ------------------------------
-
-> **__Note:__** qgs is presently compatible with Linux. It should be compatible with Mac OS (not tested).
-> **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
-
 
 The easiest way to install is through [Anaconda](https://www.anaconda.com/).
 
@@ -40,7 +37,7 @@ You can then perform a test by running the script
 
     python qgs_rp.py
     
-to see if everything run smoothly (should take less than a minute).
+to see if everything runs smoothly (this should take less than a minute).
 
 To build the documentation, please run (with the conda environment still activated):
 
@@ -59,8 +56,8 @@ qgs can be used by editing and running the script `qgs_rp.py` and `qgs_maooam.py
 Examples
 --------
 
-Another nice way is through the use of Jupyter notebooks. 
-Simple examples can be found int the [notebooks folder](./notebooks).
+Another nice way to run the model is through the use of Jupyter notebooks. 
+Simple examples can be found in the [notebooks folder](./notebooks).
 For instance, running 
 
     conda activate qgs

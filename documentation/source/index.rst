@@ -8,8 +8,8 @@ Quasi-Geostrophic Spectral model (qgs)
 ======================================
 
 
-qgs is quasi-geostrophic atmospheric model integrally written in Python.
-It can have an orography or an ocean beneath.
+qgs is quasi-geostrophic atmospheric model which is integrally written in Python.
+The lower boundary condition can be either a surface with orography or a dynamical ocean.
 
 .. toctree::
    :maxdepth: 2

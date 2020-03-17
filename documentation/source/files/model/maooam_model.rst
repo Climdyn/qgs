@@ -2,8 +2,8 @@
 Coupled ocean-atmosphere model (MAOOAM)
 =======================================
 
-This model version is composed of a the two-layer quasi-geostrophic :ref:`files/model/atmosphere:Atmospheric component`
-coupled both thermally and mechanically to shallow-water :ref:`files/model/ocean:Oceanic component`.
+This model version is composed of a two-layer quasi-geostrophic :ref:`files/model/atmosphere:Atmospheric component`
+coupled both thermally and mechanically to a shallow-water :ref:`files/model/ocean:Oceanic component`.
 The coupling between the two components includes wind forcings, radiative and heat exchanges.
 
 .. figure:: figures/model_variables_duck.png
@@ -14,7 +14,7 @@ The coupling between the two components includes wind forcings, radiative and he
     The domain (:math:`\beta`-plane) `zonal and meridional`_ coordinates are labeled as the :math:`x` and
     :math:`y` variables.
 
-The equations for the atmospheric and oceanic streamfunctions defined in the links above read
+The evolution equations for the atmospheric and oceanic streamfunctions defined in the sections above read
 
 .. math::
 
@@ -25,11 +25,11 @@ The equations for the atmospheric and oceanic streamfunctions defined in the lin
     \frac{\partial}{\partial t} \left( \nabla^2 \psi_\text{o} - \frac{\psi_\text{o}}{L_\text{R}^2} \right) + J(\psi_\text{o}, \nabla^2 \psi_\text{o}) + \beta \frac{\partial \psi_\text{o}}{\partial x}
     & = -r \nabla^2 \psi_\text{o} +\frac{C}{\rho_{\rm o} h} \nabla^2 (\psi^3_\text{a}-\psi_\text{o}).\nonumber
 
-where :math:`\rho_{\rm o}` is the density of the ocean's fluid and :math:`h` is the depth of its layer (:attr:`~params.params.OceanicParams.h`).
+where :math:`\rho_{\rm o}` is the density of the ocean's water and :math:`h` is the depth of its layer (:attr:`~params.params.OceanicParams.h`).
 The rightmost term of the last equation represents the impact of the wind stress on the ocean, and is modulated
 by the coefficient of the mechanical ocean-atmosphere coupling, :math:`d = C/(\rho_{\rm o} h)` (:attr:`~params.params.OceanicParams.d`).
 
-As for the :ref:`files/model/oro_model:Model with an orography and a temperature profile`, we rewrite these equations in term of the `barotropic`_ streamfunction :math:`\psi_{\rm a}` and `baroclinic`_ streamfunction :math:`\theta_{\rm a}`:
+As we did for the :ref:`files/model/oro_model:Model with an orography and a temperature profile`, we rewrite these equations in terms of the `barotropic`_ streamfunction :math:`\psi_{\rm a}` and `baroclinic`_ streamfunction :math:`\theta_{\rm a}`:
 
 .. math::
 
@@ -47,7 +47,7 @@ The temperature :math:`T_\text{o}` in the ocean is a passively advected scalar i
 
     \gamma_\text{o} \left( \frac{\partial T_\text{o}}{\partial t} + J(\psi_\text{o}, T_\text{o}) \right) = -\lambda (T_\text{o}-T_\text{a}) -\sigma_\text{B} T_\text{o}^4 + \epsilon_\text{a} \sigma_\text{B} T_\text{a}^4 + R_\text{o}
 
-and the time evolution of the atmosphere temperature :math:`T_\text{a}` obeys a similar equation:
+and the time evolution of the atmospheric temperature :math:`T_\text{a}` obeys a similar equation:
 
 .. math::
 
@@ -62,12 +62,12 @@ The quartic terms represent the long-wave
 radiation fluxes between the ocean, the atmosphere, and outer space, with
 :math:`\epsilon_\text{a}` (:attr:`~.AtmosphericTemperatureParams.eps`)  the emissivity of the grey-body atmosphere and
 :math:`\sigma_\text{B}` (:attr:`~.QgParams.sb`) the Stefan--Boltzmann constant. By decomposing the
-temperatures as :math:`T_\text{a} = T_\text{a}^0 + \delta T_\text{a}` and :math:`T_\text{o} = T_\text{o}^0 + \delta T_\text{o}`, the quartic terms are
-linearized around spatially uniform temperatures :math:`T_\text{a}^0` (:attr:`.AtmosphericTemperatureParams.T0`) and
-:math:`T_\text{o}^0` (:attr:`.OceanicTemperatureParams.T0`), as detailed in Appendix~B of :cite:`mao-VDDG2015`. :math:`R_\text{a}`
+temperatures as :math:`T_\text{a} = T_{\text{a},0} + \delta T_\text{a}` and :math:`T_\text{o} = T_{\text{o},0} + \delta T_\text{o}`, the quartic terms are
+linearized around spatially uniform and constant temperatures :math:`T_{\text{a},0}` (:attr:`.AtmosphericTemperatureParams.T0`) and
+:math:`T_{\text{o},0}` (:attr:`.OceanicTemperatureParams.T0`), as detailed in Appendix B of :cite:`mao-VDDG2015`. :math:`R_\text{a}`
 and :math:`R_\text{o}` are the short-wave radiation fluxes entering the atmosphere
 and the ocean that are also decomposed as :math:`R_\text{a}=R_\text{a}^0 + \delta
-R_\text{a}` and :math:`R_\text{o} = R_\text{o}^0 + \delta R_\text{o}`. It results in the equations:
+R_\text{a}` and :math:`R_\text{o} = R_\text{o}^0 + \delta R_\text{o}`. It results in these evolution equations for the temperature anomalies:
 
 .. math::
 
@@ -91,21 +91,21 @@ the ideal gas constant.
 
     Actual values of the energy flux between the ground and the atmosphere (from ...).
 
-Function basis
---------------
+Set of basis functions
+----------------------
 
-The present model solve the equations above by projecting them onto a basis of functions, to obtain a
+The present model solves the equations above by projecting them onto a basis of functions, to obtain a
 system of `ordinary differential equations`_ (ODE). This procedure is sometimes called a `Galerkin expansion`_.
 This basis being finite, the resolution of the model is automatically truncated at the characteristic length of the
 highest-resolution function of the basis.
 
-The atmospheric basis of function :math:`F_i` is described in the section :ref:`files/model/oro_model:Projecting the equations on a function basis`.
+The atmospheric set of basis functions :math:`F_i` is described in the section :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`.
 
-The oceanic basis of function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The oceanic set of basis functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Both oceanic fields :math:`\psi_{\rm o}` and :math:`\delta T_{\rm o}` are defined in closed basin with no-flux boundary
-conditions in the meridional direction (:math:`\partial \cdot_{\rm o} /\partial x \equiv 0` at the meridional boundaries and
+Both oceanic fields :math:`\psi_{\rm o}` and :math:`\delta T_{\rm o}` are defined in a closed basin with no-flux boundary
+conditions (:math:`\partial \cdot_{\rm o} /\partial x \equiv 0` at the meridional boundaries and
 :math:`\partial \cdot_{\rm o}/\partial y \equiv 0` at the zonal boundaries).
 
 These fields are projected on Fourier modes respecting these boundary conditions:
@@ -115,14 +115,14 @@ These fields are projected on Fourier modes respecting these boundary conditions
     \phi_{H_{\rm o},P_{\rm o}} (x, y) = 2\sin(\frac{H_{\rm o} n}{2}x)\, \sin(P_{\rm o} y)
 
 with integer values of :math:`H_{\rm o}`, :math:`P_{\rm o}`.
-Again, :math:`x` and :math:`y` are here the horizontal adimensionalized coordinates defined above.
+Again, :math:`x` and :math:`y` are the horizontal adimensionalized coordinates defined above.
 
-To manipulate easily these functions and the coefficients of the fields
+To easily manipulate these functions and the coefficients of the fields
 expansion, we number the basis functions along increasing values of :math:`H_{\rm o}` and then :math:`P_{\rm o}`.
 It allows to write the set as :math:`\left\{ \phi_i(x,y); 1 \leq i \leq n_\text{o}\right\}` where :math:`n_{\mathrm{o}}`
 (:attr:`~params.params.QgParams.nmod` [1]) is the number of modes of the spectral expansion in the ocean.
 
-For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`H_{\rm o} \in \{1,4\}`; :math:`P_{\rm o} \in \{1,2\}` and the basis of functions is
+For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`H_{\rm o} \in \{1,4\}`; :math:`P_{\rm o} \in \{1,2\}` and the set of basis functions is
 
 .. math::
 
@@ -149,7 +149,7 @@ These Fourier modes are also orthonormal with respect to the inner product
     \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} \phi_i(x,y)\, \phi_j(x,y)\, \mathrm{d} x \, \mathrm{d} y = \delta_{ij}
 
 where :math:`\delta_{ij}` is the `Kronecker delta`_. Note however that the atmospheric and oceanic basis :math:`F_i` and
-:math:`\phi_i` are not orthonormal with each other.
+:math:`\phi_i` are not orthonormal to each other.
 
 .. figure:: figures/visualise_basisfunctions_ocean.png
     :align: center
@@ -159,7 +159,7 @@ where :math:`\delta_{ij}` is the `Kronecker delta`_. Note however that the atmos
 Fields expansion
 ----------------
 
-The fields of the model can expanded on these basis according to
+The fields of the model can expanded on these sets of basis functions according to
 
 .. math::
 
@@ -171,7 +171,7 @@ The fields of the model can expanded on these basis according to
      \delta T_\text{o}(x,y) &= \sum_{j=1}^{n_\text{o}} \delta T_{\text{o},j} \; \phi_j(x,y).
 
 In the expansion for :math:`\psi_\text{o}`, a term :math:`\overline{\phi_j}` is added to the oceanic
-basis function :math:`\phi_j` in order to get a vanishing spatial
+basis function :math:`\phi_j` in order to get a zero spatial
 average. This is required to guarantee mass conservation in the ocean, but otherwise does not affect the dynamics. Indeed,
 it can be added a posteriori when plotting the field
 :math:`\psi_\text{o}`. This term is non-zero for odd :math:`P_\text{o}` and
@@ -203,8 +203,8 @@ Ordinary differential equations
 The fields, parameters and variables are non-dimensionalized
 by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
 the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
-temperature by :math:`f_0^2 L^2/R` (:attr:`~.QgParams.rr`), and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization is that the
-fields :math:`\theta_{\rm a}` and :math:`T_{\rm a}` are identified: :math:`2 \theta_{\rm a} \equiv T_{\rm a}`.
+temperature by :math:`f_0^2 L^2/R` (:attr:`~.QgParams.rr`), and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization, the
+fields :math:`\theta_{\rm a}` and :math:`\delta T_{\rm a}` can be identified: :math:`2 \theta_{\rm a} \equiv \delta T_{\rm a}`.
 
 The ordinary differential equations of the truncated model are:
 
@@ -258,7 +258,7 @@ The coefficients involved in the ocean-atmosphere interactions :math:`W_{i,j}`, 
   W_{i, j} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} \phi_i(x,y)\, F_j(x,y) \, \mathrm{d} x \, \mathrm{d} y = s_{j, i}
 
 
-These inner products are computed according to formula found in :cite:`mao-DDV2016` and stored in the :class:`~inner_products.analytic.AtmosphericInnerProducts` and
+These inner products are computed according to formulas detailed in :cite:`mao-DDV2016` and stored in the :class:`~inner_products.analytic.AtmosphericInnerProducts` and
 :class:`~inner_products.analytic.OceanicInnerProducts` objects.
 
 The vertical velocity :math:`\omega_i` can be eliminated, leading to the final equations
@@ -275,14 +275,14 @@ The vertical velocity :math:`\omega_i` can be eliminated, leading to the final e
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
   \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + C'_{{\rm o},i}
 
-that are implemented in with a tensorial contraction:
+that are implemented by means of a tensorial contraction:
 
 .. math::
 
-    \frac{\text{d}\eta_i^{\rm{a}}}{\text{d}t} = \sum_{j, k=0}^{2 n_\mathrm{a}} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
+    \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j, k=0}^{2 (n_\mathrm{a}+n_\mathrm{o})} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
 
-with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta_{{\rm o},n_\mathrm{o}})`, as described in :ref:`files/technical_description:Code Description`.
-The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
+with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
+The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
 
 References
 ----------

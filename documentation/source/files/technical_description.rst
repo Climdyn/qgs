@@ -40,7 +40,7 @@ expression reduces to
 
 .. math::
 
-    J_{i,j} = \frac{\text{d}f_i}{\text{d}\eta_j}& = \text{d} (\sum_{k,l=0}^\mathrm{ndim} \mathcal{T}_{i,k,l} \; \eta_k \; \eta_l ) / \text{d}\eta_j  \\
+    J_{i,j} = \frac{\text{d}f_i}{\text{d}\eta_j}& = \frac{\text{d}}{\text{d}\eta_j } (\sum_{k,l=0}^\mathrm{ndim} \mathcal{T}_{i,k,l} \; \eta_k \; \eta_l )  \\
              & = \sum_{k=0}^{\mathrm{ndim}} \left ( \mathcal{T}_{i,k,j} + \mathcal{T}_{i,j,k} \right) \eta_k
 
 The differential form of the `tangent linear model`_ (TL) for a small
@@ -56,13 +56,13 @@ perturbation :math:`\boldsymbol{\delta\eta}^\text{TL}` of a trajectory
 Computational flow
 ------------------
 
-The computational flow is as follow:
+The computational flow is as follows:
 
 1. The parameters are specified by instantiating a :class:`~params.params.QgParams` .
 2. The inner products are computed and stored in :class:`~inner_products.analytic.AtmosphericInnerProducts` and :class:`~inner_products.analytic.OceanicInnerProducts` objects.
 3. The tensor of the tendencies terms are computed in a :class:`~tensors.qgtensor.QgsTensor` object.
 4. The functions :obj:`~functions.tendencies.create_tendencies` create Numba optimized functions that return the tendencies and the Jacobian matrix.
-5. These functions are passed to integrator in the module :mod:`~integrators.integrator` .
+5. These functions are passed to the numerical integrator in the module :mod:`~integrators.integrator` .
 
 .. figure:: figures/compuflow.png
     :scale: 70%
@@ -73,10 +73,10 @@ The computational flow is as follow:
 Additional technical information
 --------------------------------
 
-* qgs is optimized to run ensemble of initial conditions on multiple core, using `Numba`_ jit-compilation and
+* qgs is optimized to run ensembles of initial conditions on multiple cores, using `Numba`_ jit-compilation and
   `multiprocessing`_ workers. As such, qgs might not work on Windows (not tested).
 
-* qgs has a `tangent linear model`_ optimized to run ensemble of initial conditions as well, with a broadcasted
+* qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.
 
 

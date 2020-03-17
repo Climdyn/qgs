@@ -2,12 +2,14 @@
 Model Description
 =================
 
-qgs is a Python 2-layer `quasi-geostrophic`_ channel model
-on a `beta-plane`_ for the atmosphere, coupled to a simple land or
-`shallow-water`_ ocean component beneath.
-Presently it possesses two operation modes:
+qgs is a Python implementation of an atmospheric model for midlatitudes.  It
+models the dynamics of a 2-layer `quasi-geostrophic`_ (QG) channel atmosphere
+on a `beta-plane`_, coupled to a simple land or `shallow-water`_ ocean
+component. 
 
-* A QG atmosphere coupled to an topography through friction only. It is described in details in the articles:
+It currently has two modes of operation:
+
+* A QG atmosphere coupled to a land surface with topography through friction only. It is described in detail in the following articles:
 
   * Reinhold, B. B., & Pierrehumbert, R. T. (1982). *Dynamics of weather regimes: Quasi-stationary waves and blocking*.
     Monthly Weather Review, **110** (9), 1105-1145.
@@ -17,8 +19,8 @@ Presently it possesses two operation modes:
     `doi:10.1175/1520-0469(1987)044%3C3282%3ATOMEAW%3E2.0.CO%3B2 <https://doi.org/10.1175/1520-0469(1987)044%3C3282%3ATOMEAW%3E2.0.CO%3B2>`_
 
 * A QG atmosphere coupled to a closed-basin shallow-water ocean through friction and heat exchange.
-  This configuration is the model `MAOOAM`_ by De Cruz, Demaeyer and Vannitsem; exhibiting oceanic
-  low-frequency variability. It is described in details in the articles:
+  This configuration is the model `MAOOAM`_ by De Cruz, Demaeyer and Vannitsem. This model exhibits
+  low-frequency variability in a coupled ocean-atmosphere mode. It is described in detail in the articles:
 
   * Vannitsem, S., Demaeyer, J., De Cruz, L., & Ghil, M. (2015). *Low-frequency variability and heat
     transport in a low-order nonlinear coupled ocean–atmosphere model*. Physica D: Nonlinear Phenomena, **309**, 71-85.
@@ -27,7 +29,7 @@ Presently it possesses two operation modes:
   * De Cruz, L., Demaeyer, J. and Vannitsem, S. (2016). *The Modular Arbitrary-Order Ocean-Atmosphere Model: MAOOAM v1.0*,
     Geosci. Model Dev., **9**, 2793-2808. `doi:10.5194/gmd-9-2793-2016 <https://doi.org/10.5194/gmd-9-2793-2016>`_
 
-The shallow-water ocean can in principle be used alone, but it is not implemented for the moment.
+The shallow-water ocean can in principle be used as a stand-alone model, but this is not implemented for the moment.
 More developments are yet to come, see the Forthcoming developments section below.
 
 Components description

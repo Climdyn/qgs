@@ -2,7 +2,7 @@
 Oceanic component
 =================
 
-The oceanic component is an oceanic layer superimposed on a deep ocean layer at rest.
+The oceanic component is a shallow-water active oceanic layer superimposed on a deep ocean layer at rest.
 The dynamics is given by the reduced-gravity quasi-geostrophic vorticity equation.
 
 Therefore, the equation of motion for the streamfunction :math:`\psi_\text{o}` of the ocean

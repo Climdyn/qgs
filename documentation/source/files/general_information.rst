@@ -2,9 +2,10 @@
 General Information
 ===================
 
-qgs is a Python 2-layer `quasi-geostrophic`_ channel model
-on a `beta-plane`_ for the atmosphere, coupled to a simple land or
-`shallow-water`_ ocean component beneath.
+qgs is a Python implementation of an atmospheric model for midlatitudes.  It
+models the dynamics of a 2-layer `quasi-geostrophic`_ (QG) channel atmosphere
+on a `beta-plane`_, coupled to a simple land or `shallow-water`_ ocean
+component. 
 
 Installation
 ------------
@@ -30,7 +31,7 @@ You can then perform a test by running the script ::
 
     python qgs_rp.py
 
-to see if everything run smoothly (should take less than a minute).
+to see if everything runs smoothly (this should take less than a minute).
 
 To build the documentation, please run (with the conda environment still activated): ::
 
@@ -55,8 +56,8 @@ or ::
 Examples
 --------
 
-Another nice way is through the use of Jupyter notebooks.
-Simple examples can be found int the `notebooks folder <../../../../notebooks>`_.
+Another nice way to run the model is through the use of Jupyter notebooks.
+Simple examples can be found in the `notebooks folder <../../../../notebooks>`_.
 For instance, running ::
 
     conda activate qgs

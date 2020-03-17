@@ -27,8 +27,8 @@ It transforms the equations in :ref:`files/model/atmosphere:Atmospheric componen
     \frac{\partial}{\partial t} \left( \nabla^2 \psi^3_{\rm a} \right) + J(\psi^3_{\rm a}, \nabla^2 \psi^3_{\rm a}) + J(\psi^3_{\rm a}, f_0 \, h/H_{\rm a})  + \beta \frac{\partial \psi^3_{\rm a}}{\partial x}
     & = +k'_d \nabla^2 (\psi^1_{\rm a}-\psi^3_{\rm a}) - k_d \nabla^2 \psi^3_{\rm a} - \frac{f_0}{\Delta p}  \omega \nonumber \\
 
-where :math:`H_{\rm a}` is the characteristic depth of each fluid layer and the parameter :math:`k_d` (:attr:`~params.params.AtmosphericParams.kd`) quantify the friction
-between the atmosphere and the ground. :math:`h` is the topographic height field.
+where :math:`H_{\rm a}` is the characteristic depth of each fluid layer and the parameter :math:`k_d` (:attr:`~params.params.AtmosphericParams.kd`) quantifies the friction
+between the atmosphere and the surface. :math:`h` is the topographic height field.
 
 Mid-layer equations and the thermal wind relation
 -------------------------------------------------
@@ -39,16 +39,16 @@ The equations governing the time evolution of the mean and shear streamfunctions
 
     &\frac{\partial}{\partial t}  \left(\nabla^2 \psi_{\rm a}\right) + J(\psi_{\rm a}, \nabla^2 \psi_{\rm a}) + J(\theta_{\rm a}, \nabla^2 \theta_{\rm a}) + \frac{1}{2} J(\psi_{\rm a} - \theta_{\rm a}, f_0 \, h/H_{\rm a}) + \beta \frac{\partial \psi_{\rm a}}{\partial x} = - \frac{k_d}{2} \nabla^2 (\psi_{\rm a} - \theta_{\rm a}) \\
     &\frac{\partial}{\partial t} \left( \nabla^2 \theta_{\rm a} \right) + J(\psi_{\rm a}, \nabla^2 \theta_{\rm a}) + J(\theta_{\rm a}, \nabla^2 \psi_{\rm a}) - \frac{1}{2} J(\psi_{\rm a} - \theta_{\rm a}, f_0 \, h/H_{\rm a}) + \beta \frac{\partial \theta_{\rm a}}{\partial x} \nonumber \\
-    & \qquad \qquad \qquad \qquad \qquad \qquad = - 2 \, k'_d \nabla^2 \theta_{\rm a} + \frac{k_d}{2} \nabla^2 (\psi_{\rm a} - \theta_{\rm a}) + \frac{f_0}{\Delta p}  \omega
+    & \qquad \qquad \qquad \qquad \qquad \qquad = - 2 \, k'_d \nabla^2 \theta_{\rm a} + \frac{k_d}{2} \nabla^2 (\psi_{\rm a} - \theta_{\rm a}) + \frac{f_0}{\Delta p}  \omega.
 
-:math:`\psi_{\rm a}` and :math:`\theta_{\rm a}` are often referred to as respectively the `barotropic`_ and `baroclinic`_ streamfunctions.
-On the other hand, the thermodynamic equation governing the mean `potential temperature`_ :math:`T_{\rm a} = (T^1_{\rm a} + T^3_{\rm a})/2`, where :math:`T^1_{\rm a}` and :math:`T^3_{\rm a}` are the mean potential temperature in respectively the higher and lower layer, is given by :cite:`om-V2006`
+:math:`\psi_{\rm a}` and :math:`\theta_{\rm a}` are often referred to as the `barotropic`_ and `baroclinic`_ streamfunctions, respectively. 
+On the other hand, the thermodynamic equation governing the mean `potential temperature`_ :math:`T_{\rm a} = (T^1_{\rm a} + T^3_{\rm a})/2`, where :math:`T^1_{\rm a}` and :math:`T^3_{\rm a}` are the mean potential temperature in respectively the upper and lower layer, is given by :cite:`om-V2006`
 
 .. math::
 
     2 \, \frac{\partial}{\partial t} T_{\rm a} + J(\psi_{\rm a}, 2 T_{\rm a}) = - \frac{\sigma}{H_{\rm a}} \,\omega + 2 h_d \, (T^\ast - T_{\rm a})
 
-where :math:`h_d` (:attr:`~params.params.AtmosphericTemperatureParams.hd`) is the `Newtonian cooling`_ coefficient indicating the tendency to return to the equilibrium temperature profile :math:`\theta^\ast`.
+where :math:`h_d` (:attr:`~params.params.AtmosphericTemperatureParams.hd`) is the `Newtonian cooling`_ coefficient indicating the tendency to return to the equilibrium temperature profile :math:`T^\ast`.
 :math:`\sigma` (:attr:`~params.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
 The thermal wind relation
 
@@ -56,16 +56,16 @@ The thermal wind relation
 
     \nabla^2 T_{\rm a} = A \, \nabla^2 \theta_{\rm a}
 
-where :math:`A` is a constant, relates the the baroclinic streamfunction and the temperature fields.
+where :math:`A` is a constant, relates the baroclinic streamfunction and the temperature fields.
 Upon `nondimensionalization`_, both fields are identified with each other: :math:`\theta_{\rm a} \equiv T_{\rm a}` and
 :math:`\theta^\star \equiv T^\star`, and the equations above fully describe the system.
 
 The mean streamfunction :math:`\psi_{\rm a}` and temperature :math:`\theta_{\rm a}` can be considered to be the value of these fields at the 500 hPa level.
 
-Projecting the equations on a function basis
---------------------------------------------
+Projecting the equations on a set of basis functions
+----------------------------------------------------
 
-The present model solve the equations above by projecting them onto a basis of functions, to obtain a
+The present model solves the equations above by projecting them onto a set of basis functions, to obtain a
 system of `ordinary differential equations`_ (ODE). This procedure is sometimes called a `Galerkin expansion`_.
 This basis being finite, the resolution of the model is automatically truncated at the characteristic length of the
 highest-resolution function of the basis.
@@ -76,24 +76,24 @@ The fields are projected on Fourier modes respecting these boundary conditions:
 
 .. math::
 
-    &F^A_{P} (x, y)   =  \sqrt{2}\, \cos(P y) \\
-    &F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y) \\
+    &F^A_{P} (x, y)   =  \sqrt{2}\, \cos(P y), \\
+    &F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y), \\
     &F^L_{H,P} (x, y) = 2\sin(H nx)\, \sin(P y)
 
 with integer values of :math:`M`, :math:`H`, :math:`P`.
-:math:`x` and :math:`y` are here the horizontal adimensionalized coordinates, rescaled
+:math:`x` and :math:`y` are the horizontal adimensionalized coordinates, rescaled
 by dividing the dimensional coordinates by the characteristic length :math:`L` (:attr:`~params.params.ScaleParams.L`).
 The model's domain is then defined by :math:`(0 \leq x \leq \frac{2\pi}{n}, 0 \leq y \leq \pi)`, with :math:`n` (:attr:`~params.params.ScaleParams.n`) the aspect ratio
 between its meridional and zonal extents :math:`L_y` (:attr:`~params.params.ScaleParams.L_y`) and :math:`L_x` (:attr:`~params.params.ScaleParams.L_x`).
 
-To manipulate easily these functions and the coefficients of the fields
+To easily manipulate these functions and the coefficients of the fields
 expansion, we number the basis functions along increasing values of :math:`M= H` and then :math:`P`. It allows to
 write the set as :math:`\left\{ F_i(x,y); 1 \leq i \leq n_\text{a}\right\}` where :math:`n_{\mathrm{a}}`
 (:attr:`~params.params.QgParams.nmod` [0]) is the number of modes of the spectral expansion.
 
-For example, with :math:`M=H=1` and :math:`P \in \{1,2\}`, one obtain the spectral truncation used by :cite:`om-CS1980`.
+For example, with :math:`M=H=1` and :math:`P \in \{1,2\}`, one obtains the spectral truncation used by :cite:`om-CS1980`.
 The model derived in :cite:`om-RP1982` extended this set by two blocks of two functions each, and the
-resulting set can be specified as :math:`M,H \in \{1,2\}`; :math:`P \in \{1,2\}` and the basis of functions is
+resulting set can be specified as :math:`M,H \in \{1,2\}`; :math:`P \in \{1,2\}`. The corresponding set of basis functions is
 
 .. math::
 
@@ -125,16 +125,16 @@ where :math:`\delta_{ij}` is the `Kronecker delta`_.
 
     The first 10 basis functions :math:`F_i` evaluated on the nondimensional domain of the model.
 
-We have thus the following decomposition for the model's fields:
+The model's fields can be decomposed as follows:
 
 .. math::
 
     \psi_{\rm a}(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \psi_{{\rm a},i} \, F_i(x,y) \\
-    \theta_{\rm a}(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \theta_i^{\rm a} \, F_i(x,y) .
+    \theta_{\rm a}(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \theta_{{\rm a},i} \, F_i(x,y) .
 
 
 The radiative equilibrium temperature field :math:`\theta^\star(x,y)`, the topographic height field :math:`h(x,y)` and
-the vertical velocity :math:`\omega(x,y)` have also to be decomposed onto the eigenfunctions of the Laplacian:
+the vertical velocity :math:`\omega(x,y)` also have to be decomposed into the eigenfunctions of the Laplacian:
 
 .. math::
 
@@ -143,8 +143,8 @@ the vertical velocity :math:`\omega(x,y)` have also to be decomposed onto the ei
     \omega(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \omega_i \, F_i(x,y) .
 
 These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~params.params.ScaleParams.hk`
-and :attr:`~params.params.AtmosphericTemperatureParams.thetas` (:math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
-:math:`\theta^\star` is scaled by :math:`A f_0^2 L^2` (see section below)).
+and :attr:`~params.params.AtmosphericTemperatureParams.thetas`. Note that :math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
+and :math:`\theta^\star` is scaled by :math:`A f_0^2 L^2` (see section below).
 
 Ordinary differential equations
 -------------------------------
@@ -153,7 +153,7 @@ The fields, parameters and variables are non-dimensionalized
 by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
 the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
 temperature by :math:`A f_0^2 L^2`, and streamfunction by :math:`L^2 f_0`. As stated above, a result of this non-dimensionalization is that the
-fields :math:`\theta_{\rm a}` and :math:`T_{\rm a}` are identified: :math:`\theta_{\rm a} \equiv T_{\rm a}`.
+field :math:`\theta_{\rm a}` is identified with :math:`T_{\rm a}`: :math:`\theta_{\rm a} \equiv T_{\rm a}`.
 
 The ordinary differential equations of the truncated model are:
 
@@ -175,7 +175,7 @@ The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :
   b_{i, j, m} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, J\left(F_j(x,y), \nabla^2 F_m(x,y)\right) \, \mathrm{d} x \, \mathrm{d} y \\
   c_{i, j} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, \frac{\partial}{\partial x} F_j(x,y) \, \mathrm{d} x \, \mathrm{d} y
 
-These inner products are computed according to formula found in :cite:`om-CT1987` and stored in the :class:`~inner_products.analytic.AtmosphericInnerProducts` object.
+These inner products are computed according to formulas found in :cite:`om-CT1987` and stored in the :class:`~inner_products.analytic.AtmosphericInnerProducts` object.
 
 The vertical velocity :math:`\omega_i` can be eliminated, leading to the final equations
 
@@ -191,9 +191,9 @@ that are implemented in with a tensorial contraction:
 
 .. math::
 
-    \frac{\text{d}\eta_i^{\rm{a}}}{\text{d}t} = \sum_{j, k=0}^{2 n_\mathrm{a}} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
+    \frac{\text{d}\eta_{{\rm{a},i}}}{\text{d}t} = \sum_{j, k=0}^{2 n_\mathrm{a}} \mathcal{T}_{i,j,k} \; \eta_{{\rm a},j} \; \eta_{{\rm a},k}
 
-with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}})`, as described in :ref:`files/technical_description:Code Description`.
+with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}})`, as described in the :ref:`files/technical_description:Code Description`.
 The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
 
 References
