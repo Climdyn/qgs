@@ -22,6 +22,9 @@ See [LICENSE.txt](./LICENSE.txt) for license information.
 Installation and documentation
 ------------------------------
 
+> **__Note:__** qgs is presently compatible with Linux. It should be compatible with Mac OS (not tested).
+> **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
+
 The easiest way to install is through [Anaconda](https://www.anaconda.com/).
 
 First install Anaconda and clone the repository:
