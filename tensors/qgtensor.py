@@ -156,7 +156,7 @@ class QgsTensor(object):
 
                 t[self.theta(j), 0] = (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
 
-                if np.any(scp.hk != 0):
+                if scp.hk is not None:
                     oro = (aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)])
                     t[self.psi_a(j), 0] -= oro
                     t[self.theta(j), 0] += oro
@@ -183,10 +183,12 @@ class QgsTensor(object):
         for i in range(1, namod + 1):
             t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
 
-            if i == 1 and par.Cpa is not None:
-                t[0, 0] = par.Cpa / (1 - aips.a[0, 0] * ap.sig0)
+            if par.Cpa is not None:
+                t[0, 0] = par.Cpa[i - 1] / (1 - aips.a[0, 0] * ap.sig0)
 
-            t[0, 0] += atp.hd * atp.thetas[(i - 1)] / (1. - ap.sig0 * aips.a[(i - 1), (i - 1)])
+            if atp.hd is not None and atp.thetas is not None:
+                t[0, 0] += atp.hd * atp.thetas[(i - 1)] / (1. - ap.sig0 * aips.a[(i - 1), (i - 1)])
+
             for j in range(1, namod + 1):
 
                 t[self.psi_a(j), 0] = (aips.a[(i - 1), (j - 1)] * ap.kd * ap.sig0) \
@@ -199,11 +201,12 @@ class QgsTensor(object):
 
                 t[self.theta(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
                                                      * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
-                                       + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0) \
-                                      + (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (
-                                              ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
+                                       + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-                if np.any(scp.hk != 0):
+                if atp.hd is not None:
+                   t[self.theta(j), 0] += (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
+
+                if scp.hk is not None:
                     oro = (ap.sig0 * aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
                     t[self.theta(j), 0] -= oro
                     t[self.psi_a(j), 0] += oro
@@ -220,7 +223,8 @@ class QgsTensor(object):
                 t[self.psi_o(j), 0] = ap.kd * (aips.d[(i - 1), (j - 1)] * ap.sig0) \
                                       / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-                t[self.deltaT_o(j), 0] = aips.s[(i - 1), (j - 1)] * (2 * par.LSBpo + par.Lpa) \
+                if par.LSBpo is not None and par.Lpa is not None:
+                    t[self.deltaT_o(j), 0] = aips.s[(i - 1), (j - 1)] * (2 * par.LSBpo + par.Lpa) \
                                          / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
             t = self.simplify_matrix(t)
@@ -264,7 +268,7 @@ class QgsTensor(object):
 
             t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
 
-            t[0, 0] = par.Cpo * oips.W[(i - 1), 0]
+            t[0, 0] = oips.W[(i - 1), :] @ par.Cpo
 
             for j in range(1, namod + 1):
                 t[self.theta(j), 0] = oips.W[(i - 1), (j - 1)] * (2 * atp.sc * par.Lpo + par.sbpa)
@@ -319,8 +323,6 @@ if __name__ == '__main__':
     params = QgParams()
     params.set_max_atmospheric_modes(2, 2)
     params.set_max_oceanic_modes(2, 4)
-    params.scale_params.hk[1] = 0.2
-    params.atemperature_params.thetas[0] = 0.1
     aip = AtmosphericInnerProducts(params)
     oip = OceanicInnerProducts(params)
     aip.connect_to_ocean(oip)

@@ -189,9 +189,12 @@ Furthermore, the short-wave radiation or insolation is determined by
 .. math::
 
     \delta R_\text{a}(x,y) = \sum_{i=1}^{n_\text{a}} \, C_{\text{a},i} \, F_i, \\
-    \delta R_\text{o}(x,y) = \sum_{i=1}^{n_\text{o}} \, C_{\text{o},i} \, \phi_i.
+    \delta R_\text{o}(x,y) = \sum_{i=1}^{n_\text{a}} \, C_{\text{o},i} \, F_i.
 
-and the vertical velocity :math:`\omega(x,y)` have also to be decomposed:
+which we project on the same atmospheric basis of function to maintain consistency and allow meridional gradients.
+These decompositions are stored in the parameters :attr:`.AtmosphericTemperatureParams.C` and :attr:`.OceanicTemperatureParams.C` .
+
+The vertical velocity :math:`\omega(x,y)` have also to be decomposed:
 
 .. math::
 
@@ -218,7 +221,7 @@ The ordinary differential equations of the truncated model are:
   & & \qquad \qquad \qquad \qquad  + \left(\frac{\lambda'_{\rm a}}{2}+ S_{B, {\rm o}}\right) \sum_{j=1}^{n_{\mathrm{o}}} \, s_{i, j} \, \delta T_{{\rm o},j} + C'_{\text{a},i} \\
   \dot\psi_{{\rm o},i} & = & \frac{1}{\left(M_{i,i} + G\right)} \, \left\{ - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
-  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + C'_{{\rm o},i}
+  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j} + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
 :math:`G = - L^2/L_R^2` (:attr:`~params.params.QgParams.G`),
@@ -273,7 +276,7 @@ The vertical velocity :math:`\omega_i` can be eliminated, leading to the final e
   & & \qquad \qquad \qquad \qquad - \left.\left(\frac{\lambda'_{\rm a}}{2}+ S_{B, {\rm o}}\right) \sum_{j=1}^{n_{\mathrm{o}}} \, s_{i, j} \, \delta T_{{\rm o},j} - C'_{\text{a},i} \right\} \\
   \dot\psi_{{\rm o},i} & = & \frac{1}{\left(M_{i,i} + G\right)} \, \left\{ - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
-  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + C'_{{\rm o},i}
+  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  +  + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 that are implemented by means of a tensorial contraction:
 

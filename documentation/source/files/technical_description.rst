@@ -21,7 +21,7 @@ merge :math:`c_i`, :math:`m_{i,j}`, and :math:`t_{i,j,k}` into the tensor
 
     \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j,k=0}^{\mathrm{ndim}} \mathcal{T}_{i,j,k} \, \eta_j \, \eta_k
 
-The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
+The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
 Recasting the system of ordinary differential
 equations for :math:`\eta_i` in the form of a tensor contraction has certain
 advantages. Indeed, the symmetry of the tensor contraction allows for a unique representation
@@ -29,7 +29,7 @@ of :math:`\mathcal{T}_{i,j,k}`, if it is taken to be upper triangular in the las
 indices (:math:`\mathcal{T}_{i,j,k} \equiv 0` if :math:`j > k`). Since
 :math:`\mathcal{T}_{i,j,k}` is known to be sparse, it is stored using the
 coordinate list representation, i.e. a list of tuples
-:math:`(i,j,k,\mathcal{T}_{i,j,k})` defined by the class :class:`~tensor.cootensor.CooTensor`.
+:math:`(i,j,k,\mathcal{T}_{i,j,k})` defined by the class :class:`~tensors.cootensor.CooTensor`.
 This representation renders the computation of the tendencies :math:`\text{d}\eta_i/\text{d}t` computationally very efficient as
 well as conveniently parallelizable.
 
@@ -74,7 +74,7 @@ Additional technical information
 --------------------------------
 
 * qgs is optimized to run ensembles of initial conditions on multiple cores, using `Numba`_ jit-compilation and
-  `multiprocessing`_ workers. As such, qgs might not work on Windows (not tested).
+  `multiprocessing`_ workers. As such, qgs does not work on Windows presently.
 
 * qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.
