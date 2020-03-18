@@ -194,7 +194,7 @@ that are implemented in with a tensorial contraction:
     \frac{\text{d}\eta_{{\rm{a},i}}}{\text{d}t} = \sum_{j, k=0}^{2 n_\mathrm{a}} \mathcal{T}_{i,j,k} \; \eta_{{\rm a},j} \; \eta_{{\rm a},k}
 
 with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}})`, as described in the :ref:`files/technical_description:Code Description`.
-The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
+The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
 
 References
 ----------

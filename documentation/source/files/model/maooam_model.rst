@@ -221,7 +221,7 @@ The ordinary differential equations of the truncated model are:
   \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + C'_{{\rm o},i}
 
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
-:math:`G = - L^2/L_R^2` (:attr:`.QgParams.G`),
+:math:`G = - L^2/L_R^2` (:attr:`~params.params.QgParams.G`),
 :math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.Lpa`),
 :math:`\lambda'_{{\rm o}} = \lambda/(\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.Lpo`),
 :math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpa`),
@@ -282,7 +282,7 @@ that are implemented by means of a tensorial contraction:
     \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j, k=0}^{2 (n_\mathrm{a}+n_\mathrm{o})} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
 
 with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
-The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensor.qgtensor.QgTensor`.
+The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
 
 References
 ----------

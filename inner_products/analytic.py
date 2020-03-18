@@ -10,7 +10,7 @@
 
 
     between the truncated set of basis functions :math:`\phi_i` for the ocean streamfunctions and
-    :math:`F_i` for the atmosphere streamfunction and temperature fields (see :ref:`files/model/oro_model:Projecting the equations on a function basis`).
+    :math:`F_i` for the atmosphere streamfunction and temperature fields (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
 
     Notes
     -----
@@ -47,7 +47,7 @@ class WaveNumber(object):
     * `'K'` for a function of the form :math:`F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y) = 2\cos(n_x\,  n\, x)\, \sin(n_y\, y)`
     * `'L'` for a function of the form :math:`F^L_{H,P} (x, y) = 2\sin(H nx)\, \sin(P y) = 2\sin(n_x\, n \,x)\, \sin(n_y\, y)`
 
-    where :math:`x` and :math:`y` are the nondimensional model's domain coordinates (see :ref:`files/model/oro_model:Projecting the equations on a function basis`).
+    where :math:`x` and :math:`y` are the nondimensional model's domain coordinates (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
 
     Parameters
     ----------
