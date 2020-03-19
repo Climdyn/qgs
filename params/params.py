@@ -312,8 +312,9 @@ class AtmosphericTemperatureParams(Params):
 
         self.set_params(dic)
 
-    def set_C(self, value, pos=None):
-        """Function to define the decomposition of the constant short-wave radiation of the atmosphere :math:`C_{{\\rm a}, i}`.
+    def set_insolation(self, value, pos=None):
+        """Function to define the decomposition of the constant short-wave radiation of the atmosphere (insolation)
+        :math:`C_{{\\rm a}, i}` (:attr:`~.AtmosphericTemperatureParams.C`).
 
         Parameters
         ----------
@@ -409,8 +410,9 @@ class OceanicTemperatureParams(Params):
 
         self.set_params(dic)
 
-    def set_C(self, value, pos=None):
-        """Function to define the decomposition of the constant short-wave radiation of the ocean :math:`C_{{\\rm o}, i}`.
+    def set_insolation(self, value, pos=None):
+        """Function to define the decomposition of the constant short-wave radiation of the ocean (insolation)
+        :math:`C_{{\\rm o}, i}` (:attr:`~.OceanicTemperatureParams.C`).
 
         Parameters
         ----------

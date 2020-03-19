@@ -192,7 +192,8 @@ Furthermore, the short-wave radiation or insolation is determined by
     \delta R_\text{o}(x,y) = \sum_{i=1}^{n_\text{a}} \, C_{\text{o},i} \, F_i.
 
 which we project on the same atmospheric basis of function to maintain consistency and allow meridional gradients.
-These decompositions are stored in the parameters :attr:`.AtmosphericTemperatureParams.C` and :attr:`.OceanicTemperatureParams.C` .
+These decompositions are stored in the parameters :attr:`.AtmosphericTemperatureParams.C` and :attr:`.OceanicTemperatureParams.C` and
+can be set using the functions :attr:`.AtmosphericTemperatureParams.set_insolation` and :attr:`.OceanicTemperatureParams.set_insolation`.
 
 The vertical velocity :math:`\omega(x,y)` have also to be decomposed:
 
