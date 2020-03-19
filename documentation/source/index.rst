@@ -30,7 +30,7 @@ Indices and tables
 About
 =====
 
-Part of the code comes from the Python MAOOAM implementation by Maxime Tondeur and Jonathan Demaeyer.
+Part of the code comes from the Python `MAOOAM`_ implementation by Maxime Tondeur and Jonathan Demaeyer.
 qgs is licensed under the `MIT`_ license:
 
 .. code-block:: none
@@ -59,3 +59,4 @@ qgs is licensed under the `MIT`_ license:
 
 
 .. _MIT: https://opensource.org/licenses/MIT
+.. _MAOOAM: https://github.com/Climdyn/MAOOAM
