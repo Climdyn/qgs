@@ -79,17 +79,17 @@ The hydrostatic relation in pressure coordinates is :math:`(\partial \Phi/\parti
 and the vertical discretization of the hydrostatic relation at 500 hPa allows to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` is
 the ideal gas constant.
 
-.. figure:: figures/energy_balance.png
-    :scale: 100%
+.. figure:: figures/energybalance.png
+    :scale: 30%
     :align: center
 
-    Sketch of the energy balance underlying the radiative and heat exchange in the model (extract from :cite:`mao-BB1998`).
+    Sketch of the energy balance of :cite:`mao-BB1998`. It underlies the radiative and heat exchange scheme in the model.
 
-.. figure:: figures/budget.gif
-    :scale: 70%
+.. figure:: figures/energybalance_detail.png
+    :scale: 30%
     :align: center
 
-    Actual values of the energy flux between the ground and the atmosphere (from ...).
+    Actual values of the energy flux between the ground and the atmosphere :cite:`mao-TFK2009`.
 
 Set of basis functions
 ----------------------

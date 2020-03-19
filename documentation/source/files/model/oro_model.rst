@@ -11,7 +11,7 @@ Friction with the ground
 The atmosphere is coupled to the orography through mechanical coupling (friction).
 
 .. figure:: figures/atmoro.png
-    :scale: 70%
+    :scale: 80%
     :align: center
 
     Sketch of the atmospheric model layers with a simple `orography`_.
