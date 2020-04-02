@@ -20,7 +20,7 @@ The easiest way to install is through `Anaconda`_.
 
 First install Anaconda and clone the repository: ::
 
-    git clone
+    git clone https://github.com/Climdyn/qgs.git
 
 Then install and activate the Python3 Anaconda environment: ::
 
