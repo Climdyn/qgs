@@ -942,6 +942,8 @@ class QgParams(Params):
         """float: Return the conversion factor between the non-dimensional time and the dimensional time unit specified
         in :attr:`.time_unit`"""
         c = 24 * 3600
+        if self.time_unit == 'hours':
+            c = 3600
         if self.time_unit == 'days':
             c = 24 * 3600
         if self.time_unit == 'years':
