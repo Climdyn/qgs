@@ -49,6 +49,7 @@ Model versions description
 
     model/oro_model
     model/maooam_model
+    model/li_model
 
 .. _quasi-geostrophic: https://en.wikipedia.org/wiki/Quasi-geostrophic_equations
 .. _shallow-water: https://en.wikipedia.org/wiki/Shallow_water_equations

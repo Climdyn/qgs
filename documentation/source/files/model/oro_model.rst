@@ -142,7 +142,7 @@ the vertical velocity :math:`\omega(x,y)` also have to be decomposed into the ei
     h(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, h_i \, F_i(x,y) \\
     \omega(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \omega_i \, F_i(x,y) .
 
-These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~params.params.ScaleParams.hk`
+These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~params.params.GroundParams.hk`
 and :attr:`~params.params.AtmosphericTemperatureParams.thetas`. Note that :math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
 and :math:`\theta^\star` is scaled by :math:`A f_0^2 L^2` (see section below).
 
@@ -195,6 +195,11 @@ that are implemented in with a tensorial contraction:
 
 with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}})`, as described in the :ref:`files/technical_description:Code Description`.
 The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
+
+Example
+-------
+
+An example about how to setup the model to use this model version is shown in :ref:`files/examples/RP:Recovering the result of Reinhold and Pierrehumbert (1982)`.
 
 References
 ----------

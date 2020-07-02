@@ -69,7 +69,7 @@ T = time.process_time()
 # Model parameters instantiation with some non-default specs
 model_parameters = QgParams({'phi0_npi': np.deg2rad(50.)/np.pi, 'hd': 0.1})
 # Mode truncation at the wavenumber 2 in both x and y spatial coordinate
-model_parameters.set_max_atmospheric_modes(2, 2)
+model_parameters.set_atmospheric_modes(2, 2)
 
 # Changing (increasing) the orography depth and the meridional temperature gradient
 model_parameters.scale_params.hk[1] = 0.2                

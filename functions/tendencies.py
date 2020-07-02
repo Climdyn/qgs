@@ -47,7 +47,7 @@ def create_tendencies(params):
     else:
         aip = None
 
-    if params.oblocks is not None:
+    if params.goblocks is not None and params.gotemperature_params._name == "Oceanic Temperature":
         oip = OceanicInnerProducts(params)
     else:
         oip = None

@@ -63,7 +63,7 @@ class QgsTensor(object):
 
         self.compute_tensor()
 
-    def psi_a(self, i):
+    def _psi_a(self, i):
         """Transform the :math:`\psi_{\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
@@ -78,7 +78,7 @@ class QgsTensor(object):
         """
         return i
 
-    def theta(self, i):
+    def _theta(self, i):
         """Transform the :math:`\\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
@@ -93,7 +93,7 @@ class QgsTensor(object):
         """
         return i + self.params.nmod[0]
 
-    def psi_o(self, i):
+    def _psi_o(self, i):
         """Transform the :math:`\psi_{\mathrm o}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
@@ -108,7 +108,7 @@ class QgsTensor(object):
         """
         return i + 2 * self.params.nmod[0]
 
-    def deltaT_o(self, i):
+    def _deltaT_o(self, i):
         """Transform the :math:`\delta T_{\mathrm o}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
@@ -123,6 +123,21 @@ class QgsTensor(object):
         """
         return i + 2 * self.params.nmod[0] + self.params.nmod[1]
 
+    def _deltaT_g(self, i):
+        """Transform the :math:`\delta T_{\mathrm o}` :math:`i`-th coefficient into the effective model's variable.
+
+        Parameters
+        ----------
+        i: int
+            The :math:`i`-th coefficients of :math:`\delta T_{\mathrm o}`
+
+        Returns
+        -------
+        int
+            The effective model's variable.
+        """
+        return i + 2 * self.params.nmod[0]
+
     def compute_tensor(self):
         """Routine to compute the tensor."""
         aips = self.atmospheric_inner_products
@@ -132,9 +147,17 @@ class QgsTensor(object):
         ap = par.atmospheric_params
         op = par.oceanic_params
         scp = par.scale_params
+        gp = par.ground_params
         namod = par.nmod[0]
-        nomod = par.nmod[1]
+        ngomod = par.nmod[1]
         ndim = par.ndim
+
+        if par.gotemperature_params is not None:
+            ocean = par.gotemperature_params._name == "Oceanic Temperature"
+            ground_temp = par.gotemperature_params._name == "Ground Temperature"
+        else:
+            ocean = False
+            ground_temp = False
 
         # 0-th tensor component is an empty csr matrix
         t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
@@ -151,26 +174,26 @@ class QgsTensor(object):
 
             for j in range(1, namod + 1):
 
-                t[self.psi_a(j), 0] = -((aips.c[(i - 1), (j - 1)] * scp.beta) / aips.a[(i - 1), (i - 1)]) \
-                                      - (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
+                t[self._psi_a(j), 0] = -((aips.c[(i - 1), (j - 1)] * scp.beta) / aips.a[(i - 1), (i - 1)]) \
+                                       - (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
 
-                t[self.theta(j), 0] = (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
+                t[self._theta(j), 0] = (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
 
-                if scp.hk is not None:
-                    oro = (aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)])
-                    t[self.psi_a(j), 0] -= oro
-                    t[self.theta(j), 0] += oro
+                if gp.hk is not None:
+                    oro = (aips.g[(i - 1), (j - 1), :] @ gp.hk) / (2 * aips.a[(i - 1), (i - 1)])
+                    t[self._psi_a(j), 0] -= oro
+                    t[self._theta(j), 0] += oro
 
                 for k in range(1, namod + 1):
-                    t[self.psi_a(j), self.psi_a(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
-                                                      / aips.a[(i - 1), (i - 1)]
+                    t[self._psi_a(j), self._psi_a(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
+                                                        / aips.a[(i - 1), (i - 1)]
 
-                    t[self.theta(j), self.theta(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
-                                                      / aips.a[(i - 1), (i - 1)]
-
-            for j in range(1, nomod + 1):
-                t[self.psi_o(j), 0] = ap.kd * aips.d[(i - 1), (j - 1)] / \
-                                      (2 * aips.a[(i - 1), (i - 1)])
+                    t[self._theta(j), self._theta(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
+                                                        / aips.a[(i - 1), (i - 1)]
+            if ocean:
+                for j in range(1, ngomod + 1):
+                    t[self._psi_o(j), 0] = ap.kd * aips.d[(i - 1), (j - 1)] / \
+                                       (2 * aips.a[(i - 1), (i - 1)])
 
             t = self.simplify_matrix(t)
             X = csr_matrix(t)
@@ -191,70 +214,45 @@ class QgsTensor(object):
 
             for j in range(1, namod + 1):
 
-                t[self.psi_a(j), 0] = (aips.a[(i - 1), (j - 1)] * ap.kd * ap.sig0) \
-                                      / (-2 + 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
+                t[self._psi_a(j), 0] = (aips.a[(i - 1), (j - 1)] * ap.kd * ap.sig0) \
+                                       / (-2 + 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
                 if par.LSBpa is not None and par.Lpa is not None:
                     heat = 2. * (par.LSBpa + atp.sc * par.Lpa) * _kronecker_delta((i - 1), (j - 1))
                 else:
                     heat = 0
 
-                t[self.theta(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
-                                                     * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
-                                       + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0)
+                t[self._theta(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
+                                                      * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
+                                        + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
                 if atp.hd is not None:
-                   t[self.theta(j), 0] += (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
+                   t[self._theta(j), 0] += (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
 
-                if scp.hk is not None:
-                    oro = (ap.sig0 * aips.g[(i - 1), (j - 1), :] @ scp.hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
-                    t[self.theta(j), 0] -= oro
-                    t[self.psi_a(j), 0] += oro
+                if gp.hk is not None:
+                    oro = (ap.sig0 * aips.g[(i - 1), (j - 1), :] @ gp.hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
+                    t[self._theta(j), 0] -= oro
+                    t[self._psi_a(j), 0] += oro
 
                 for k in range(1, namod + 1):
-                    t[self.psi_a(j), self.theta(k)] = (aips.g[(i - 1), (j - 1), (k - 1)]
-                                                       - aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) / \
-                                                      (-1 + aips.a[(i - 1), (i - 1)] * ap.sig0)
+                    t[self._psi_a(j), self._theta(k)] = (aips.g[(i - 1), (j - 1), (k - 1)]
+                                                         - aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) / \
+                                                        (-1 + aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-                    t[self.theta(j), self.psi_a(k)] = (aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) \
-                                                      / (1 - aips.a[(i - 1), (i - 1)] * ap.sig0)
+                    t[self._theta(j), self._psi_a(k)] = (aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) \
+                                                        / (1 - aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-            for j in range(1, nomod + 1):
-                t[self.psi_o(j), 0] = ap.kd * (aips.d[(i - 1), (j - 1)] * ap.sig0) \
-                                      / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
+            if ocean:
+                for j in range(1, ngomod + 1):
+                    t[self._psi_o(j), 0] = ap.kd * (aips.d[(i - 1), (j - 1)] * ap.sig0) \
+                                       / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-                if par.LSBpo is not None and par.Lpa is not None:
-                    t[self.deltaT_o(j), 0] = aips.s[(i - 1), (j - 1)] * (2 * par.LSBpo + par.Lpa) \
-                                         / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
+                    if par.LSBpgo is not None and par.Lpa is not None:
+                        t[self._deltaT_o(j), 0] = aips.s[(i - 1), (j - 1)] * (2 * par.LSBpgo + par.Lpa) \
+                                              / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-            t = self.simplify_matrix(t)
-            X = csr_matrix(t)
-            self.tensor.append(X)
-
-            X = csr_matrix(t + t.T)
-            self.jacobian_tensor.append(X)
-
-        # psi_o part
-        for i in range(1, nomod + 1):
-
-            t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
-
-            for j in range(1, namod + 1):
-                t[self.psi_a(j), 0] = oips.K[(i - 1), (j - 1)] * op.d \
-                                      / (oips.M[(i - 1), (i - 1)] + par.G)
-
-                t[self.theta(j), 0] = -(oips.K[(i - 1), (j - 1)]) * op.d \
-                                      / (oips.M[(i - 1), (i - 1)] + par.G)
-
-            for j in range(1, nomod + 1):
-
-                t[self.psi_o(j), 0] = -((oips.N[(i - 1), (j - 1)] * scp.beta +
-                                         oips.M[(i - 1), (i - 1)] * (op.r + op.d) *
-                                         _kronecker_delta((i - 1), (j - 1)))) / (oips.M[(i - 1), (i - 1)] + par.G)
-
-                for k in range(1, nomod + 1):
-                    t[self.psi_o(j), self.psi_o(k)] = -(oips.C[(i - 1), (j - 1), (k - 1)]) \
-                                                      / (oips.M[(i - 1), (i - 1)] + par.G)
+            if ground_temp and i <= ngomod:
+                t[self._deltaT_g(i), 0] = (2 * par.LSBpgo + par.Lpa) / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
             t = self.simplify_matrix(t)
             X = csr_matrix(t)
@@ -263,29 +261,78 @@ class QgsTensor(object):
             X = csr_matrix(t + t.T)
             self.jacobian_tensor.append(X)
 
-        # deltaT_o part
-        for i in range(1, nomod + 1):
+        if ocean:
+            # psi_o part
+            for i in range(1, ngomod + 1):
 
-            t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
+                t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
 
-            t[0, 0] = oips.W[(i - 1), :] @ par.Cpo
+                for j in range(1, namod + 1):
+                    t[self._psi_a(j), 0] = oips.K[(i - 1), (j - 1)] * op.d \
+                                           / (oips.M[(i - 1), (i - 1)] + par.G)
 
-            for j in range(1, namod + 1):
-                t[self.theta(j), 0] = oips.W[(i - 1), (j - 1)] * (2 * atp.sc * par.Lpo + par.sbpa)
+                    t[self._theta(j), 0] = -(oips.K[(i - 1), (j - 1)]) * op.d \
+                                           / (oips.M[(i - 1), (i - 1)] + par.G)
 
-            for j in range(1, nomod + 1):
+                for j in range(1, ngomod + 1):
 
-                t[self.deltaT_o(j), 0] = - (par.Lpo + par.sbpo) * _kronecker_delta((i - 1), (j - 1))
+                    t[self._psi_o(j), 0] = -((oips.N[(i - 1), (j - 1)] * scp.beta +
+                                              oips.M[(i - 1), (i - 1)] * (op.r + op.d) *
+                                              _kronecker_delta((i - 1), (j - 1)))) / (oips.M[(i - 1), (i - 1)] + par.G)
 
-                for k in range(1, nomod + 1):
-                    t[self.psi_o(j), self.deltaT_o(k)] = -(oips.O[(i - 1), (j - 1), (k - 1)])
+                    for k in range(1, ngomod + 1):
+                        t[self._psi_o(j), self._psi_o(k)] = -(oips.C[(i - 1), (j - 1), (k - 1)]) \
+                                                            / (oips.M[(i - 1), (i - 1)] + par.G)
 
-            t = self.simplify_matrix(t)
-            X = csr_matrix(t)
-            self.tensor.append(X)
+                t = self.simplify_matrix(t)
+                X = csr_matrix(t)
+                self.tensor.append(X)
 
-            X = csr_matrix(t + t.T)
-            self.jacobian_tensor.append(X)
+                X = csr_matrix(t + t.T)
+                self.jacobian_tensor.append(X)
+
+            # deltaT_o part
+            for i in range(1, ngomod + 1):
+
+                t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
+
+                t[0, 0] = oips.W[(i - 1), :] @ par.Cpgo
+
+                for j in range(1, namod + 1):
+                    t[self._theta(j), 0] = oips.W[(i - 1), (j - 1)] * (2 * atp.sc * par.Lpgo + par.sbpa)
+
+                for j in range(1, ngomod + 1):
+
+                    t[self._deltaT_o(j), 0] = - (par.Lpgo + par.sbpgo) * _kronecker_delta((i - 1), (j - 1))
+
+                    for k in range(1, ngomod + 1):
+                        t[self._psi_o(j), self._deltaT_o(k)] = -(oips.O[(i - 1), (j - 1), (k - 1)])
+
+                t = self.simplify_matrix(t)
+                X = csr_matrix(t)
+                self.tensor.append(X)
+
+                X = csr_matrix(t + t.T)
+                self.jacobian_tensor.append(X)
+
+        # deltaT_g part
+        if ground_temp:
+            for i in range(1, ngomod + 1):
+
+                t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
+
+                t[0, 0] = par.Cpgo[(i - 1)]
+
+                t[self._theta(i), 0] = 2 * atp.sc * par.Lpgo + par.sbpa
+
+                t[self._deltaT_g(i), 0] = - (par.Lpgo + par.sbpgo)
+
+                t = self.simplify_matrix(t)
+                X = csr_matrix(t)
+                self.tensor.append(X)
+
+                X = csr_matrix(t + t.T)
+                self.jacobian_tensor.append(X)
 
     @staticmethod
     def simplify_matrix(matrix):
@@ -321,8 +368,8 @@ if __name__ == '__main__':
     from tensors.cootensor import from_csr_mat_list
 
     params = QgParams()
-    params.set_max_atmospheric_modes(2, 2)
-    params.set_max_oceanic_modes(2, 4)
+    params.set_atmospheric_modes(2, 2)
+    params.set_oceanic_modes(2, 4)
     aip = AtmosphericInnerProducts(params)
     oip = OceanicInnerProducts(params)
     aip.connect_to_ocean(oip)

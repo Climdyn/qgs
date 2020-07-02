@@ -35,8 +35,8 @@ class TestAnalyticInnerProducts(TestBase):
             tfunc = output_func
 
         pars = QgParams()
-        pars.set_max_atmospheric_modes(2, 2)
-        pars.set_max_oceanic_modes(2, 4)
+        pars.set_atmospheric_modes(2, 2)
+        pars.set_oceanic_modes(2, 4)
 
         # Setting MAOOAM default parameters
         pars.set_params({'k': 0.02, 'kp': 0.04, 'n': 1.5})

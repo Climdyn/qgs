@@ -76,7 +76,7 @@ R_\text{a}` and :math:`R_\text{o} = R_\text{o}^0 + \delta R_\text{o}`. It result
 
 The hydrostatic relation in pressure coordinates is :math:`(\partial \Phi/\partial p)
 = -1/\rho_\text{a}` with the geopotential height :math:`\Phi = f_0\;\psi_\text{a}` and :math:`\rho_\text{a}` the dry air density. The ideal gas relation :math:`p=\rho_\text{a} R T_\text{a}`
-and the vertical discretization of the hydrostatic relation at 500 hPa allows to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` is
+and the vertical discretization of the hydrostatic relation at 500 hPa allows to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` (:attr:`~.QgParams.rr`) is
 the ideal gas constant.
 
 .. figure:: figures/energybalance.png
@@ -207,7 +207,7 @@ Ordinary differential equations
 The fields, parameters and variables are non-dimensionalized
 by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
 the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
-temperature by :math:`f_0^2 L^2/R` (:attr:`~.QgParams.rr`), and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization, the
+temperature by :math:`f_0^2 L^2/R`, and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization, the
 fields :math:`\theta_{\rm a}` and :math:`\delta T_{\rm a}` can be identified: :math:`2 \theta_{\rm a} \equiv \delta T_{\rm a}`.
 
 The ordinary differential equations of the truncated model are:
@@ -227,13 +227,13 @@ The ordinary differential equations of the truncated model are:
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
 :math:`G = - L^2/L_R^2` (:attr:`~params.params.QgParams.G`),
 :math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.Lpa`),
-:math:`\lambda'_{{\rm o}} = \lambda/(\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.Lpo`),
+:math:`\lambda'_{{\rm o}} = \lambda/(\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.Lpgo`),
 :math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpa`),
-:math:`S_{B,{\rm o}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpo`),
+:math:`S_{B,{\rm o}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpgo`),
 :math:`s_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.sbpa`),
-:math:`s_{B,{\rm o}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.sbpo`),
+:math:`s_{B,{\rm o}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.sbpgo`),
 :math:`C'_{{\rm a},i} = R C_{{\rm a},i} / (2 \gamma_{\rm a} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpa`),
-:math:`C'_{{\rm o},i} = R C_{{\rm o},i} /   (\gamma_{\rm o} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpo`).
+:math:`C'_{{\rm o},i} = R C_{{\rm o},i} /   (\gamma_{\rm o} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpgo`).
 
 The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :math:`c_{i, j}` are the inner products of the Fourier modes :math:`F_i`:
 
@@ -277,7 +277,7 @@ The vertical velocity :math:`\omega_i` can be eliminated, leading to the final e
   & & \qquad \qquad \qquad \qquad - \left.\left(\frac{\lambda'_{\rm a}}{2}+ S_{B, {\rm o}}\right) \sum_{j=1}^{n_{\mathrm{o}}} \, s_{i, j} \, \delta T_{{\rm o},j} - C'_{\text{a},i} \right\} \\
   \dot\psi_{{\rm o},i} & = & \frac{1}{\left(M_{i,i} + G\right)} \, \left\{ - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
-  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  +  + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
+  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 that are implemented by means of a tensorial contraction:
 
@@ -285,8 +285,13 @@ that are implemented by means of a tensorial contraction:
 
     \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j, k=0}^{2 (n_\mathrm{a}+n_\mathrm{o})} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
 
-with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
+with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta T_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
 The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
+
+Example
+-------
+
+An example about how to setup the model to use this model version is shown in :ref:`files/examples/DDV:Recovering the result of De Cruz, Demaeyer and Vannitsem (2016)`.
 
 References
 ----------

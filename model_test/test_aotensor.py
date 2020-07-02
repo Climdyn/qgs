@@ -35,8 +35,8 @@ class TestAoTensor(TestBase):
             tfunc = output_func
 
         pars = QgParams({'rr': 287.e0, 'sb': 5.6e-8})
-        pars.set_max_atmospheric_modes(2, 2)
-        pars.set_max_oceanic_modes(2, 4)
+        pars.set_atmospheric_modes(2, 2)
+        pars.set_oceanic_modes(2, 4)
 
         # Setting MAOOAM default parameters
         pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})

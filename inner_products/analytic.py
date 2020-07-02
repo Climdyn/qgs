@@ -462,7 +462,7 @@ class OceanicInnerProducts(object):
         oceanic_wavenumbers = np.empty(noc, dtype=object)
 
         # Oceanic wavenumbers definition
-        oms = self.params.oblocks
+        oms = self.params.goblocks
 
         for i in range(oms.shape[0]):  # function type is limited to L for the moment: ocean is a closed basin
             oceanic_wavenumbers[i] = WaveNumber('L', oms[i, 1], 0, oms[i, 0], oms[i, 0] / 2., oms[i, 1])
@@ -649,8 +649,8 @@ def S4(Pj, Pk, Hj, Hk):
 if __name__ == '__main__':
     from params.params import QgParams
     pars = QgParams()
-    pars.set_max_atmospheric_modes(2, 2)
+    pars.set_atmospheric_modes(2, 2)
     aip = AtmosphericInnerProducts(pars)
-    pars.set_max_oceanic_modes(2, 2)
+    pars.set_oceanic_modes(2, 2)
     oip = OceanicInnerProducts(pars)
     aip.connect_to_ocean(oip)
