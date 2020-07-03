@@ -79,9 +79,11 @@ model_parameters.set_oceanic_modes(2, 4)
 # Setting MAOOAM parameters according to the publication linked above
 model_parameters.set_params({'kd': 0.0290, 'kdp': 0.0290, 'n': 1.5, 'r': 1.e-7,
                              'h': 136.5, 'd': 1.1e-7})
-model_parameters.atemperature_params.set_params({'eps': 0.7, 'T0': 289.3, 'C': 103.3333,
-                                                 'hlambda': 15.06, })
-model_parameters.gotemperature_params.set_params({'gamma': 5.6e8, 'C': 310, 'T0': 301.46})
+model_parameters.atemperature_params.set_params({'eps': 0.7, 'T0': 289.3, 'hlambda': 15.06, })
+model_parameters.gotemperature_params.set_params({'gamma': 5.6e8, 'T0': 301.46})
+
+model_parameters.atemperature_params.set_insolation(103.3333, 0)
+model_parameters.gotemperature_params.set_insolation(310., 0)
 
 if print_parameters:
     print("")

@@ -72,8 +72,8 @@ model_parameters = QgParams({'phi0_npi': np.deg2rad(50.)/np.pi, 'hd': 0.1})
 model_parameters.set_atmospheric_modes(2, 2)
 
 # Changing (increasing) the orography depth and the meridional temperature gradient
-model_parameters.scale_params.hk[1] = 0.2                
-model_parameters.atemperature_params.thetas[0] = 0.2
+model_parameters.ground_params.set_orography(0.2, 1)
+model_parameters.atemperature_params.set_thetas(0.2, 0)
 
 if print_parameters:
     print("")
