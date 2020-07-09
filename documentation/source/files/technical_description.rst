@@ -29,7 +29,7 @@ of :math:`\mathcal{T}_{i,j,k}`, if it is taken to be upper triangular in the las
 indices (:math:`\mathcal{T}_{i,j,k} \equiv 0` if :math:`j > k`). Since
 :math:`\mathcal{T}_{i,j,k}` is known to be sparse, it is stored using the
 coordinate list representation, i.e. a list of tuples
-:math:`(i,j,k,\mathcal{T}_{i,j,k})` defined by the class :class:`~tensors.cootensor.CooTensor`.
+:math:`(i,j,k,\mathcal{T}_{i,j,k})` defined by the class :class:`sparse.COO`.
 This representation renders the computation of the tendencies :math:`\text{d}\eta_i/\text{d}t` computationally very efficient as
 well as conveniently parallelizable.
 

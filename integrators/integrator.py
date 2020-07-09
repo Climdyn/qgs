@@ -587,7 +587,7 @@ class RungeKuttaTglsIntegrator(object):
         The time at which the state of the system was saved. Array of shape (`n_records`,).
     recorded_traj: ~numpy.ndarray
         Saved states of the ODEs. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
-    recorded_traj: ~numpy.ndarray
+    recorded_fmatrix: ~numpy.ndarray
         Saved states of the linear ODEs. 4D array of shape (:attr:`n_traj`, :attr:`n_tg_traj`, :attr:`n_dim`, :attr:`n_records`).
     func: callable
         Last function :math:`\\boldsymbol{f}` used by the integrator to integrate.

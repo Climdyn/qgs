@@ -17,7 +17,7 @@
 
 """
 import numpy as np
-from scipy.sparse import csr_matrix
+import sparse as sp
 
 
 class QgsTensor(object):
@@ -42,11 +42,10 @@ class QgsTensor(object):
         If None, the oceanic tendencies are disabled.
     params: QgParams
         The models parameters.
-    tensor: list(~scipy.sparse.csr_matrix)
-        List of the tensor :math:`\mathcal{T}_{i,j,k}` :math:`i`-th components, as a list of :mod:`scipy.sparse` matrices.
-    jacobian_tensor: list(~scipy.sparse.csr_matrix)
-        List of the jacobian tensor :math:`\mathcal{T}_{i,j,k} + \mathcal{T}_{i,k,j}` :math:`i`-th components,
-        as a list of :mod:`scipy.sparse` matrices.
+    tensor: sparse.COO(float)
+        The tensor :math:`\mathcal{T}_{i,j,k}` :math:`i`-th components.
+    jacobian_tensor: sparse.COO(float)
+        The jacobian tensor :math:`\mathcal{T}_{i,j,k} + \mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
     def __init__(self, atmospheric_inner_products=None, oceanic_inner_products=None):
@@ -58,8 +57,8 @@ class QgsTensor(object):
         if self.oceanic_inner_products is not None:
             self.params = self.oceanic_inner_products.params
 
-        self.tensor = list()
-        self.jacobian_tensor = list()
+        self.tensor = None
+        self.jacobian_tensor = None
 
         self.compute_tensor()
 
@@ -78,7 +77,7 @@ class QgsTensor(object):
         """
         return i
 
-    def _theta(self, i):
+    def _theta_a(self, i):
         """Transform the :math:`\\theta_{\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
 
         Parameters
@@ -159,15 +158,14 @@ class QgsTensor(object):
             ocean = False
             ground_temp = False
 
-        # 0-th tensor component is an empty csr matrix
-        t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
-        t = self.simplify_matrix(t)
-        X = csr_matrix(t)
-        self.tensor.append(X)
+        # 0-th tensor component is an empty matrix
+        tensor = sp.zeros((ndim+1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
+        jacobian_tensor = sp.zeros((ndim+1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
-        X = csr_matrix(t + t.T)
-        self.jacobian_tensor.append(X)
-
+        ## Problem with matmul with object and DOK archi : Temporary fix until a better solution is found
+        hk = np.array(gp.hk, dtype=np.float)
+        g = aips.g.to_coo()
+        #################
         # psi_a part
         for i in range(1, namod + 1):
             t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
@@ -177,30 +175,27 @@ class QgsTensor(object):
                 t[self._psi_a(j), 0] = -((aips.c[(i - 1), (j - 1)] * scp.beta) / aips.a[(i - 1), (i - 1)]) \
                                        - (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
 
-                t[self._theta(j), 0] = (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
+                t[self._theta_a(j), 0] = (ap.kd * _kronecker_delta((i - 1), (j - 1))) / 2
 
                 if gp.hk is not None:
-                    oro = (aips.g[(i - 1), (j - 1), :] @ gp.hk) / (2 * aips.a[(i - 1), (i - 1)])
+                    oro = (g[(i - 1), (j - 1), :] @ hk) / (2 * aips.a[(i - 1), (i - 1)])
                     t[self._psi_a(j), 0] -= oro
-                    t[self._theta(j), 0] += oro
+                    t[self._theta_a(j), 0] += oro
 
                 for k in range(1, namod + 1):
                     t[self._psi_a(j), self._psi_a(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
                                                         / aips.a[(i - 1), (i - 1)]
 
-                    t[self._theta(j), self._theta(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
-                                                        / aips.a[(i - 1), (i - 1)]
+                    t[self._theta_a(j), self._theta_a(k)] = - aips.b[(i - 1), (j - 1), (k - 1)] \
+                                                            / aips.a[(i - 1), (i - 1)]
             if ocean:
                 for j in range(1, ngomod + 1):
                     t[self._psi_o(j), 0] = ap.kd * aips.d[(i - 1), (j - 1)] / \
                                        (2 * aips.a[(i - 1), (i - 1)])
 
             t = self.simplify_matrix(t)
-            X = csr_matrix(t)
-            self.tensor.append(X)
-
-            X = csr_matrix(t + t.T)
-            self.jacobian_tensor.append(X)
+            tensor[self._psi_a(i)] = t
+            jacobian_tensor[self._psi_a(i)] = t + t.T
 
         # theta_a part
         for i in range(1, namod + 1):
@@ -222,25 +217,25 @@ class QgsTensor(object):
                 else:
                     heat = 0
 
-                t[self._theta(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
-                                                      * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
-                                        + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0)
+                t[self._theta_a(j), 0] = (-((ap.sig0 * (2. * aips.c[(i - 1), (j - 1)]
+                                                        * scp.beta + aips.a[(i - 1), (j - 1)] * (ap.kd + 4. * ap.kdp))))
+                                          + heat) / (-2. + 2. * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
                 if atp.hd is not None:
-                   t[self._theta(j), 0] += (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
+                   t[self._theta_a(j), 0] += (atp.hd * _kronecker_delta((i - 1), (j - 1))) / (ap.sig0 * aips.a[(i - 1), (i - 1)] - 1.)
 
                 if gp.hk is not None:
-                    oro = (ap.sig0 * aips.g[(i - 1), (j - 1), :] @ gp.hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
-                    t[self._theta(j), 0] -= oro
+                    oro = (ap.sig0 * g[(i - 1), (j - 1), :] @ hk) / (2 * aips.a[(i - 1), (i - 1)] * ap.sig0 - 2.)
+                    t[self._theta_a(j), 0] -= oro
                     t[self._psi_a(j), 0] += oro
 
                 for k in range(1, namod + 1):
-                    t[self._psi_a(j), self._theta(k)] = (aips.g[(i - 1), (j - 1), (k - 1)]
-                                                         - aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) / \
-                                                        (-1 + aips.a[(i - 1), (i - 1)] * ap.sig0)
+                    t[self._psi_a(j), self._theta_a(k)] = (aips.g[(i - 1), (j - 1), (k - 1)]
+                                                           - aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) / \
+                                                          (-1 + aips.a[(i - 1), (i - 1)] * ap.sig0)
 
-                    t[self._theta(j), self._psi_a(k)] = (aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) \
-                                                        / (1 - aips.a[(i - 1), (i - 1)] * ap.sig0)
+                    t[self._theta_a(j), self._psi_a(k)] = (aips.b[(i - 1), (j - 1), (k - 1)] * ap.sig0) \
+                                                          / (1 - aips.a[(i - 1), (i - 1)] * ap.sig0)
 
             if ocean:
                 for j in range(1, ngomod + 1):
@@ -255,11 +250,8 @@ class QgsTensor(object):
                 t[self._deltaT_g(i), 0] = (2 * par.LSBpgo + par.Lpa) / (2 - 2 * aips.a[(i - 1), (i - 1)] * ap.sig0)
 
             t = self.simplify_matrix(t)
-            X = csr_matrix(t)
-            self.tensor.append(X)
-
-            X = csr_matrix(t + t.T)
-            self.jacobian_tensor.append(X)
+            tensor[self._theta_a(i)] = t
+            jacobian_tensor[self._theta_a(i)] = t + t.T
 
         if ocean:
             # psi_o part
@@ -271,8 +263,8 @@ class QgsTensor(object):
                     t[self._psi_a(j), 0] = oips.K[(i - 1), (j - 1)] * op.d \
                                            / (oips.M[(i - 1), (i - 1)] + par.G)
 
-                    t[self._theta(j), 0] = -(oips.K[(i - 1), (j - 1)]) * op.d \
-                                           / (oips.M[(i - 1), (i - 1)] + par.G)
+                    t[self._theta_a(j), 0] = -(oips.K[(i - 1), (j - 1)]) * op.d \
+                                             / (oips.M[(i - 1), (i - 1)] + par.G)
 
                 for j in range(1, ngomod + 1):
 
@@ -285,21 +277,22 @@ class QgsTensor(object):
                                                             / (oips.M[(i - 1), (i - 1)] + par.G)
 
                 t = self.simplify_matrix(t)
-                X = csr_matrix(t)
-                self.tensor.append(X)
-
-                X = csr_matrix(t + t.T)
-                self.jacobian_tensor.append(X)
+                tensor[self._psi_o(i)] = t
+                jacobian_tensor[self._psi_o(i)] = t + t.T
 
             # deltaT_o part
+            ## Problem with matmul with object and DOK archi : Temporary fix until a better solution is found
+            Cpgo = np.array(par.Cpgo, dtype=np.float)
+            W = oips.W.to_coo()
+            #################
             for i in range(1, ngomod + 1):
 
                 t = np.zeros((ndim + 1, ndim + 1), dtype=np.float64)
 
-                t[0, 0] = oips.W[(i - 1), :] @ par.Cpgo
+                t[0, 0] = W[(i - 1), :] @ Cpgo
 
                 for j in range(1, namod + 1):
-                    t[self._theta(j), 0] = oips.W[(i - 1), (j - 1)] * (2 * atp.sc * par.Lpgo + par.sbpa)
+                    t[self._theta_a(j), 0] = oips.W[(i - 1), (j - 1)] * (2 * atp.sc * par.Lpgo + par.sbpa)
 
                 for j in range(1, ngomod + 1):
 
@@ -309,11 +302,8 @@ class QgsTensor(object):
                         t[self._psi_o(j), self._deltaT_o(k)] = -(oips.O[(i - 1), (j - 1), (k - 1)])
 
                 t = self.simplify_matrix(t)
-                X = csr_matrix(t)
-                self.tensor.append(X)
-
-                X = csr_matrix(t + t.T)
-                self.jacobian_tensor.append(X)
+                tensor[self._deltaT_o(i)] = t
+                jacobian_tensor[self._deltaT_o(i)] = t + t.T
 
         # deltaT_g part
         if ground_temp:
@@ -323,16 +313,16 @@ class QgsTensor(object):
 
                 t[0, 0] = par.Cpgo[(i - 1)]
 
-                t[self._theta(i), 0] = 2 * atp.sc * par.Lpgo + par.sbpa
+                t[self._theta_a(i), 0] = 2 * atp.sc * par.Lpgo + par.sbpa
 
                 t[self._deltaT_g(i), 0] = - (par.Lpgo + par.sbpgo)
 
                 t = self.simplify_matrix(t)
-                X = csr_matrix(t)
-                self.tensor.append(X)
+                tensor[self._deltaT_g(i)] = t
+                jacobian_tensor[self._deltaT_g(i)] = t + t.T
 
-                X = csr_matrix(t + t.T)
-                self.jacobian_tensor.append(X)
+        self.tensor = tensor.to_coo()
+        self.jacobian_tensor = jacobian_tensor.to_coo()
 
     @staticmethod
     def simplify_matrix(matrix):
@@ -365,7 +355,6 @@ def _kronecker_delta(i, j):
 if __name__ == '__main__':
     from params.params import QgParams
     from inner_products.analytic import AtmosphericInnerProducts, OceanicInnerProducts
-    from tensors.cootensor import from_csr_mat_list
 
     params = QgParams()
     params.set_atmospheric_modes(2, 2)
@@ -373,5 +362,4 @@ if __name__ == '__main__':
     aip = AtmosphericInnerProducts(params)
     oip = OceanicInnerProducts(params)
     aip.connect_to_ocean(oip)
-    aotensor = QgsTensor(aip, oip)
-    coo_tensor = from_csr_mat_list(aotensor.tensor)
+    agotensor = QgsTensor(aip, oip)

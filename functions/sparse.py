@@ -17,17 +17,17 @@ def sparse_mul3(coo, value, vec_a, vec_b):
 
     Warnings
     --------
-    It is a Numba-jitted function, so it cannot take a :class:`~tensors.cootensor.CooTensor` directly.
+    It is a Numba-jitted function, so it cannot take a :class:`sparse.COO` sparse tensor directly.
     The tensor coordinates list and values must be provided separately by the user.
 
-    This will be solved later by converting CooTensor into a numba-jitted class.
+    In principle, this will be solved later in `sparse`, see https://github.com/pydata/sparse/issues/378.
 
     Parameters
     ----------
     coo: ~numpy.ndarray(int)
-        A 2D array of shape (:attr:`~tensors.cootensor.CooTensor.n_elems`, 3), a list of n_elems tensor coordinates corresponding to each value provided.
+        A 2D array of shape (n_elems, 3), a list of n_elems tensor coordinates corresponding to each value provided.
     value: ~numpy.ndarray(float)
-        A 1D array of shape (:attr:`~tensors.cootensor.CooTensor.n_elems`,), a list of value in the tensor
+        A 1D array of shape (n_elems,), a list of value in the tensor
     vec_a: ~numpy.ndarray(float)
         The vector :math:`a_j` to contract the tensor with. Must be of shape (:attr:`~params.params.QgParams.ndim` + 1,).
     vec_b: ~numpy.ndarray(float)
@@ -53,17 +53,17 @@ def sparse_mul2(coo, value, vec):
 
     Warnings
     --------
-    It is a Numba-jitted function, so it cannot take a :class:`~tensors.cootensor.CooTensor` directly.
+    It is a Numba-jitted function, so it cannot take a :class:`sparse.COO` sparse tensor directly.
     The tensor coordinates list and values must be provided separately by the user.
 
-    This will be solved later by converting CooTensor into a numba-jitted class.
+    In principle, this will be solved later in `sparse`, see https://github.com/pydata/sparse/issues/378.
 
     Parameters
     ----------
     coo: ~numpy.ndarray(int)
-        A 2D array of shape (:attr:`~tensors.cootensor.CooTensor.n_elems`, 3), a list of n_elems tensor coordinates corresponding to each value provided.
+        A 2D array of shape (n_elems, 3), a list of n_elems tensor coordinates corresponding to each value provided.
     value: ~numpy.ndarray(float)
-        A 1D array of shape (:attr:`~tensors.cootensor.CooTensor.n_elems`,), a list of value in the tensor
+        A 1D array of shape (n_elems,), a list of value in the tensor
     vec: ~numpy.ndarray(float)
         The vector :math:`a_k` to contract the tensor with. Must be of shape (:attr:`~params.params.QgParams.ndim` + 1,).
 

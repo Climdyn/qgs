@@ -38,6 +38,7 @@
 # TODO : inner products should be sparse tensor.
 
 import numpy as np
+import sparse as sp
 
 
 class WaveNumber(object):
@@ -116,25 +117,25 @@ class AtmosphericInnerProducts(object):
         An instance of model's parameters object.
     atmospheric_wavenumbers: ~numpy.ndarray(WaveNumber)
         An array of shape (:attr:`~params.params.QgParams.nmod` [0], ) of the wavenumber object of each mode.
-    a: ~numpy.ndarray(float)
+    a: sparse.DOK(float)
         Matrix of the eigenvalues of the Laplacian (atmospheric): :math:`a_{i, j} = (F_i, {\\nabla}^2 F_j)`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    c: ~numpy.ndarray(float)
+    c: ~sparse.DOK(float)
         Matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \partial_x F_j)`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    b: ~numpy.ndarray(float)
+    b: ~sparse.DOK(float)
         Tensors holding the Jacobian inner products: :math:`b_{i, j, k} = (F_i, J(F_j, \\nabla^2 F_k))`.
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0],
         :attr:`~params.params.QgParams.nmod` [0]).
-    g: ~numpy.ndarray(float)
+    g: ~sparse.DOK(float)
         Tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, F_k))`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0],
         :attr:`~params.params.QgParams.nmod` [0]).
-    d: None or ~numpy.ndarray(float)
+    d: None or ~sparse.DOK(float)
         Forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`. \n
         Not defined if no ocean is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    s: None or ~numpy.ndarray(float)
+    s: None or ~sparse.DOK(float)
         Forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`. \n
         Not defined if no ocean is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
@@ -149,10 +150,10 @@ class AtmosphericInnerProducts(object):
         if natm == 0:
             exit("*** Problem with inner products : natm==0!***")
 
-        self.a = np.zeros((natm, natm), dtype=float)
-        self.c = np.zeros((natm, natm), dtype=float)
-        self.b = np.zeros((natm, natm, natm), dtype=float)  # could be a CooTensor
-        self.g = np.zeros((natm, natm, natm), dtype=float)  # could be a CooTensor
+        self.a = sp.zeros((natm, natm), dtype=float, format='dok')
+        self.c = sp.zeros((natm, natm), dtype=float, format='dok')
+        self.b = sp.zeros((natm, natm, natm), dtype=float, format='dok')
+        self.g = sp.zeros((natm, natm, natm), dtype=float, format='dok')
         self.d = None
         self.s = None
 
@@ -208,8 +209,8 @@ class AtmosphericInnerProducts(object):
 
         natm, noc = self.params.nmod
 
-        self.d = np.zeros((natm, noc), dtype=float)
-        self.s = np.zeros((natm, noc), dtype=float)
+        self.d = sp.zeros((natm, noc), dtype=float, format='dok')
+        self.s = sp.zeros((natm, noc), dtype=float, format='dok')
 
         self._calculate_s(ocean_inner_products)
 
@@ -418,25 +419,25 @@ class OceanicInnerProducts(object):
         Indicate if the ocean is connected to an atmosphere.
     params: ~params.params.QgParams
         An instance of model's parameters object.
-    M: ~numpy.ndarray(float)
+    M: ~sparse.DOK(float)
         Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    N: ~numpy.ndarray(float)
+    N: ~sparse.DOK(float)
         Beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`.
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    O: ~numpy.ndarray(float)
+    O: ~sparse.DOK(float)
         Temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`.
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
         :attr:`~params.params.QgParams.nmod` [1]).
-    C: ~numpy.ndarray(float)
+    C: ~sparse.DOK(float)
         Tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
         :attr:`~params.params.QgParams.nmod` [1]).
-    K: None or ~numpy.ndarray(float)
+    K: None or ~sparse.DOK(float)
         Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`.
         Not defined if no atmosphere is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    W: None or ~numpy.ndarray(float)
+    W: None or ~sparse.DOK(float)
         Short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`. \n
         Not defined if no atmosphere is present. \n
         Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
@@ -449,11 +450,11 @@ class OceanicInnerProducts(object):
         self.params = params
         natm, noc = self.params.nmod
 
-        self.M = np.zeros((noc, noc), dtype=float)
-        self.N = np.zeros((noc, noc), dtype=float)
+        self.M = sp.zeros((noc, noc), dtype=float, format='dok')
+        self.N = sp.zeros((noc, noc), dtype=float, format='dok')
 
-        self.O = np.zeros((noc, noc, noc), dtype=float)  # could be a CooTensor
-        self.C = np.zeros((noc, noc, noc), dtype=float)  # could be a CooTensor
+        self.O = sp.zeros((noc, noc, noc), dtype=float, format='dok')
+        self.C = sp.zeros((noc, noc, noc), dtype=float, format='dok')
 
         self.K = None
         self.W = None
@@ -485,11 +486,11 @@ class OceanicInnerProducts(object):
 
         natm, noc = self.params.nmod
 
-        self.K = np.zeros((noc, natm), dtype=float)
-        self.W = np.zeros((noc, natm), dtype=float)
+        self.K = sp.zeros((noc, natm), dtype=float, format='dok')
+        self.W = sp.zeros((noc, natm), dtype=float, format='dok')
 
         if atmosphere_inner_products.s is None:
-            atmosphere_inner_products.s = np.zeros((natm, noc), dtype=float)
+            atmosphere_inner_products.s = sp.zeros((natm, noc), dtype=float, format='dok')
             atmosphere_inner_products._calculate_s(self)
 
         self._calculate_W(atmosphere_inner_products)

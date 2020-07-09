@@ -1,9 +1,10 @@
 name: qgs 
 channels:
+  - conda-forge
   - numba
   - defaults
 dependencies:
-  - python=3.7
+  - python=3.8
   - ipython
   - jupyter
   - matplotlib
@@ -12,6 +13,7 @@ dependencies:
   - scipy
   - sphinx
   - sphinx_rtd_theme
+  - sparse
   - pip
   - pip:
       - sphinxcontrib-bibtex

@@ -5,7 +5,6 @@ import numpy as np
 from params.params import QgParams
 from inner_products import analytic
 from tensors.qgtensor import QgsTensor
-from tensors.cootensor import from_csr_mat_list
 
 from model_test.test_base import TestBase
 
@@ -47,10 +46,8 @@ class TestAoTensor(TestBase):
 
         aotensor = QgsTensor(aip, oip)
 
-        coo_tensor = from_csr_mat_list(aotensor.tensor)
-
-        for x in coo_tensor:
-            tfunc("aotensor[" + str(x[0][0]) + "]" + "[" + str(x[0][1]) + "]" + "[" + str(x[0][2]) + "]" + " = % .5E" % x[1])
+        for coo, val in zip(aotensor.tensor.coords.T, aotensor.tensor.data):
+            tfunc("aotensor[" + str(coo[0]) + "]" + "[" + str(coo[1]) + "]" + "[" + str(coo[2]) + "]" + " = % .5E" % val)
 
 
 if __name__ == "__main__":
