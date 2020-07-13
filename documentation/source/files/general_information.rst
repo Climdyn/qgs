@@ -38,7 +38,7 @@ Activating DifferentialEquations.jl optional support
 
 In addition to the qgs builtin Runge-Kutta integrator, the qgs model can alternatively be integrated with a package called `DifferentialEquations.jl <https://github.com/SciML/DifferentialEquations.jl>`_ written in `Julia <https://julialang.org/>`_, and available through the
 `diffeqpy <https://github.com/SciML/diffeqpy>`_ python package.
-The diffeqpy pakage first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
+The diffeqpy package first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
 
 These can be summed up as opening a terminal and doing: ::
 
