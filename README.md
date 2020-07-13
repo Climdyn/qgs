@@ -46,7 +46,7 @@ You can then perform a test by running the script
     
 to see if everything runs smoothly (this should take less than a minute).
 
-#### Activating DifferentialEquations.jl support
+#### Activating DifferentialEquations.jl optional support
 
 Qgs can be integrated with a third-party package called [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) written in [Julia](https://julialang.org/), and available through the 
 [diffeqpy](https://github.com/SciML/diffeqpy) python package.
