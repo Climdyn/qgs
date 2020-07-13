@@ -137,12 +137,6 @@ Non-exhaustive list:
 * `Isca <https://execlim.github.io/IscaWebsite/index.html>`_: Research GCM written in Fortran and largely
   configured with Python scripts, with internal coding changes required for non-standard cases.
 
-References
-----------
-
-.. bibliography:: model/ref.bib
-    :keyprefix: gi-
-
 .. _quasi-geostrophic: https://en.wikipedia.org/wiki/Quasi-geostrophic_equations
 .. _shallow-water: https://en.wikipedia.org/wiki/Shallow_water_equations
 .. _MAOOAM: https://github.com/Climdyn/MAOOAM
