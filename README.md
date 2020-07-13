@@ -63,7 +63,7 @@ and then inside the Python command line interface do:
 >>> import diffeqpy
 >>> diffeqpy.install()
 ```
-which will then finalize the installation. An example of a notebook using this package is available in the documentation.
+which will then finalize the installation. An example of a notebook using this package is available in the documentation and on [readthedocs](https://qgs.readthedocs.io/en/latest/files/examples/diffeq.html).
 
 
 Documentation
