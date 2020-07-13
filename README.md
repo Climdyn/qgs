@@ -23,10 +23,10 @@ Part of the code comes from the Python [MAOOAM](https://github.com/Climdyn/MAOOA
 
 See [LICENSE.txt](./LICENSE.txt) for license information.
 
-Installation and documentation
-------------------------------
+Installation
+------------
 
-> **__Note:__** qgs is presently compatible with Linux. It should be compatible with Mac OS (not tested).
+> **__Note:__** qgs is presently compatible with Linux and Mac OS.
 > **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
 
 The easiest way to install is through [Anaconda](https://www.anaconda.com/).
@@ -46,7 +46,30 @@ You can then perform a test by running the script
     
 to see if everything runs smoothly (this should take less than a minute).
 
-To build the documentation, please run (with the conda environment still activated):
+#### Activating DifferentialEquations.jl support
+
+Qgs can be integrated with a third-party package called [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) written in [Julia](https://julialang.org/), and available through the 
+[diffeqpy](https://github.com/SciML/diffeqpy) python package.
+The diffeqpy pakage first installation step is done by Anaconda in the qgs environment but then you must [install Julia](https://julialang.org/downloads/) and follow the final manual installation instruction found in the [diffeqpy README](https://github.com/SciML/diffeqpy).
+
+These can be summed up as opening a terminal and doing:
+```
+conda activate qgs
+python
+```
+and then inside the Python command line interface do:
+
+```
+>>> import diffeqpy
+>>> diffeqpy.install()
+```
+which will then finalize the installation. An example of a notebook using this package is available in the documentation.
+
+
+Documentation
+-------------
+
+To build the documentation, please run (with the conda environment activated):
 
     cd documentation
     make html
@@ -81,6 +104,7 @@ Dependencies
 qgs needs mainly:
 
    * [Numpy](https://numpy.org/) for numeric support
+   * [sparse](https://sparse.pydata.org/) for sparse multidimensional arrays support
    * [Numba](https://numba.pydata.org/) for code acceleration
    
 Check the yaml file [environment.yml](./environment.yml) for the dependencies.
@@ -88,28 +112,22 @@ Check the yaml file [environment.yml](./environment.yml) for the dependencies.
 Forthcoming developments
 ------------------------
 
-* Coming soon (mostly technical developments)
-    + Inner products sparse representation 
 * Scientific development (short-to-mid-term developments)
     + Dynamical equilibrium temperature equations
     + Non-autonomous equation (seasonality, etc...)
-    + Heat exchange schemes when using land model version 
-      (using a model derived from MAOOAM in [Li et al.](https://doi.org/10.1007/s13351-018-8012-y))
+    + Quartic T⁴ temperature tendencies
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
-    + Visualisation tools, e.g. based on the [movie-script](https://github.com/jodemaey/movie-script) package
-* Long-term development track
-    + [Julia](https://julialang.org/) core (integrators, parallelization)
-    + Quartic T⁴ temperature tendencies
-    + Active advection
-    + True quasi-geostrophic ocean when using ocean model version
-    + Salinity in the ocean
-* Very long-term (may never happen)
+    + Windows OS support
     + Symbolic inner products (using e.g. [Simpy](https://www.sympy.org/))
         - Arbitrary spatial mode basis of functions
         - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
         - Symbolic PDE equation specification
-    + Multi-domain Galerkin expansion with boundary condition solver
+    + Visualisation tools, e.g. based on the [movie-script](https://github.com/jodemaey/movie-script) package
+* Long-term development track
+    + Active advection
+    + True quasi-geostrophic ocean when using ocean model version
+    + Salinity in the ocean
 
 Other atmospheric models in Python
 ----------------------------------

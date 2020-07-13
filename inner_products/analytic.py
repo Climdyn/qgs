@@ -250,7 +250,7 @@ class AtmosphericInnerProducts(object):
                 Tj = self.atmospheric_wavenumbers[j]
 
                 if (Ti.type, Tj.type) == ('K', 'L'):
-                    val = delta(Ti.M - Tj.H) * delta(Ti.P - Tj.P)
+                    val = _delta(Ti.M - Tj.H) * _delta(Ti.P - Tj.P)
                     val = n * Ti.M * val
 
                 if val != 0.:
@@ -280,30 +280,30 @@ class AtmosphericInnerProducts(object):
                     val = 0.
 
                     if (Ti.type, Tj.type, Tk.type) == ('A', 'K', 'L'):
-                        vb1 = B1(Ti.P, Tj.P, Tk.P)
-                        vb2 = B2(Ti.P, Tj.P, Tk.P)
-                        val = -2 * (sq2 / pi) * Tj.M * delta(Tj.M - Tk.H) \
-                            * flambda(Ti.P + Tj.P + Tk.P)
+                        vb1 = _B1(Ti.P, Tj.P, Tk.P)
+                        vb2 = _B2(Ti.P, Tj.P, Tk.P)
+                        val = -2 * (sq2 / pi) * Tj.M * _delta(Tj.M - Tk.H) \
+                              * _flambda(Ti.P + Tj.P + Tk.P)
                         if val != 0:
                             val = val * (((vb1**2) / (vb1**2 - 1)) - ((vb2**2)
                             / (vb2**2 - 1)))
 
                     if (Ti.type, Tj.type, Tk.type) == ('K', 'K', 'L'):
-                        vs1 = S1(Tj.P, Tk.P, Tj.M, Tk.H)
-                        vs2 = S2(Tj.P, Tk.P, Tj.M, Tk.H)
-                        val = vs1 * (delta(Ti.M - Tk.H - Tj.M)
-                                     * delta(Ti.P - Tk.P + Tj.P)
-                                     - delta(Ti.M - Tk.H - Tj.M)
-                                     * delta(Ti.P + Tk.P - Tj.P)
-                                     + (delta(Tk.H - Tj.M + Ti.M)
-                                     + delta(Tk.H - Tj.M - Ti.M))
-                                     * delta(Tk.P + Tj.P - Ti.P)) \
-                              + vs2 * (delta(Ti.M - Tk.H - Tj.M)
-                                       * delta(Ti.P - Tk.P - Tj.P)
-                                       + (delta(Tk.H - Tj.M - Ti.M)
-                                       + delta(Ti.M + Tk.H - Tj.M))
-                                       * (delta(Ti.P - Tk.P + Tj.P)
-                                       - delta(Tk.P - Tj.P + Ti.P)))
+                        vs1 = _S1(Tj.P, Tk.P, Tj.M, Tk.H)
+                        vs2 = _S2(Tj.P, Tk.P, Tj.M, Tk.H)
+                        val = vs1 * (_delta(Ti.M - Tk.H - Tj.M)
+                                     * _delta(Ti.P - Tk.P + Tj.P)
+                                     - _delta(Ti.M - Tk.H - Tj.M)
+                                     * _delta(Ti.P + Tk.P - Tj.P)
+                                     + (_delta(Tk.H - Tj.M + Ti.M)
+                                        + _delta(Tk.H - Tj.M - Ti.M))
+                                     * _delta(Tk.P + Tj.P - Ti.P)) \
+                              + vs2 * (_delta(Ti.M - Tk.H - Tj.M)
+                                       * _delta(Ti.P - Tk.P - Tj.P)
+                                       + (_delta(Tk.H - Tj.M - Ti.M)
+                                          + _delta(Ti.M + Tk.H - Tj.M))
+                                       * (_delta(Ti.P - Tk.P + Tj.P)
+                                          - _delta(Tk.P - Tj.P + Ti.P)))
 
                     val = val * n
 
@@ -326,20 +326,20 @@ class AtmosphericInnerProducts(object):
                     val = 0.
 
                     if (Ti.type, Tj.type, Tk.type) == ('L', 'L', 'L'):
-                        vs3 = S3(Tj.P, Tk.P, Tj.H, Tk.H)
-                        vs4 = S4(Tj.P, Tk.P, Tj.H, Tk.H)
-                        val = vs3 * ((delta(Tk.H - Tj.H - Ti.H)
-                                      - delta(Tk.H - Tj.H + Ti.H))
-                                     * delta(Tk.P + Tj.P - Ti.P)
-                                     + delta(Tk.H + Tj.H - Ti.H)
-                                     * (delta(Tk.P - Tj.P + Ti.P)
-                                     - delta(Tk.P - Tj.P - Ti.P))) \
-                              + vs4 * ((delta(Tk.H + Tj.H - Ti.H)
-                                        * delta(Tk.P - Tj.P - Ti.P))
-                                       + (delta(Tk.H - Tj.H + Ti.H)
-                                       - delta(Tk.H - Tj.H - Ti.H))
-                                       * (delta(Tk.P - Tj.P - Ti.P)
-                                       - delta(Tk.P - Tj.P + Ti.P)))
+                        vs3 = _S3(Tj.P, Tk.P, Tj.H, Tk.H)
+                        vs4 = _S4(Tj.P, Tk.P, Tj.H, Tk.H)
+                        val = vs3 * ((_delta(Tk.H - Tj.H - Ti.H)
+                                      - _delta(Tk.H - Tj.H + Ti.H))
+                                     * _delta(Tk.P + Tj.P - Ti.P)
+                                     + _delta(Tk.H + Tj.H - Ti.H)
+                                     * (_delta(Tk.P - Tj.P + Ti.P)
+                                        - _delta(Tk.P - Tj.P - Ti.P))) \
+                              + vs4 * ((_delta(Tk.H + Tj.H - Ti.H)
+                                        * _delta(Tk.P - Tj.P - Ti.P))
+                                       + (_delta(Tk.H - Tj.H + Ti.H)
+                                          - _delta(Tk.H - Tj.H - Ti.H))
+                                       * (_delta(Tk.P - Tj.P - Ti.P)
+                                          - _delta(Tk.P - Tj.P + Ti.P)))
 
                     val = val * n
 
@@ -368,19 +368,19 @@ class AtmosphericInnerProducts(object):
                 val = 0.
 
                 if Ti.type == 'A':
-                    val = flambda(Dj.H) * flambda(Dj.P + Ti.P)
+                    val = _flambda(Dj.H) * _flambda(Dj.P + Ti.P)
                     if val != 0.:
                         val = val * 8 * sq2 * Dj.P / \
                               (pi ** 2 * (Dj.P ** 2 - Ti.P ** 2) * Dj.H)
 
                 if Ti.type == 'K':
-                    val = flambda(2 * Ti.M + Dj.H) * delta(Dj.P - Ti.P)
+                    val = _flambda(2 * Ti.M + Dj.H) * _delta(Dj.P - Ti.P)
 
                     if val != 0:
                         val = val * 4 * Dj.H / (pi * (-4 * Ti.M ** 2 + Dj.H ** 2))
 
                 if Ti.type == 'L':
-                    val = delta(Dj.P - Ti.P) * delta(2 * Ti.H - Dj.H)
+                    val = _delta(Dj.P - Ti.P) * _delta(2 * Ti.H - Dj.H)
 
                 if val != 0.:
                     self.s[i, j] = val
@@ -526,7 +526,7 @@ class OceanicInnerProducts(object):
             for j in range(0, nmod):
                 Di = self.oceanic_wavenumbers[i]
                 Dj = self.oceanic_wavenumbers[j]
-                val = delta(Di.P - Dj.P) * flambda(Di.H + Dj.H)
+                val = _delta(Di.P - Dj.P) * _flambda(Di.H + Dj.H)
 
                 if val != 0.:
                     self.N[i, j] = val * (-2) * Dj.H * Di.H * n / \
@@ -547,22 +547,22 @@ class OceanicInnerProducts(object):
                     Dj = self.oceanic_wavenumbers[j]
                     Dk = self.oceanic_wavenumbers[k]
 
-                    vs3 = S3(Dj.P, Dk.P, Dj.H, Dk.H)
+                    vs3 = _S3(Dj.P, Dk.P, Dj.H, Dk.H)
 
-                    vs4 = S4(Dj.P, Dk.P, Dj.H, Dk.H)
+                    vs4 = _S4(Dj.P, Dk.P, Dj.H, Dk.H)
 
-                    val = vs3*((delta(Dk.H - Dj.H - Di.H)
-                                - delta(Dk.H - Dj.H + Di.H))
-                               * delta(Dk.P + Dj.P - Di.P)
-                               + delta(Dk.H + Dj.H - Di.H)
-                               * (delta(Dk.P - Dj.P + Di.P)
-                                  - delta(Dk.P - Dj.P - Di.P))) \
-                        + vs4 * ((delta(Dk.H + Dj.H - Di.H)
-                                 * delta(Dk.P - Dj.P - Di.P))
-                                 + (delta(Dk.H - Dj.H + Di.H)
-                                 - delta(Dk.H - Dj.H - Di.H))
-                                 * (delta(Dk.P - Dj.P - Di.P)
-                                    - delta(Dk.P - Dj.P + Di.P)))
+                    val = vs3*((_delta(Dk.H - Dj.H - Di.H)
+                                - _delta(Dk.H - Dj.H + Di.H))
+                               * _delta(Dk.P + Dj.P - Di.P)
+                               + _delta(Dk.H + Dj.H - Di.H)
+                               * (_delta(Dk.P - Dj.P + Di.P)
+                                  - _delta(Dk.P - Dj.P - Di.P))) \
+                        + vs4 * ((_delta(Dk.H + Dj.H - Di.H)
+                                  * _delta(Dk.P - Dj.P - Di.P))
+                                 + (_delta(Dk.H - Dj.H + Di.H)
+                                    - _delta(Dk.H - Dj.H - Di.H))
+                                 * (_delta(Dk.P - Dj.P - Di.P)
+                                    - _delta(Dk.P - Dj.P + Di.P)))
 
                     val = val * n / 2
 
@@ -605,15 +605,15 @@ class OceanicInnerProducts(object):
 #  !-----------------------------------------------------!
 
 
-def B1(Pi, Pj, Pk):
+def _B1(Pi, Pj, Pk):
     return (Pk+Pj)/float(Pi)
 
 
-def B2(Pi, Pj, Pk):
+def _B2(Pi, Pj, Pk):
     return (Pk-Pj)/float(Pi)
 
 
-def delta(r):
+def _delta(r):
 
     if r == 0:
         return 1.
@@ -622,7 +622,7 @@ def delta(r):
         return 0.
 
 
-def flambda(r):
+def _flambda(r):
 
     if r % 2 == 0:
         return 0.
@@ -631,19 +631,19 @@ def flambda(r):
         return 1.
 
 
-def S1(Pj, Pk, Mj, Hk):
+def _S1(Pj, Pk, Mj, Hk):
     return -(Pk * Mj + Pj * Hk) / 2.
 
 
-def S2(Pj, Pk, Mj, Hk):
+def _S2(Pj, Pk, Mj, Hk):
     return (Pk * Mj - Pj * Hk) / 2.
 
 
-def S3(Pj, Pk, Hj, Hk):
+def _S3(Pj, Pk, Hj, Hk):
     return (Pk * Hj + Pj * Hk) / 2.
 
 
-def S4(Pj, Pk, Hj, Hk):
+def _S4(Pj, Pk, Hj, Hk):
     return (Pk * Hj - Pj * Hk) / 2.
 
 

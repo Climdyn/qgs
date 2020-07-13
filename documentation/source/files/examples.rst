@@ -10,4 +10,5 @@ Some basic examples are available in this section
    examples/RP
    examples/DDV
    examples/Lietal
+   examples/diffeq
 

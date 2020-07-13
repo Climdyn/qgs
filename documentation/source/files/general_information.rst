@@ -12,7 +12,7 @@ Installation
 
 .. note::
 
-    qgs is presently compatible with Linux. It should be compatible with Mac OS (not tested).
+    qgs is presently compatible with Linux and Mac OS.
 
     **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
 
@@ -33,7 +33,29 @@ You can then perform a test by running the script ::
 
 to see if everything runs smoothly (this should take less than a minute).
 
-To build the documentation, please run (with the conda environment still activated): ::
+Activating DifferentialEquations.jl support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Qgs can be integrated with a third-party package called `DifferentialEquations.jl <https://github.com/SciML/DifferentialEquations.jl>`_ written in `Julia <https://julialang.org/>`_, and available through the
+`diffeqpy <https://github.com/SciML/diffeqpy>`_ python package.
+The diffeqpy pakage first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
+
+These can be summed up as opening a terminal and doing: ::
+
+    conda activate qgs
+    python
+
+and then inside the Python command line interface do: ::
+
+    >>> import diffeqpy
+    >>> diffeqpy.install()
+
+which will then finalize the installation. An :ref:`files/examples/diffeq:Example of DiffEqPy usage` notebook using this package is available in the documentation.
+
+Documentation
+-------------
+
+To build the documentation, please run (with the conda environment activated): ::
 
     cd documentation
     make html
@@ -72,6 +94,7 @@ Dependencies
 qgs needs mainly:
 
 * `Numpy`_ for numeric support
+* `sparse`_ for sparse multidimensional arrays support
 * `Numba`_ for code acceleration
 
 Check the yaml file `environment.yml <../../../../environment.yml>`_ for the full list of dependencies.
@@ -79,39 +102,29 @@ Check the yaml file `environment.yml <../../../../environment.yml>`_ for the ful
 Forthcoming developments
 ------------------------
 
-* Coming soon (mostly technical developments)
-
-  + Inner products sparse representation
-
 * Scientific development (short-to-mid-term developments)
 
-  + Dynamical equilibrium temperature equations
-  + Non-autonomous equation (seasonality, etc...)
-  + Heat exchange schemes when using land model version
-    (using a model derived from MAOOAM in :cite:`gi-LHHBD2018`)
+    + Dynamical equilibrium temperature equations
+    + Non-autonomous equation (seasonality, etc...)
+    + Quartic T⁴ temperature tendencies
 
 * Technical mid-term developments
 
-  + Dimensionally robust Parameter class operation
-  + Visualisation tools, e.g. based on the `movie-script`_ package
+    + Dimensionally robust Parameter class operation
+    + Windows OS support
+    + Symbolic inner products (using e.g. `Simpy`_)
+
+        - Arbitrary spatial mode basis of functions
+        - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
+        - Symbolic PDE equation specification
+
+    + Visualisation tools, e.g. based on the `movie-script`_ package
 
 * Long-term development track
 
-  + `Julia`_ core (integrators, parallelization)
-  + Quartic :math:`T^4` temperature tendencies
-  + Active advection
-  + True quasi-geostrophic ocean when using ocean model version
-  + Salinity in the ocean
-
-* Very long-term (may never happen)
-
-  + Symbolic inner products (using e.g. `Simpy`_)
-
-    - Arbitrary spatial mode basis of functions
-    - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
-    - Symbolic PDE equation specification
-
-  + Multi-domain Galerkin expansion with boundary condition solver
+    + Active advection
+    + True quasi-geostrophic ocean when using ocean model version
+    + Salinity in the ocean
 
 Other atmospheric models in Python
 ----------------------------------
@@ -143,3 +156,4 @@ References
 .. _Simpy: https://www.sympy.org/
 .. _make: https://www.gnu.org/software/make/
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
+.. _sparse: https://sparse.pydata.org/

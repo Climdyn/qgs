@@ -17,4 +17,5 @@ dependencies:
   - pip
   - pip:
       - sphinxcontrib-bibtex
+      - diffeqpy
 
