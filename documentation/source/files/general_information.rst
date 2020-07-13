@@ -36,7 +36,7 @@ to see if everything runs smoothly (this should take less than a minute).
 Activating DifferentialEquations.jl optional support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Qgs can be integrated with a third-party package called `DifferentialEquations.jl <https://github.com/SciML/DifferentialEquations.jl>`_ written in `Julia <https://julialang.org/>`_, and available through the
+Qgs can be integrated with a package called `DifferentialEquations.jl <https://github.com/SciML/DifferentialEquations.jl>`_ written in `Julia <https://julialang.org/>`_, and available through the
 `diffeqpy <https://github.com/SciML/diffeqpy>`_ python package.
 The diffeqpy pakage first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
 
