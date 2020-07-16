@@ -7,7 +7,7 @@ tags:
   - Coupled model
   - Mid-latitude climate variability
 authors:
-  - name: Jonathan Demaeyer^[Custom footnotes for e.g. denoting who the corresspoinding author is can be included like this.]
+  - name: Jonathan Demaeyer^[Corresponding author.]
     orcid: 0000-0002-5098-404X 
     affiliation: "1, 2"
   - name: Lesley De Cruz
@@ -29,57 +29,40 @@ bibliography: joss.bib
 
 # Summary
 
+`qgs` is a a Python implementation of an idealized atmospheric model which displays a typical mid-latitudes variability. 
+It consists in a spectral 2-layer quasi-geostrophic atmosphere on a beta-plane, coupled to a simple land or shallow-water ocean component.
+* In the case of an ocean component, it reproduces the model proposed in [@DDV2016]. In [@VDDG2015], this model version was shown to reproduce a 
+low-frequency variability (LFV) typical of the ocean-atmosphere coupling. 
+This coupling consists in both mechanical and heat exchange interactions between the two components.
+* In the case of a land component, it can reproduce the model proposed in [@RP1982] and [@CT1987] with a mechanical coupling due to the 
+friction between the land and the atmosphere. It can also reproduce the model proposed in [@Lietal2017], with mechanical coupling and heat exchange.
 
-# Statement of need 
+`qgs` being a spectral model means that the partial differential equations (PDEs) ruling the time evolution of its fields are decomposed on a basis of spatial functions. 
+This kind of decomposition are known as Galerkin decomposition and allow to transform the PDEs into a set of ordinary differential equations (ODEs) which can then be solved 
+with the usual integration techniques.
 
-`qgs` is a
+The model implementation consists in submodules to set up the model's parameters and compute the model's tensor of tendencies terms.
+This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
+to external one. For instance, an example of the diffeqpy integration package usage is provided.
 
-# Mathematics
+The model implementation use Numba extensively to accelerate the tensor products computation used to compute the tendencies.
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+# Statement of need
 
-Double dollars make self-standing equations:
+Frequently in geoscience, methods are tested and researchs are conducted with a Lorenz-$N$ model ($N \in \{63, 84, 96\}$)  which are toy models of atmospheric variability. 
+Some of the aforementioned models are obtained by truncating heavily the dynamical equations of the atmosphere, and such heavy truncation of the dynamics can lead to non-realistic dynamical properties.
+On the other hand, in a broader point of view, less truncated spectral quasi-geostrophic models of the atmosphere offer also a diverse set of models for the dry atmospheric dynamics. The dynamics hence obtained allow to 
+identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, low-frequency variability, etc...
+However, these latter idealized models are less considered in the literature, despite their exhibit of realistic behaviours.
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+`qgs` aims to change that by providing a fast and easy-to-use Python framework for researcher and teacher to integrate this kind of models. 
+Its development will be done in a modular fashion which allows to connect the atmosphere to various other subsystems and use it with built-in and external toolboxes.
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
+The choice of Python was specifically done to facilitate its use in Jupyter notebooks and the multiple recent machine learning libraries that are available in this 
+language.
 
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Fenced code blocks are rendered with syntax highlighting:
-```python
-for n in range(10):
-    yield f(n)
-```	
+# State of the field
 
 # Acknowledgements
-
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
 
 # References
