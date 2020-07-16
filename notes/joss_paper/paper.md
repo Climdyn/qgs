@@ -75,7 +75,7 @@ Other software might interest the reader in need for an easy-to-use idealized at
 * Isca [@Isca]: Research General Circulation Model (GCM) written in Fortran and largely
                 configured with Python scripts, with internal coding changes required for non-standard cases.
 
-The coupled atmosphere-land version of `qgs` was used recently to test new ideas using response theory to adapt statistical postprocessing schemes to a model change in [@DV2020].
+The mechanically coupled atmosphere-land version of `qgs` was used recently to test new ideas using response theory to adapt statistical postprocessing schemes to a model change in [@DV2020].
  
 # Acknowledgements
 
