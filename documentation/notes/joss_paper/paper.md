@@ -7,22 +7,20 @@ tags:
   - Coupled model
   - Mid-latitude climate variability
 authors:
-  - name: Jonathan Demaeyer^[Corresponding author.]
+  - name: Jonathan Demaeyer
     orcid: 0000-0002-5098-404X 
-    affiliation: "1, 2"
+    affiliation: 1
   - name: Lesley De Cruz
     orcid: 0000-0003-4458-8953
     affiliation: 1
   - name: Stéphane Vannitsem 
     orcid: 0000-0002-1734-1042
-    affiliation: "1, 2"
+    affiliation: 1
 affiliations:
  - name: Institut Royal Météorologique de Belgique, Avenue Circulaire, 3, 1180 Brussels, Belgium
    index: 1
- - name: European Meteorological Network (EUMETNET), Avenue Circulaire, 3, 1180 Brussels, Belgium
-   index: 2 
 
-date: 16 July 2020
+date: 17 July 2020
 bibliography: joss.bib
 
 ---
@@ -30,12 +28,13 @@ bibliography: joss.bib
 # Summary
 
 `qgs` is a a Python implementation of an idealized atmospheric model which displays a typical mid-latitudes variability. 
-It consists in a spectral 2-layer quasi-geostrophic atmosphere on a beta-plane, coupled to a simple land or shallow-water ocean component.
-* In the case of an ocean component, it reproduces the model MAOOAM proposed in [@DDV2016]. In [@VDDG2015], this model version was shown to reproduce a 
+It consists in a spectral two-layers quasi-geostrophic atmosphere on a beta-plane, coupled to a simple land or shallow-water ocean component.
+
+* In the case of an ocean component, it reproduces the MAOOAM model proposed in @DDV2016. In @VDDG2015, this model version was shown to reproduce a 
 low-frequency variability (LFV) typical of the ocean-atmosphere coupling. 
 This coupling consists in both mechanical and heat exchange interactions between the two components.
-* In the case of a land component, it can reproduce the model proposed in [@RP1982] and [@CT1987] with a mechanical coupling due to the 
-friction between the land and the atmosphere. It can also reproduce the model proposed in [@LHHBD2018], with mechanical coupling and heat exchange.
+* In the case of a land component, it can reproduce the model proposed in @RP1982 and @CT1987 with a mechanical coupling due to the 
+friction between the land and the atmosphere. It can also reproduce the model proposed in @LHHBD2018, with mechanical coupling and heat exchange.
 
 `qgs` being a spectral model means that the partial differential equations (PDEs) ruling the time evolution of its fields are decomposed on a basis of functions defined on its 
 spatial domain. 
@@ -45,9 +44,9 @@ according to the future developments plan, the user will be able to specify the 
 
 The model implementation consists in submodules to set up the model's parameters and compute the model's tensor of tendencies terms.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
-to external one. For instance, an example of the diffeqpy [put ref here] integration package usage is provided.
+to external one. For instance, an example of the diffeqpy [@diffeqpy] integration package usage is provided.
 
-The model implementation use Numpy [@vCV2011; O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to extensively accelerate the tensor products computation used to compute the tendencies.
+The model implementation use Numpy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to extensively accelerate the tensor products computation used to compute the tendencies.
 
 # Statement of need
 
@@ -68,14 +67,14 @@ language.
 
 Other software might interest the reader in need for an easy-to-use idealized atmospheric model.
 
-* MAOOAM [@MAOOAM]: The Modular arbitrary-order ocean-atmosphere model, a coupled ocean-atmosphere model included in `qgs`. 
-                    Code available in Lua, Fortran and Python.
-* q-gcm [@qgcm]: A mid-latitude grid based ocean-atmosphere model like MAOOAM. Code in Fortran, interface is in Python.
-* pyqg [@pyqg]: A pseudo-spectral python solver for quasi-geostrophic systems.
-* Isca [@Isca]: Research General Circulation Model (GCM) written in Fortran and largely
-                configured with Python scripts, with internal coding changes required for non-standard cases.
+* MAOOAM: The Modular arbitrary-order ocean-atmosphere model, a coupled ocean-atmosphere model included in `qgs` [@MAOOAM]. 
+          Code available in Lua, Fortran and Python.
+* q-gcm: A mid-latitude grid based ocean-atmosphere model like MAOOAM. Code in Fortran, interface is in Python [@qgcm].
+* pyqg: A pseudo-spectral python solver for quasi-geostrophic systems [@pyqg].
+* Isca: A research General Circulation Model (GCM) written in Fortran and largely
+        configurable with Python scripts, with internal coding changes required for non-standard cases [@Isca].
 
-The mechanically coupled atmosphere-land version of `qgs` was used recently to test new ideas using response theory to adapt statistical postprocessing schemes to a model change in [@DV2020].
+The mechanically coupled atmosphere-land version of `qgs` was used recently to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
  
 # Acknowledgements
 

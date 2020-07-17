@@ -6,6 +6,13 @@
 # @website https://github.com/casics/dassie
 # =============================================================================
 
+# To use this Makefile, you have to install pandoc and bibstyle. You have also to clone the
+# whedon repository :
+#
+# git clone https://github.com/openjournals/whedon.git
+#
+# in the same directory.
+
 # Change the following values to match your configuration.
 # .............................................................................
 
@@ -36,14 +43,19 @@ $(output): $(input) $(bib) Makefile
 	-V published="00 January 0000" \
 	-V page="00" \
 	-V graphics="true" \
-	-V logo_path="whedon/resources/joss-logo.png" \
+	-V logo_path="whedon/resources/joss/logo.png" \
 	-V geometry:margin=1in \
 	-o $(output) \
-	--pdf-engine=xelatex \
+    	--pdf-engine=xelatex \
 	--filter pandoc-citeproc $(input) \
-	-M "csl=whedon/resources/apa.csl" \
+        --csl="whedon/resources/joss/apa.csl" \
 	--from markdown+autolink_bare_uris \
-	--template "whedon/resources/latex.template"
+	--template "whedon/resources/joss/latex.template"
 
 autorefresh:;
 	((ls $(input) $(bib) | entr make $(output)) &)
+
+
+#      --pdf-engine=xelatex \
+#	--filter pandoc-citeproc $(input) \
+#	--bibliography=$(bib) \
