@@ -45,7 +45,7 @@ according to the future developments plan, the user will be able to specify the 
 
 The model implementation consists in submodules to set up the model's parameters and compute the model's tensor of tendencies terms.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
-to external one. For instance, an example of the diffeqpy integration package usage is provided.
+to external one. For instance, an example of the diffeqpy [put ref here] integration package usage is provided.
 
 The model implementation use Numpy [@vCV2011; O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to extensively accelerate the tensor products computation used to compute the tendencies.
 
