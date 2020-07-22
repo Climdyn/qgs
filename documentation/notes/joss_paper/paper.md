@@ -34,7 +34,7 @@ It consists of a spectral two-layers quasi-geostrophic atmosphere on a beta-plan
 low-frequency variability (LFV) typical of the ocean-atmosphere coupling. 
 This coupling consists in both mechanical and heat exchange interactions between the two components. 
 The model has already been used in several context, in particular for data assimilation analyses [@PBBCDSY2019; @TCVB2020], 
-and predictability studies [@VSD2019; VD2020]
+and predictability studies [@VSD2019; @VD2020]
 * In the case of a land surface coupling, it emulates the model proposed in @RP1982 and @CT1987 with a simple thermal relaxation toward a climatological temperature and a mechanical coupling due to the 
 friction between the land and the atmosphere. It can also emulate the model proposed in @LHHBD2018, with mechanical coupling and heat exchange. In addition, the number of dynamical spectral modes can be fixed by the users as for the MAOOAM model.
 

@@ -55,7 +55,3 @@ $(output): $(input) $(bib) Makefile
 autorefresh:;
 	((ls $(input) $(bib) | entr make $(output)) &)
 
-
-#      --pdf-engine=xelatex \
-#	--filter pandoc-citeproc $(input) \
-#	--bibliography=$(bib) \
