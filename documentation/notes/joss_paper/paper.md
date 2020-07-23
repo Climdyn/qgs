@@ -1,5 +1,5 @@
 ---
-title: 'qgs: A flexible Python framework of reduced-order multiscale quasi-geopstrophic spectral models'
+title: 'qgs: A flexible Python framework of reduced-order multiscale quasi-geostrophic spectral models'
 tags:
   - Python
   - Numba
