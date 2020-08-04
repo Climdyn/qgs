@@ -28,12 +28,12 @@ bibliography: joss.bib
 # Summary
 
 `qgs` is a a Python implementation of a set of idealized reduced-order models representing atmospheric mid-latitude variability. 
-It consists of a spectral two-layer quasi-geostrophic (hence the name`qgs`) atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean.
+It consists of a two-layer *q*uasi-*g*eostrophic *s*pectral (`qgs`) model of the atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean.
 
 * In the case where it is coupled to an ocean, it reproduces the Modular Arbitrary-Order Ocean-Atmosphere Model (MAOOAM), described in @DDV2016. In @VDDG2015, a 36-variable configuration of this model was shown to reproduce a 
 low-frequency variability (LFV) typical of the coupled ocean-atmosphere system. 
 This coupling consists in both mechanical and heat exchange interactions between the two components. 
-The model has already been used in several different contexts, in particular for data assimilation analyses [@PBBCDSY2019; @TCVB2020], 
+The model has already been used in different contexts, in particular for data assimilation [@PBBCDSY2019; @TCVB2020], 
 and predictability studies [@VSD2019; @VD2020]
 * In the case of a land surface coupling, it emulates the model proposed in @RP1982 and @CT1987 with a simple thermal relaxation toward a climatological temperature and a mechanical coupling due to the 
 friction between the land and the atmosphere. It can also emulate the model proposed in @LHHBD2018, with mechanical coupling and heat exchange. In addition, the number of dynamical spectral modes can be configured by the user, as is the case for the MAOOAM model.
@@ -55,11 +55,11 @@ The model implementation uses Numpy [@vCV2011; @O2006] and SciPy [@scipy] for ar
 
 In atmospheric and climate sciences, research and development is often first conducted with a simple idealized system like the Lorenz-$N$ models ($N \in \{63, 84, 96\}$) [@L63; @L84; @L96] which are toy models of atmospheric variability. 
 The first two models are heavily truncated systems (3-variable) describing the very large synoptic-scale dynamics of the single-component atmosphere, that neglect the interaction with other components of the climate system and with smaller scales.
-The third one is based on heuristic assumptions that lead to unrealistic features like spatial anti-correlation. 
+The third one is based on reasonable heuristic assumptions on the spatial dynamics along a latitude, but which may lead to unrealistic statistical features. 
 
-Truncated spectral quasi-geostrophic models of the atmosphere offer better representations of the dry atmospheric dynamics [@V2017]. The dynamics thus obtained allow to 
-identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
-However, these models are less often considered in literature, despite their demonstration of realistic behavior.
+Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer better representations of the dry atmospheric dynamics [@OB1989]. 
+The dynamics thus obtained allow to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
+However, these models are less often considered in literature, despite their demonstration of more realistic behavior.
 
 `qgs` aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model. 
 For an efficient handling of the model by users, its documentation is conceived such that its equations and parameters are explained and linked to the code.
