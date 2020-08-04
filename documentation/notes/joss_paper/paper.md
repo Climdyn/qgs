@@ -1,5 +1,5 @@
 ---
-title: 'qgs: A flexible Python framework of reduced-order multiscale quasi-geostrophic spectral models'
+title: 'qgs: A flexible Python framework of reduced-order multiscale climate models'
 tags:
   - Python
   - Numba
@@ -28,7 +28,7 @@ bibliography: joss.bib
 # Summary
 
 `qgs` is a a Python implementation of a set of idealized reduced-order models representing atmospheric mid-latitude variability. 
-It consists of a spectral two-layer quasi-geostrophic atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean.
+It consists of a spectral two-layer quasi-geostrophic (hence the name`qgs`) atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean.
 
 * In the case where it is coupled to an ocean, it reproduces the Modular Arbitrary-Order Ocean-Atmosphere Model (MAOOAM), described in @DDV2016. In @VDDG2015, a 36-variable configuration of this model was shown to reproduce a 
 low-frequency variability (LFV) typical of the coupled ocean-atmosphere system. 
@@ -47,6 +47,7 @@ A future development is planned that will enable the user to specify the basis o
 The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia DifferentialEquations.jl [@RN2017] integration package through the Python diffeqpy [@diffeqpy] package is provided.
+Technical details about this implementation can be found in the *Code Description* section of the included documentation.
 
 The model implementation uses Numpy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
 
@@ -56,7 +57,7 @@ In atmospheric and climate sciences, research and development is often first con
 The first two models are heavily truncated systems (3-variable) describing the very large synoptic-scale dynamics of the single-component atmosphere, that neglect the interaction with other components of the climate system and with smaller scales.
 The third one is based on heuristic assumptions that lead to unrealistic features like spatial anti-correlation. 
 
-Truncated spectral quasi-geostrophic models of the atmosphere offer better representations of the dry atmospheric dynamics. The dynamics thus obtained allow to 
+Truncated spectral quasi-geostrophic models of the atmosphere offer better representations of the dry atmospheric dynamics [@V2017]. The dynamics thus obtained allow to 
 identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
 However, these models are less often considered in literature, despite their demonstration of realistic behavior.
 
