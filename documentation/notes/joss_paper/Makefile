@@ -1,12 +1,11 @@
 # =============================================================================
-# @file    Makefile
-# @brief   Makefile for generating previews of the paper
-# @author  Michael Hucka <mhucka@caltech.edu>
-# @license Please see the file named LICENSE in the project directory
-# @website https://github.com/casics/dassie
+# Mefile for generating previews of JOSS paper
+# Original author: Michael Hucka <mhucka@caltech.edu>
+# License: GNU General Public License v3.0 
+# Original project: https://github.com/casics/dassie
 # =============================================================================
 
-# To use this Makefile, you have to install pandoc and bibstyle. You have also to clone the
+# To use this Makefile, you have to install pandoc, xetex and bibstyle. You have also to clone the
 # whedon repository :
 #
 # git clone https://github.com/openjournals/whedon.git
