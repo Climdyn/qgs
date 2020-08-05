@@ -418,7 +418,7 @@ class RungeKuttaIntegrator(object):
                            np.squeeze(self.recorded_traj)
             else:
                 rtime = reverse(self.time[::-self._write_steps])
-                if rtime[0] == time[0]:
+                if rtime[0] == self.time[0]:
                     return rtime, np.squeeze(self.recorded_traj)
                 else:
                     return np.concatenate((np.full((1,), self.time[0]), rtime)), np.squeeze(self.recorded_traj)
@@ -1042,7 +1042,7 @@ class RungeKuttaTglsIntegrator(object):
                            np.squeeze(self.recorded_traj), np.squeeze(self.recorded_fmatrix)
             else:
                 rtime = reverse(self.time[::-self._write_steps])
-                if rtime[0] == time[0]:
+                if rtime[0] == self.time[0]:
                     return rtime, np.squeeze(self.recorded_traj), np.squeeze(self.recorded_fmatrix)
                 else:
                     return np.concatenate((np.full((1,), self.time[0]), rtime)), np.squeeze(self.recorded_traj),\
