@@ -28,7 +28,8 @@ bibliography: joss.bib
 # Summary
 
 `qgs` is a a Python implementation of a set of idealized reduced-order models representing atmospheric mid-latitude variability. 
-It consists of a two-layer *q*uasi-*g*eostrophic *s*pectral (`qgs`) model of the atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean.
+It consists of a two-layer *q*uasi-*g*eostrophic *s*pectral (`qgs`) model of the atmosphere on a beta-plane, coupled either to a simple land surface or to a shallow-water ocean. 
+The model's dynamical fields include the atmospheric and oceanic streamfunction and temperature fields, and the land temperature field.
 
 * In the case where it is coupled to an ocean, it reproduces the Modular Arbitrary-Order Ocean-Atmosphere Model (MAOOAM), described in @DDV2016. In @VDDG2015, a 36-variable configuration of this model was shown to reproduce a 
 low-frequency variability (LFV) typical of the coupled ocean-atmosphere system. 
