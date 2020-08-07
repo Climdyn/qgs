@@ -20,7 +20,7 @@ affiliations:
  - name: Institut Royal Météorologique de Belgique, Avenue Circulaire, 3, 1180 Brussels, Belgium
    index: 1
 
-date: 17 July 2020
+date: 7 August 2020
 bibliography: joss.bib
 
 ---
@@ -75,7 +75,7 @@ Other software might interest the reader in need for an easy-to-use idealized at
 * q-gcm: A mid-latitude grid based ocean-atmosphere model like MAOOAM. Code in Fortran, interface is in Python [@qgcm].
 * pyqg: A pseudo-spectral python solver for quasi-geostrophic systems [@pyqg].
 * Isca: A research General Circulation Model (GCM) written in Fortran and largely
-        configurable with Python scripts, with internal coding changes required for non-standard cases [@Isca].
+        configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
 The mechanically coupled atmosphere-land version of `qgs` was used recently to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
  
