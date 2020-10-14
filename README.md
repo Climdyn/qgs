@@ -82,7 +82,7 @@ The documentation is also available online on read the docs: [https://qgs.readth
 Usage
 -----
 
-qgs can be used by editing and running the script `qgs_rp.py` and `qgs_maooam.py` found in the [main folder](./).
+qgs can be used by editing and running the script `qgs_rp.py` and `qgs_maooam.py` found in the main folder.
 
 
 Examples
@@ -119,7 +119,7 @@ Forthcoming developments
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Symbolic inner products (using e.g. [Simpy](https://www.sympy.org/))
+    + Symbolic inner products (using e.g. [Sympy](https://www.sympy.org/))
         - Arbitrary spatial mode basis of functions
         - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
         - Symbolic PDE equation specification

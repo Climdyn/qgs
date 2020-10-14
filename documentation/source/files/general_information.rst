@@ -67,7 +67,7 @@ Once built, the documentation is available `here <../index.html>`_.
 Usage
 -----
 
-qgs can be used by editing and running the script found in the `main folder <../../../../>`_: ::
+qgs can be used by editing and running the script found in the main folder: ::
 
     python qgs_rp.py
 
@@ -112,7 +112,7 @@ Forthcoming developments
 
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Symbolic inner products (using e.g. `Simpy`_)
+    + Symbolic inner products (using e.g. `Sympy`_)
 
         - Arbitrary spatial mode basis of functions
         - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
@@ -147,7 +147,7 @@ Non-exhaustive list:
 .. _Anaconda: https://www.anaconda.com/
 .. _movie-script: https://github.com/jodemaey/movie-script
 .. _Julia: https://julialang.org/
-.. _Simpy: https://www.sympy.org/
+.. _Sympy: https://www.sympy.org/
 .. _make: https://www.gnu.org/software/make/
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
 .. _sparse: https://sparse.pydata.org/
