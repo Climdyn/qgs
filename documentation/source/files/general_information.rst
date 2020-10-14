@@ -5,7 +5,19 @@ General Information
 qgs is a Python implementation of an atmospheric model for midlatitudes.  It
 models the dynamics of a 2-layer `quasi-geostrophic`_ (QG) channel atmosphere
 on a `beta-plane`_, coupled to a simple land or `shallow-water`_ ocean
-component. 
+component.
+
+Statement of need
+-----------------
+
+Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer a good representations of the dry atmospheric dynamics :cite:`gi-OB1989`.
+The dynamics thus obtained allow to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
+However, these models are less often considered in literature than other toy models, despite their demonstration of more realistic behavior.
+
+qgs aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model.
+
+The choice to use Python was specifically made to facilitate its use in `Jupyter <https://jupyter.org/>`_ notebooks and the multiple recent machine learning libraries that are available in this
+language.
 
 Installation
 ------------
@@ -126,6 +138,26 @@ Forthcoming developments
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean
 
+Contributing to qgs
+-------------------
+
+If you want to contribute actively to the roadmap detailed above, please contact directly the authors.
+
+In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the `qgs Github repository <https://github.com/Climdyn/qgs>`_.
+
+A review of your pull request will follow with possibly suggestions of changes before merging it in the master branch.
+Please consider the following guidelines before submitting:
+
+* Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
+* For any changes to the core model files, please run the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid.
+* For substantial additions of code, including a test case in the folder `model_test <../../../../model_test>`_ is recommended.
+* Please do not make changes to existing test cases, these are here for trip-testing as well as user guidance.
+* Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
+* If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
+* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some times.
+
+For more information about git, Github and the pull request framework, a good source of information is the `contributing guide <https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html>`_ of the `MITgcm <https://github.com/MITgcm/MITgcm>`_.
+
 Other atmospheric models in Python
 ----------------------------------
 
@@ -136,6 +168,12 @@ Non-exhaustive list:
 * `pyqg <https://github.com/pyqg/pyqg>`_: A pseudo-spectral python solver for quasi-geostrophic systems.
 * `Isca <https://execlim.github.io/IscaWebsite/index.html>`_: Research GCM written in Fortran and largely
   configured with Python scripts, with internal coding changes required for non-standard cases.
+
+References
+----------
+
+.. bibliography:: model/ref.bib
+    :keyprefix: gi-
 
 .. _quasi-geostrophic: https://en.wikipedia.org/wiki/Quasi-geostrophic_equations
 .. _shallow-water: https://en.wikipedia.org/wiki/Shallow_water_equations
@@ -151,3 +189,4 @@ Non-exhaustive list:
 .. _make: https://www.gnu.org/software/make/
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
 .. _sparse: https://sparse.pydata.org/
+.. _sphinx: https://www.sphinx-doc.org/en/master/
