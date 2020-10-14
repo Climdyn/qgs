@@ -49,8 +49,10 @@ The model implementation consists of submodules to set up the model's parameters
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia DifferentialEquations.jl [@RN2017] integration package through the Python diffeqpy [@diffeqpy] package is provided.
 Technical details about this implementation can be found in the *Code Description* section of the included documentation.
+The tangent linear and adjoint models [@K2003] are also available and allow to conduct easily data assimilation and linear sensitivity analysis experiments.
 
 The model implementation uses Numpy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
+
 
 # Statement of need
 
@@ -64,7 +66,7 @@ However, these models are less often considered in literature, despite their dem
 
 `qgs` aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model. 
 For an efficient handling of the model by users, its documentation is conceived such that its equations and parameters are explained and linked to the code.
-In the future, its development will be done in a modular fashion which allows to connect the atmosphere to various other subsystems and use it with built-in and external toolboxes.
+In the future, its development will be done in a modular fashion which enable the connection of the atmosphere to various other subsystems and its usage with built-in and external toolboxes.
 
 The choice to use Python was specifically made to facilitate its use in Jupyter [@jupyter] notebooks and the multiple recent machine learning libraries that are available in this 
 language.

@@ -151,7 +151,7 @@ Please consider the following guidelines before submitting:
 * Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
 * For any changes to the core model files, please run the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid.
 * For substantial additions of code, including a test case in the folder `model_test <../../../../model_test>`_ is recommended.
-* Please do not make changes to existing test cases, these are here for trip-testing as well as user guidance.
+* Please do not make changes to existing test cases.
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
 * The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some times.
