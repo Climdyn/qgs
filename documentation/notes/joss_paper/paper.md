@@ -83,6 +83,29 @@ Other software might interest the reader in need for an easy-to-use idealized at
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
 The mechanically coupled atmosphere-land version of `qgs` was recently used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
+
+# Performance
+
+The performance of the `qgs` MAOOAM implementation has been benchmarked against the Lua and Fortran implementations of this model [@MAOOAM].
+This comparison has been done on a recent Intel CPU with 12 cores, with two different model resolutions: one used in @VDDG2015 and one truncated at the wavenumber 6 for both the oceanic and atmospheric components.
+The former leads to a 36 dimensional system of ODEs while the latter is higher-dimensional, with 228 variables being involved.
+ 
+In both cases, all the different codes implementations have been initialized with the same initial data and parameters, except for the length of the trajectory being computed. 
+The low-dimensional system has been integrated over 10$^7$ timeunits (roughly $\sim$ 1850 years) while the higher-dimensional one has been integrated over 10$^6$ timeunits ($\sim$ 185 years).
+In the case of the Fortran implementation, two different compilers (GNU Gfortran and Intel Ifort) with two different levels of optimization (O2 and O3) have been tested, but no significant differences between these compilers and options were found.
+In addition, two different integration modules of `qgs` have been considered: a non-parallel integrator located in the module `integrators.integrate` and a parallel one located in the module `integrators.integrator`.
+The latter permits to integrate multiple trajectories simultaneously, but for the purpose of the benchmark, only one trajectory was computed with it, the other implementations being non-parallel.
+
+The results of this benchmark are depicted on \autoref{fig:benchmark} and show that `qgs`, while not the fastest implementation of MAOOAM available, is a fair competitor. 
+The time difference is in general not greater than a factor 5 and tends to be reduced for high-dimensional model versions, where its integration time is 
+roughly the same as Lua. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference seems also to vanish at for higher-resolution model versions.
+In any case, the parallel integrator of `qgs` allows to integrate easily multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
+We note finally that the initial python version of MAOOAM (found in @MAOOAM), and which uses f2py [@f2py], takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
+
+![Computational times in seconds of different MAOOAM implementations: (a) times to compute a 10$^7$ timeunits trajectory with a low-order model version (36 variables). (b) times to compute a 10$^6$ timeunits trajectory with a higher-order model version (228 variables). \label{fig:benchmark}](timing_results.pdf)
+ 
+In conclusion, `qgs` is a sufficiently fast Python implementation to complement the other codes available and to be used in the general Python scientific ecosystem.
+
  
 # Acknowledgements
 
