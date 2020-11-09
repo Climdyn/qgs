@@ -93,7 +93,7 @@ The former leads to a 36 dimensional system of ODEs while the latter is higher-d
 In both cases, all the different codes implementations have been initialized with the same initial data and parameters, except for the length of the trajectory being computed. 
 The low-dimensional system has been integrated over 10$^7$ timeunits (roughly $\sim$ 1850 years) while the higher-dimensional one has been integrated over 10$^6$ timeunits ($\sim$ 185 years).
 In the case of the Fortran implementation, two different compilers (GNU Gfortran and Intel Ifort) with two different levels of optimization (O2 and O3) have been tested, but no significant differences between these compilers and options were found.
-In addition, two different integration modules of `qgs` have been considered: a non-parallel integrator located in the module `integrators.integrate` and a parallel one located in the module `integrators.integrator`.
+In addition, two different built-in integration modules of `qgs` have been considered: a non-parallel integrator located in the module `integrators.integrate` and a parallel one located in the module `integrators.integrator`.
 The latter permits to integrate multiple trajectories simultaneously, but for the purpose of the benchmark, only one trajectory was computed with it, the other implementations being non-parallel.
 
 The results of this benchmark are depicted on \autoref{fig:benchmark} and show that `qgs`, while not the fastest implementation of MAOOAM available, is a fair competitor. 
