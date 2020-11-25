@@ -1,4 +1,13 @@
 
+import os
+
+path = os.path.abspath('./')
+base = os.path.basename(path)
+if base == 'model_test':
+    fold = ""
+else:
+    fold = 'model_test/'
+
 import unittest
 import numpy as np
 
@@ -7,9 +16,13 @@ real_eps = np.finfo(np.float64).eps
 
 class TestBase(unittest.TestCase):
 
+    reference = list()
+    values = list()
+    folder = fold
+
     def load_ref_from_file(self):
         self.reference.clear()
-        f = open(self.filename, 'r')
+        f = open(self.folder+self.filename, 'r')
         buf = f.readlines()
 
         for l in buf:
@@ -48,6 +61,9 @@ class TestBase(unittest.TestCase):
             f.write(l + '\n')
 
         f.close()
+
+    def outputs(self):
+        pass
 
     @staticmethod
     def match_flt(s1, s2):

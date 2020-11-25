@@ -149,14 +149,36 @@ A review of your pull request will follow with possibly suggestions of changes b
 Please consider the following guidelines before submitting:
 
 * Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
-* For any changes to the core model files, please run the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid.
-* For substantial additions of code, including a test case in the folder `model_test <../../../../model_test>`_ is recommended.
-* Please do not make changes to existing test cases.
+* For any changes to the core model files, please check your submission by :ref:`files/general_information:Running the tests` found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid. Please do not make changes to existing test cases.
+* For substantial additions of code, including a test case (using `unittest`_) in the folder `model_test <../../../../model_test>`_ is recommended.
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
 * The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some times.
 
 For more information about git, Github and the pull request framework, a good source of information is the `contributing guide <https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html>`_ of the `MITgcm <https://github.com/MITgcm/MITgcm>`_.
+
+Running the tests
+-----------------
+
+.. TODO: move this to the user guide later.
+
+The model core tensors can be tested by running `pytest`_: ::
+
+    pytest
+
+This will run all the tests and return a report. The test cases are written using `unittest`_. Additionally, test cases can be executed separately by running: ::
+
+    python -m unittest model_test/test_name.py
+
+E.g., testing the MAOOAM inner products can be done by running: ::
+
+    python -m unittest model_test/test_inner_products.py
+
+Reporting issues with the software and getting support
+------------------------------------------------------
+
+Issues can be reported and support can be asked directly on the `qgs` GitHub repository `issues page <https://github.com/Climdyn/qgs/issues/>`_.
+However, please be patient as the `qgs` team is quite small.
 
 Other atmospheric models in Python
 ----------------------------------
@@ -190,3 +212,5 @@ References
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
 .. _sparse: https://sparse.pydata.org/
 .. _sphinx: https://www.sphinx-doc.org/en/master/
+.. _pytest: https://docs.pytest.org/en/stable/
+.. _unittest: https://docs.python.org/3/library/unittest.html

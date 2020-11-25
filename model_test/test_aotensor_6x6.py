@@ -1,4 +1,14 @@
 
+import sys
+import os
+
+path = os.path.abspath('./')
+base = os.path.basename(path)
+if base == 'model_test':
+    sys.path.extend([os.path.abspath('../')])
+else:
+    sys.path.extend([path])
+
 import unittest
 import numpy as np
 
@@ -13,9 +23,6 @@ real_eps = np.finfo(np.float64).eps
 
 class TestAoTensor6x6(TestBase):
 
-    reference = list()
-    values = list()
-    folder = ""  # 'model_test/'
     filename = 'test_aotensor_6x6.ref'
 
     def test_aotensor(self, file=None):

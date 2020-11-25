@@ -1,4 +1,15 @@
 
+import sys
+import os
+
+path = os.path.abspath('./')
+base = os.path.basename(path)
+if base == 'model_test':
+    sys.path.extend([os.path.abspath('../')])
+else:
+    sys.path.extend([path])
+
+
 import unittest
 import numpy as np
 
@@ -8,14 +19,12 @@ from tensors.qgtensor import QgsTensor
 
 from model_test.test_base import TestBase
 
+
 real_eps = np.finfo(np.float64).eps
 
 
 class TestAoTensor(TestBase):
 
-    reference = list()
-    values = list()
-    folder = ""  # 'model_test/'
     filename = 'test_aotensor.ref'
 
     def test_aotensor(self, file=None):

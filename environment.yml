@@ -13,6 +13,7 @@ dependencies:
   - scipy
   - sphinx
   - sphinx_rtd_theme
+  - pytest
   - sparse
   - pip
   - pip:
