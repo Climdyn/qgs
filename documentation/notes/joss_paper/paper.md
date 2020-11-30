@@ -47,11 +47,10 @@ A future development is planned that will enable the user to specify the basis o
 
 The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
-to another integrator implemented by the user. As an example, the usage of the Julia DifferentialEquations.jl [@RN2017] integration package through the Python diffeqpy [@diffeqpy] package is provided.
-Technical details about this implementation can be found in the *Code Description* section of the included documentation.
+to another integrator implemented by the user. As an example, the usage of the Julia `DifferentialEquations.jl` [@RN2017] integration package through the Python `diffeqpy` [@diffeqpy] package is provided.
 The tangent linear and adjoint models [@K2003] are also available and allow to conduct easily data assimilation and linear sensitivity analysis experiments.
 
-The model implementation uses Numpy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
+The model implementation uses NumPy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
 
 
 # Statement of need
@@ -68,12 +67,12 @@ However, these models are less often considered in literature, despite their dem
 For an efficient handling of the model by users, its documentation is conceived such that its equations and parameters are explained and linked to the code.
 In the future, its development will be done in a modular fashion which enable the connection of the atmosphere to various other subsystems and its usage with built-in and external toolboxes.
 
-The choice to use Python was specifically made to facilitate its use in Jupyter [@jupyter] notebooks and the multiple recent machine learning libraries that are available in this 
+The choice to use Python was specifically made to facilitate its use in Jupyter [@jupyter] Notebooks and the multiple recent machine learning libraries that are available in this
 language.
 
 # State of the field
 
-Other software might interest the reader in need for an easy-to-use idealized atmospheric model.
+Other software might interest the reader in need of an easy-to-use idealized atmospheric model.
 
 * MAOOAM: The Modular Arbitrary-Order Ocean-Atmosphere Model, a coupled ocean-atmosphere model included in `qgs` [@MAOOAM]. 
           Code available in Lua, Fortran and Python.
