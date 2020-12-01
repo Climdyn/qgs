@@ -45,7 +45,7 @@ This kind of decomposition transforms the PDEs into a set of ordinary differenti
 Presently in `qgs`, the functions of the basis are chosen amongst the orthogonal Fourier modes compatible with the boundary conditions of each subcomponent of the system, namely the atmosphere, and the ocean or the land surface coupled to it. 
 A future development is planned that will enable the user to specify the basis of functions for each component, depending on the required boundary conditions.
 
-The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016 and in the *Code Description* section of the included documentation.
+The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients of the system of ODEs^[More details about the implementation can be found in @DDV2016 and in the *Code Description* section of the included documentation.].
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia `DifferentialEquations.jl` [@RN2017] integration package through the Python `diffeqpy` [@diffeqpy] package is provided.
 The tangent linear and adjoint models [@K2003] are also available and allow one to conduct easily data assimilation and linear sensitivity analysis experiments.
@@ -99,7 +99,7 @@ The results of this benchmark are depicted on \autoref{fig:benchmark} and show t
 The time difference is in general not greater than a factor 5 and tends to be reduced for high-dimensional model versions, where its integration time is 
 roughly the same as Lua. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference seems also to vanish at for higher-resolution model versions.
 In any case, the parallel integrator of `qgs` allows integrating straightforwardly multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
-We note finally that the initial Python version of MAOOAM (found in @MAOOAM), and which uses f2py [@f2py], takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
+We note finally that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
 
 ![Computational times in seconds of different MAOOAM implementations: (a) times to compute a 10$^7$ timeunits trajectory with a low-order model version (36 variables). (b) times to compute a 10$^6$ timeunits trajectory with a higher-order model version (228 variables). \label{fig:benchmark}](timing_results.pdf)
  
