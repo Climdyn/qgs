@@ -45,7 +45,7 @@ This kind of decomposition transforms the PDEs into a set of ordinary differenti
 Presently in `qgs`, the functions of the basis are chosen amongst the orthogonal Fourier modes compatible with the boundary conditions of each subcomponent of the system, namely the atmosphere and the ocean or the land surface. 
 A future development is planned that will enable the user to specify the basis of functions for each component, depending on the required boundary conditions.
 
-The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016.
+The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016 and in the *Code Description* section of the included documentation.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia `DifferentialEquations.jl` [@RN2017] integration package through the Python `diffeqpy` [@diffeqpy] package is provided.
 The tangent linear and adjoint models [@K2003] are also available and allow to conduct easily data assimilation and linear sensitivity analysis experiments.
