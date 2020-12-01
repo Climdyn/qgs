@@ -42,13 +42,13 @@ friction between the land and the atmosphere. It can also emulate the model prop
 In the `qgs` framework, the partial differential equations (PDEs) that govern the time evolution of its fields are projected on a basis of functions defined on its 
 spatial domain. 
 This kind of decomposition transforms the PDEs into a set of ordinary differential equations (ODEs) which can then be solved with the usual integration techniques.
-Presently in `qgs`, the functions of the basis are chosen amongst the orthogonal Fourier modes compatible with the boundary conditions of each subcomponent of the system, namely the atmosphere and the ocean or the land surface. 
+Presently in `qgs`, the functions of the basis are chosen amongst the orthogonal Fourier modes compatible with the boundary conditions of each subcomponent of the system, namely the atmosphere, and the ocean or the land surface coupled to it. 
 A future development is planned that will enable the user to specify the basis of functions for each component, depending on the required boundary conditions.
 
 The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients in the tendencies of the model variables; more details can be found in @DDV2016 and in the *Code Description* section of the included documentation.
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia `DifferentialEquations.jl` [@RN2017] integration package through the Python `diffeqpy` [@diffeqpy] package is provided.
-The tangent linear and adjoint models [@K2003] are also available and allow to conduct easily data assimilation and linear sensitivity analysis experiments.
+The tangent linear and adjoint models [@K2003] are also available and allow one to conduct easily data assimilation and linear sensitivity analysis experiments.
 
 The model implementation uses NumPy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
 
@@ -57,10 +57,10 @@ The model implementation uses NumPy [@vCV2011; @O2006] and SciPy [@scipy] for ar
 
 In atmospheric and climate sciences, research and development is often first conducted with a simple idealized system like the Lorenz-$N$ models ($N \in \{63, 84, 96\}$) [@L63; @L84; @L96] which are toy models of atmospheric variability. 
 The first two models are heavily truncated systems (3-variable) describing the very large synoptic-scale dynamics of the single-component atmosphere, that neglect the interaction with other components of the climate system and with smaller scales.
-The third one is based on reasonable heuristic assumptions on the spatial dynamics along a latitude, but which may lead to unrealistic statistical features. 
+The third one is based on reasonable heuristic assumptions on the spatial dynamics along a latitude, which may however lead to unrealistic statistical features. 
 
 Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer better representations of the dry atmospheric dynamics [@OB1989]. 
-The dynamics thus obtained allow to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
+The dynamics thus obtained allow one to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
 However, these models are less often considered in literature, despite their demonstration of more realistic behavior.
 
 `qgs` aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model. 
@@ -98,8 +98,8 @@ The latter permits to integrate multiple trajectories simultaneously, but for th
 The results of this benchmark are depicted on \autoref{fig:benchmark} and show that `qgs`, while not the fastest implementation of MAOOAM available, is a fair competitor. 
 The time difference is in general not greater than a factor 5 and tends to be reduced for high-dimensional model versions, where its integration time is 
 roughly the same as Lua. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference seems also to vanish at for higher-resolution model versions.
-In any case, the parallel integrator of `qgs` allows to integrate easily multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
-We note finally that the initial python version of MAOOAM (found in @MAOOAM), and which uses f2py [@f2py], takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
+In any case, the parallel integrator of `qgs` allows integrating straightforwardly multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
+We note finally that the initial Python version of MAOOAM (found in @MAOOAM), and which uses f2py [@f2py], takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
 
 ![Computational times in seconds of different MAOOAM implementations: (a) times to compute a 10$^7$ timeunits trajectory with a low-order model version (36 variables). (b) times to compute a 10$^6$ timeunits trajectory with a higher-order model version (228 variables). \label{fig:benchmark}](timing_results.pdf)
  
