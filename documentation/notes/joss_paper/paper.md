@@ -81,7 +81,8 @@ Other software might interest the reader in need of an easy-to-use idealized atm
 * Isca: A research General Circulation Model (GCM) written in Fortran and largely
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
-The mechanically coupled atmosphere-land version of `qgs` was recently used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
+The mechanically coupled atmosphere-land version of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
+The MAOOAM model version of `qgs` was recently considered to perform ocean-atmosphere strongly-coupled data assimilation experiments [@CBDGRV2020].
 
 # Performance
 
