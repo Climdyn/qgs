@@ -81,6 +81,8 @@ Other software might interest the reader in need of an easy-to-use idealized atm
 * Isca: A research General Circulation Model (GCM) to simulate a full planet. Written in Fortran and largely
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
+`qgs` distinguishes itself from these other models by a combination of a simplified and configurable geometry, a spectral discretization, an efficient numerical implementation of the ODE system by a sparse tensor multiplication, and the availability of the tangent linear and adjoint models. As such it is very suitable to quickly simulate very long time periods while capturing the most relevant dynamics of the climate system at mid-latitudes.
+
 The mechanically coupled atmosphere-land version of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
 The MAOOAM model version of `qgs` was recently considered to perform ocean-atmosphere strongly-coupled data assimilation experiments [@CBDGRV2020].
 
