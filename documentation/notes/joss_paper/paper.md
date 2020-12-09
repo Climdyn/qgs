@@ -76,9 +76,9 @@ Other software might interest the reader in need of an easy-to-use idealized atm
 
 * MAOOAM: The Modular Arbitrary-Order Ocean-Atmosphere Model, a coupled ocean-atmosphere model included in `qgs` [@MAOOAM]. 
           Code available in Lua, Fortran and Python.
-* q-gcm: A mid-latitude grid-based ocean-atmosphere model like MAOOAM. Code in Fortran, interface in Python [@qgcm].
-* pyqg: A pseudo-spectral Python solver for quasi-geostrophic systems [@pyqg].
-* Isca: A research General Circulation Model (GCM) written in Fortran and largely
+* q-gcm: A mid-latitude grid-based ocean-atmosphere model like MAOOAM with two oceanic layers. Code in Fortran, interface in Python [@qgcm].
+* pyqg: A pseudo-spectral Python solver for quasi-geostrophic systems [@pyqg]. Allow one to create and solve multiple-layers quasigeostrophic systems.
+* Isca: A research General Circulation Model (GCM) to simulate a full planet. Written in Fortran and largely
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
 The mechanically coupled atmosphere-land version of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
