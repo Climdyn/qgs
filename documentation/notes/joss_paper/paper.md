@@ -48,7 +48,7 @@ A future development is planned that will enable the user to specify the basis o
 The model implementation consists of submodules to set up the model's parameters and to compute the tensor that defines the coefficients of the system of ODEs^[More details about the implementation can be found in @DDV2016 and in the *Code Description* section of the included documentation.].
 This tensor is used by the code to compute the tendencies function and its Jacobian matrix. These functions can then be fed to the `qgs` built-in Runge-Kutta integrator or 
 to another integrator implemented by the user. As an example, the usage of the Julia `DifferentialEquations.jl` [@RN2017] integration package through the Python `diffeqpy` [@diffeqpy] package is provided.
-The tangent linear and adjoint models [@K2003] are also available and allow one to conduct easily data assimilation and linear sensitivity analysis experiments.
+The tangent linear and adjoint models [@K2003] are also available and allow one to easily conduct data assimilation and linear sensitivity analysis experiments.
 
 The model implementation uses NumPy [@vCV2011; @O2006] and SciPy [@scipy] for arrays and computations support, as well as Numba [@numba] and sparse [@sparse] to considerably accelerate the tensor products computation used to compute the tendencies.
 
@@ -65,7 +65,7 @@ However, these models are less often considered in literature, despite their dem
 
 `qgs` aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model. 
 For an efficient handling of the model by users, its documentation is conceived such that its equations and parameters are explained and linked to the code.
-In the future, its development will be done in a modular fashion which enable the connection of the atmosphere to various other subsystems and its usage with built-in and external toolboxes.
+In the future, its development will be done in a modular fashion which enables the connection of the atmosphere to various other subsystems and the use of built-in and external toolboxes.
 
 The choice to use Python was specifically made to facilitate its use in Jupyter [@jupyter] Notebooks and the multiple recent machine learning libraries that are available in this
 language.
@@ -77,36 +77,37 @@ Other software might interest the reader in need of an easy-to-use idealized atm
 * MAOOAM: The Modular Arbitrary-Order Ocean-Atmosphere Model, a coupled ocean-atmosphere model included in `qgs` [@MAOOAM]. 
           Code available in Lua, Fortran and Python.
 * q-gcm: A mid-latitude grid-based ocean-atmosphere model like MAOOAM with two oceanic layers. Code in Fortran, interface in Python [@qgcm].
-* pyqg: A pseudo-spectral Python solver for quasi-geostrophic systems [@pyqg]. Allow one to create and solve multiple-layers quasigeostrophic systems.
+* pyqg: A pseudo-spectral Python solver for quasi-geostrophic systems [@pyqg]. Allows one to create and solve multiple-layer quasigeostrophic systems.
 * Isca: A research General Circulation Model (GCM) to simulate a full planet. Written in Fortran and largely
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
-`qgs` distinguishes itself from these other models by a combination of a simplified and configurable geometry, a spectral discretization, an efficient numerical implementation of the ODE system by a sparse tensor multiplication, and the availability of the tangent linear and adjoint models. As such it is very suitable to quickly simulate very long time periods while capturing the most relevant dynamics of the climate system at mid-latitudes.
+`qgs` distinguishes itself from these other models by a combination of a simplified and configurable geometry, a spectral discretization, an efficient numerical implementation of the ODE system by a sparse tensor multiplication, 
+and the availability of the tangent linear and adjoint models. As such it is very suitable to quickly simulate very long time periods while capturing the most relevant dynamics of the climate system at mid-latitudes.
 
-The mechanically coupled atmosphere-land version of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
-The MAOOAM model version of `qgs` was recently considered to perform ocean-atmosphere strongly-coupled data assimilation experiments [@CBDGRV2020].
+The mechanically coupled atmosphere-land configuration of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
+The MAOOAM model configuration of `qgs` was recently considered to perform strongly-coupled data assimilation experiments in the ocean-atmosphere system [@CBDGRV2020].
 
 # Performance
 
 The performance of the `qgs` MAOOAM implementation has been benchmarked against the Lua and Fortran implementations of this model [@MAOOAM].
-This comparison has been done on a recent Intel CPU with 12 cores, with two different model resolutions: one used in @VDDG2015 and one truncated at the wavenumber 6 for both the oceanic and atmospheric components.
-The former leads to a 36 dimensional system of ODEs while the latter is higher-dimensional, with 228 variables being involved.
+This comparison was done on a recent Intel CPU with 12 cores, with two different model resolutions: one used in @VDDG2015 and one truncated at the wavenumber 6 for both the oceanic and atmospheric components.
+The former leads to a 36-dimensional system of ODEs while the latter is higher-dimensional, using 228 variables.
  
-In both cases, all the different codes implementations have been initialized with the same initial data and parameters, except for the length of the trajectory being computed. 
-The low-dimensional system has been integrated over 10$^7$ timeunits (roughly $\sim$ 1850 years) while the higher-dimensional one has been integrated over 10$^6$ timeunits ($\sim$ 185 years).
+In both cases, all the different code implementations have been initialized with the same initial data and parameters, except for the length of the trajectory being computed. 
+The low-dimensional system was integrated for 10$^7$ timeunits (roughly $\sim$ 1850 years) while the higher-dimensional one was integrated over 10$^6$ timeunits ($\sim$ 185 years).
 In the case of the Fortran implementation, two different compilers (GNU Gfortran and Intel Ifort) with two different levels of optimization (O2 and O3) have been tested, but no significant differences between these compilers and options were found.
 In addition, two different built-in integration modules of `qgs` have been considered: a non-parallel integrator located in the module `integrators.integrate` and a parallel one located in the module `integrators.integrator`.
-The latter permits to integrate multiple trajectories simultaneously, but for the purpose of the benchmark, only one trajectory was computed with it, the other implementations being non-parallel.
+The latter can integrate multiple trajectories simultaneously, but for the purpose of the benchmark, only one trajectory was computed with it, the other implementations being non-parallel.
 
 The results of this benchmark are depicted on \autoref{fig:benchmark} and show that `qgs`, while not the fastest implementation of MAOOAM available, is a fair competitor. 
-The time difference is in general not greater than a factor 5 and tends to be reduced for high-dimensional model versions, where its integration time is 
-roughly the same as Lua. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference seems also to vanish at for higher-resolution model versions.
-In any case, the parallel integrator of `qgs` allows integrating straightforwardly multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
-We note finally that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model version and thus is not included in the benchmark.
+The time difference is in general not greater than a factor 5 and tends to be less for high-dimensional model configurations, where its integration time is 
+roughly the same as the Lua implementation. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference also seems to vanish for higher-resolution model configurations.
+In any case, the parallel integrator of `qgs` can straightforwardly integrate multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
+A final remark is that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model configuration and is therefore not included in the benchmark.
 
-![Computational times in seconds of different MAOOAM implementations: (a) times to compute a 10$^7$ timeunits trajectory with a low-order model version (36 variables). (b) times to compute a 10$^6$ timeunits trajectory with a higher-order model version (228 variables). \label{fig:benchmark}](timing_results.pdf)
+![Computational times in seconds of different MAOOAM implementations: (a) time to compute a 10$^7$ timeunits trajectory with a low-order model configuration (36 variables). (b) time to compute a 10$^6$ timeunits trajectory with a higher-order model configuration (228 variables). \label{fig:benchmark}](timing_results.pdf)
  
-In conclusion, `qgs` is a sufficiently fast Python implementation to complement the other codes available and to be used in the general Python scientific ecosystem.
+In conclusion, `qgs` is a sufficiently fast Python implementation as compared to the other implementations of the MAOOAM model. In addition, it has the benefit of being more flexible, extensible, and easier to use in the general Python scientific ecosystem.
 
  
 # Acknowledgements
