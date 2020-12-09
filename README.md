@@ -29,7 +29,7 @@ Installation
 > **__Note:__** qgs is presently compatible with Linux and Mac OS.
 > **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
 
-The easiest way to install is through [Anaconda](https://www.anaconda.com/).
+The easiest way to run qgs is to use an appropriate environment created through [Anaconda](https://www.anaconda.com/).
 
 First install Anaconda and clone the repository:
 
