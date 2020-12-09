@@ -132,7 +132,7 @@ Forthcoming developments
 Contributing to qgs
 -------------------
 
-If you want to contribute actively to the roadmap detailed above, please contact directly the authors.
+If you want to contribute actively to the roadmap detailed above, please contact the authors.
 
 In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the [qgs Github repository](https://github.com/Climdyn/qgs).
 
@@ -145,7 +145,7 @@ Please consider the following guidelines before submitting:
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. 
 The documentation is done with [sphinx](https://www.sphinx-doc.org/en/master/) and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
-* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some times.
+* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some time.
 
 For more information about git, Github and the pull request framework, a good source of information is the [contributing guide](https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html) of the [MITgcm](https://github.com/MITgcm/MITgcm).
 

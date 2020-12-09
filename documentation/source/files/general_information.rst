@@ -10,8 +10,8 @@ component.
 Statement of need
 -----------------
 
-Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer a good representations of the dry atmospheric dynamics :cite:`gi-OB1989`.
-The dynamics thus obtained allow to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
+Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer a good representation of the dry atmospheric dynamics :cite:`gi-OB1989`.
+The dynamics thus obtained allow one to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
 However, these models are less often considered in literature than other toy models, despite their demonstration of more realistic behavior.
 
 qgs aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model.
@@ -141,7 +141,7 @@ Forthcoming developments
 Contributing to qgs
 -------------------
 
-If you want to contribute actively to the roadmap detailed above, please contact directly the authors.
+If you want to contribute actively to the roadmap detailed above, please contact the authors.
 
 In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the `qgs Github repository <https://github.com/Climdyn/qgs>`_.
 
@@ -153,7 +153,7 @@ Please consider the following guidelines before submitting:
 * For substantial additions of code, including a test case (using `unittest`_) in the folder `model_test <../../../../model_test>`_ is recommended.
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
-* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some times.
+* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some time.
 
 For more information about git, Github and the pull request framework, a good source of information is the `contributing guide <https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html>`_ of the `MITgcm <https://github.com/MITgcm/MITgcm>`_.
 
