@@ -18,6 +18,7 @@ The lower boundary condition can be either a surface with orography or a dynamic
    files/general_information
    files/model_description
    files/technical_description
+   files/references
    files/examples
 
 Indices and tables
