@@ -67,7 +67,7 @@ However, these models are less often considered in literature, despite their dem
 For an efficient handling of the model by users, its documentation is conceived such that its equations and parameters are explained and linked to the code.
 In the future, its development will be done in a modular fashion which enables the connection of the atmosphere to various other subsystems and the use of built-in and external toolboxes.
 
-The choice to use Python was specifically made to facilitate its use in Jupyter [@jupyter] Notebooks and the multiple recent machine learning libraries that are available in this
+The choice to use Python was specifically made to facilitate its use in Jupyter Notebooks [@jupyter] and with the multiple recent machine learning libraries that are available in this
 language.
 
 # State of the field
@@ -81,10 +81,10 @@ Other software might interest the reader in need of an easy-to-use idealized atm
 * Isca: A research General Circulation Model (GCM) to simulate global dynamics. Written in Fortran and largely
         configurable with Python scripts, with internal coding changes required for non-standard cases [@Vetal2018; @Isca].
 
-`qgs` distinguishes itself from these other models by a combination of a simplified and configurable geometry, a spectral discretization, an efficient numerical implementation of the ODE system by a sparse tensor multiplication, 
-and the availability of the tangent linear and adjoint models. As such it is very suitable to quickly simulate very long time periods while capturing the most relevant dynamics of the climate system at mid-latitudes.
+`qgs` distinguishes itself from these other models by the combination of a simplified and configurable geometry, a spectral discretization, an efficient numerical implementation of the ODE system by a sparse tensor multiplication, 
+and the availability of the tangent linear and adjoint models. As such it is very suitable to quickly simulate very long time periods while capturing key aspects of the climate dynamics at mid-latitudes.
 
-The mechanically coupled atmosphere-land configuration of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to a model change [@DV2020].
+The mechanically coupled atmosphere-land configuration of `qgs` was used to test new ideas using response theory to adapt statistical postprocessing schemes to model changes [@DV2020].
 The MAOOAM model configuration of `qgs` was recently considered to perform strongly-coupled data assimilation experiments in the ocean-atmosphere system [@CBDGRV2020].
 
 # Performance
@@ -100,10 +100,10 @@ In addition, two different built-in integration modules of `qgs` have been consi
 The latter can integrate multiple trajectories simultaneously, but for the purpose of the benchmark, only one trajectory was computed with it, the other implementations being non-parallel.
 
 The results of this benchmark are depicted on \autoref{fig:benchmark} and show that `qgs`, while not the fastest implementation of MAOOAM available, is a fair competitor. 
-The time difference is in general not greater than a factor 5 and tends to be less for high-dimensional model configurations, where its integration time is 
+The time difference is in general not greater than a factor 5 and tends to be less for high-dimensional model configurations, with an integration time 
 roughly the same as the Lua implementation. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference also seems to vanish for higher-resolution model configurations.
 In any case, the parallel integrator of `qgs` can straightforwardly integrate multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
-A final remark is that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model configuration and is therefore not included in the benchmark.
+A final remark is that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model configuration (not shown).
 
 ![Computational times in seconds of different MAOOAM implementations: (a) time to compute a 10$^7$ timeunits trajectory with a low-order model configuration (36 variables). (b) time to compute a 10$^6$ timeunits trajectory with a higher-order model configuration (228 variables). \label{fig:benchmark}](timing_results.pdf)
  
