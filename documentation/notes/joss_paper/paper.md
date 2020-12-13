@@ -103,7 +103,7 @@ The results of this benchmark are depicted on \autoref{fig:benchmark} and show t
 The time difference is in general not greater than a factor 5 and tends to be less for high-dimensional model configurations, with an integration time 
 roughly the same as the Lua implementation. We note that there is also a significant difference between the parallel and non-parallel implementation of `qgs`, but this difference also seems to vanish for higher-resolution model configurations.
 In any case, the parallel integrator of `qgs` can straightforwardly integrate multiple trajectories simultaneously and therefore has an advantage over the non-parallel one (provided that multiple CPU cores are available).
-A final remark is that the initial Python version of MAOOAM (found in @MAOOAM) takes 283 minutes to integrate the low-resolution model configuration (not shown).
+A final remark is that the initial Python version of MAOOAM [found in @MAOOAM] takes 283 minutes to integrate the low-resolution model configuration (not shown).
 
 ![Computational times in seconds of different MAOOAM implementations: (a) time to compute a 10$^7$ timeunits trajectory with a low-order model configuration (36 variables). (b) time to compute a 10$^6$ timeunits trajectory with a higher-order model configuration (228 variables). \label{fig:benchmark}](timing_results.pdf)
  
