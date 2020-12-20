@@ -79,21 +79,6 @@ Additional technical information
 * qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.
 
-
-Modules
--------
-
-
-.. toctree::
-   :maxdepth: 2
-
-   technical/configuration
-   technical/inner_products
-   technical/tensors
-   technical/functions
-   technical/integrators
-   technical/misc
-
 References
 ----------
 

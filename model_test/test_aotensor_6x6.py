@@ -9,7 +9,6 @@ if base == 'model_test':
 else:
     sys.path.extend([path])
 
-
 import unittest
 import numpy as np
 
@@ -19,16 +18,15 @@ from tensors.qgtensor import QgsTensor
 
 from model_test.test_base import TestBase
 
-
 real_eps = np.finfo(np.float64).eps
 
 
-class TestAoTensor(TestBase):
+class TestAoTensor6x6(TestBase):
 
-    filename = 'test_aotensor.ref'
+    filename = 'test_aotensor_6x6.ref'
 
     def test_aotensor(self, file=None):
-        self.check_lists()
+        self.check_lists_flt()
         if file is not None:
             self.write_reference_to_file(self.folder+file+'.ref')
             self.write_values_to_file(self.folder+file+'.val')
@@ -43,8 +41,8 @@ class TestAoTensor(TestBase):
             tfunc = output_func
 
         pars = QgParams({'rr': 287.e0, 'sb': 5.6e-8})
-        pars.set_atmospheric_modes(2, 2)
-        pars.set_oceanic_modes(2, 4)
+        pars.set_atmospheric_modes(6, 6)
+        pars.set_oceanic_modes(6, 6)
 
         # Setting MAOOAM default parameters
         pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})

@@ -5,7 +5,19 @@ General Information
 qgs is a Python implementation of an atmospheric model for midlatitudes.  It
 models the dynamics of a 2-layer `quasi-geostrophic`_ (QG) channel atmosphere
 on a `beta-plane`_, coupled to a simple land or `shallow-water`_ ocean
-component. 
+component.
+
+Statement of need
+-----------------
+
+Reduced-order spectral quasi-geostrophic models of the atmosphere with a large number of modes offer a good representation of the dry atmospheric dynamics :cite:`gi-OB1989`.
+The dynamics thus obtained allow one to identify typical features of the atmospheric circulation, such as blocked and zonal circulation regimes, and low-frequency variability.
+However, these models are less often considered in literature than other toy models, despite their demonstration of more realistic behavior.
+
+qgs aims to popularize these systems by providing a fast and easy-to-use Python framework for researchers and teachers to integrate this kind of model.
+
+The choice to use Python was specifically made to facilitate its use in `Jupyter <https://jupyter.org/>`_ notebooks and the multiple recent machine learning libraries that are available in this
+language.
 
 Installation
 ------------
@@ -16,7 +28,7 @@ Installation
 
     **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
 
-The easiest way to install is through `Anaconda`_.
+The easiest way to run qgs is to use an appropriate environment created through `Anaconda`_.
 
 First install Anaconda and clone the repository: ::
 
@@ -38,7 +50,7 @@ Activating DifferentialEquations.jl optional support
 
 In addition to the qgs builtin Runge-Kutta integrator, the qgs model can alternatively be integrated with a package called `DifferentialEquations.jl <https://github.com/SciML/DifferentialEquations.jl>`_ written in `Julia <https://julialang.org/>`_, and available through the
 `diffeqpy <https://github.com/SciML/diffeqpy>`_ python package.
-The diffeqpy pakage first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
+The diffeqpy package first installation step is done by Anaconda in the qgs environment but then you must `install Julia <https://julialang.org/downloads/>`_ and follow the final manual installation instruction found in the `diffeqpy README <https://github.com/SciML/diffeqpy>`_.
 
 These can be summed up as opening a terminal and doing: ::
 
@@ -67,7 +79,7 @@ Once built, the documentation is available `here <../index.html>`_.
 Usage
 -----
 
-qgs can be used by editing and running the script found in the `main folder <../../../../>`_: ::
+qgs can be used by editing and running the script found in the main folder: ::
 
     python qgs_rp.py
 
@@ -112,7 +124,7 @@ Forthcoming developments
 
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Symbolic inner products (using e.g. `Simpy`_)
+    + Symbolic inner products (using e.g. `Sympy`_)
 
         - Arbitrary spatial mode basis of functions
         - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
@@ -125,6 +137,48 @@ Forthcoming developments
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean
+
+Contributing to qgs
+-------------------
+
+If you want to contribute actively to the roadmap detailed above, please contact the authors.
+
+In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the `qgs Github repository <https://github.com/Climdyn/qgs>`_.
+
+A review of your pull request will follow with possibly suggestions of changes before merging it in the master branch.
+Please consider the following guidelines before submitting:
+
+* Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
+* For any changes to the core model files, please check your submission by :ref:`files/general_information:Running the tests` found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid. Please do not make changes to existing test cases.
+* For substantial additions of code, including a test case (using `unittest`_) in the folder `model_test <../../../../model_test>`_ is recommended.
+* Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
+* If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
+* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some time.
+
+For more information about git, Github and the pull request framework, a good source of information is the `contributing guide <https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html>`_ of the `MITgcm <https://github.com/MITgcm/MITgcm>`_.
+
+Running the tests
+-----------------
+
+.. TODO: move this to the user guide later.
+
+The model core tensors can be tested by running `pytest`_: ::
+
+    pytest
+
+This will run all the tests and return a report. The test cases are written using `unittest`_. Additionally, test cases can be executed separately by running: ::
+
+    python -m unittest model_test/test_name.py
+
+E.g., testing the MAOOAM inner products can be done by running: ::
+
+    python -m unittest model_test/test_inner_products.py
+
+Reporting issues with the software and getting support
+------------------------------------------------------
+
+Issues can be reported and support can be asked directly on the `qgs` GitHub repository `issues page <https://github.com/Climdyn/qgs/issues/>`_.
+However, please be patient as the `qgs` team is quite small.
 
 Other atmospheric models in Python
 ----------------------------------
@@ -153,7 +207,10 @@ References
 .. _Anaconda: https://www.anaconda.com/
 .. _movie-script: https://github.com/jodemaey/movie-script
 .. _Julia: https://julialang.org/
-.. _Simpy: https://www.sympy.org/
+.. _Sympy: https://www.sympy.org/
 .. _make: https://www.gnu.org/software/make/
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
 .. _sparse: https://sparse.pydata.org/
+.. _sphinx: https://www.sphinx-doc.org/en/master/
+.. _pytest: https://docs.pytest.org/en/stable/
+.. _unittest: https://docs.python.org/3/library/unittest.html

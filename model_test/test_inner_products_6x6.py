@@ -22,9 +22,9 @@ from model_test.test_base import TestBase
 real_eps = np.finfo(np.float64).eps
 
 
-class TestAnalyticInnerProducts(TestBase):
+class TestAnalyticInnerProducts6x6(TestBase):
 
-    filename = 'test_inprod_analytic.ref'
+    filename = 'test_inprod_analytic_6x6.ref'
 
     def test_inner_products(self, file=None):
         self.check_lists()
@@ -42,8 +42,8 @@ class TestAnalyticInnerProducts(TestBase):
             tfunc = output_func
 
         pars = QgParams()
-        pars.set_atmospheric_modes(2, 2)
-        pars.set_oceanic_modes(2, 4)
+        pars.set_atmospheric_modes(6, 6)
+        pars.set_oceanic_modes(6, 6)
 
         # Setting MAOOAM default parameters
         pars.set_params({'k': 0.02, 'kp': 0.04, 'n': 1.5})

@@ -11,4 +11,5 @@ Some basic examples are available in this section
    examples/DDV
    examples/Lietal
    examples/diffeq
+   examples/tgls
 

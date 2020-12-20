@@ -1,3 +1,3 @@
 
 .. include:: diffeq_example.rst
-    :start-line: 7
+    :start-line: 13

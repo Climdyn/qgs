@@ -11,3 +11,4 @@ sparse
 julia
 diffeqpy
 sphinxcontrib-bibtex
+pytest
