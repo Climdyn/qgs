@@ -3,6 +3,7 @@ Quasi-Geostrophic Spectral model (qgs)
 ======================================
 
 [![DOI](https://zenodo.org/badge/246609584.svg)](https://zenodo.org/badge/latestdoi/246609584)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02597/status.svg)](https://doi.org/10.21105/joss.02597)
 [![Documentation Status](https://readthedocs.org/projects/qgs/badge/?version=latest)](https://qgs.readthedocs.io/en/latest/?badge=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -19,9 +20,17 @@ About
 
 (c) 2020 Jonathan Demaeyer and Lesley De Cruz
 
-Part of the code comes from the Python [MAOOAM](https://github.com/Climdyn/MAOOAM) implementation by Maxime Tondeur and Jonathan Demaeyer.
+Part of the code originates from the Python [MAOOAM](https://github.com/Climdyn/MAOOAM) implementation by Maxime Tondeur and Jonathan Demaeyer.
 
 See [LICENSE.txt](./LICENSE.txt) for license information.
+
+**Please cite the code description article if you use (a part of) this software for a publication:**
+
+* Demaeyer J., De Cruz, L. and Vannitsem, S. , (2020). qgs: A flexible Python framework of reduced-order multiscale climate models. 
+  *Journal of Open Source Software*, **5**(56), 2597,   [https://doi.org/10.21105/joss.02597](https://doi.org/10.21105/joss.02597).
+
+Please consult the qgs [code repository](http://www.github.com/Climdyn/qgs) for updates.
+
 
 Installation
 ------------
