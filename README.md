@@ -18,7 +18,7 @@ atmosphere on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane), coupled 
 About
 -----
 
-(c) 2020 Jonathan Demaeyer and Lesley De Cruz
+(c) 2020 qgs Developers and Contributors
 
 Part of the code originates from the Python [MAOOAM](https://github.com/Climdyn/MAOOAM) implementation by Maxime Tondeur and Jonathan Demaeyer.
 
