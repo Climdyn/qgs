@@ -71,10 +71,10 @@ T = time.process_time()
 # Model parameters instantiation with default specs
 model_parameters = QgParams()
 # Mode truncation at the wavenumber 2 in both x and y spatial coordinate
-model_parameters.set_atmospheric_modes(2, 2)
+model_parameters.set_atmospheric_channel_fourier_modes(2, 2)
 # Mode truncation at the wavenumber 2 in the x and at the
 # wavenumber 4 in the y spatial coordinates for the ocean
-model_parameters.set_oceanic_modes(2, 4)
+model_parameters.set_oceanic_basin_fourier_modes(2, 4)
 
 # Setting MAOOAM parameters according to the publication linked above
 model_parameters.set_params({'kd': 0.0290, 'kdp': 0.0290, 'n': 1.5, 'r': 1.e-7,

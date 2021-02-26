@@ -5,6 +5,7 @@ numba
 numpy
 python>=3.8
 scipy
+sympy
 sphinx
 sphinx_rtd_theme
 sparse

@@ -18,6 +18,7 @@ The lower boundary condition can be either a surface with orography or a dynamic
    files/general_information
    files/model_description
    files/technical_description
+   files/user_guide
    files/references
    files/examples
 
@@ -38,7 +39,8 @@ qgs is licensed under the `MIT`_ license:
 
    The MIT License (MIT)
 
-   Copyright (c) 2020 Jonathan Demaeyer and Lesley De Cruz
+   Copyright (c) 2020 qgs Developers and Contributors
+
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

@@ -30,7 +30,7 @@
     Warning
     -------
 
-    If a parameter is set to `None`, it is assumed to be disabled.
+    If a model's parameter is set to `None`, it is assumed to be disabled.
 
 
     ---------------------
@@ -41,14 +41,17 @@
     .. _nondimentionalize: https://en.wikipedia.org/wiki/Nondimensionalization
 """
 
-# TODO : - load and save function (pickle)
-#        -
-
 import numpy as np
+import pickle
+import warnings
+from abc import ABC
+
 from params.parameter import Parameter
+from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+from basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
 
-class Params(object):
+class Params(ABC):
     """Base class for a model's parameters container.
 
     Parameters
@@ -127,9 +130,84 @@ class Params(object):
         """Print the parameters contained in the container."""
         print(self._list_params())
 
+    @staticmethod
+    def create_params_array(values, input_dimensional=None, units=None, scale_object=None, description=None,
+                            return_dimensional=None):
+
+        if hasattr(values, "__iter__"):
+            ls = len(values)
+            if not isinstance(input_dimensional, list):
+                if input_dimensional is None:
+                    input_dimensional = True
+                idx = ls * [input_dimensional]
+            else:
+                idx = input_dimensional
+            if not isinstance(units, list):
+                if units is None:
+                    units = ""
+                u = ls * [units]
+            else:
+                u = units
+            if not isinstance(description, list):
+                if description is None:
+                    description = ""
+                d = ls * [description]
+            else:
+                d = description
+            if not isinstance(scale_object, list):
+                s = ls * [scale_object]
+            else:
+                s = scale_object
+            if not isinstance(return_dimensional, list):
+                if return_dimensional is None:
+                    return_dimensional = False
+                rd = ls * [return_dimensional]
+            else:
+                rd = return_dimensional
+            arr = list()
+            for i, val in enumerate(values):
+                arr.append(Parameter(val, input_dimensional=idx[i], units=u[i], scale_object=s[i], description=d[i],
+                                     return_dimensional=rd[i]))
+        else:
+            arr = values * [Parameter(0.e0, input_dimensional=input_dimensional, units=units, scale_object=scale_object,
+                                      description=description, return_dimensional=return_dimensional)]
+
+        return np.array(arr, dtype=object)
+
     def __repr__(self):
         s = super(Params, self).__repr__()+"\n"+self._list_params()
         return s
+
+    def load_from_file(self, filename, **kwargs):
+        """Function to load previously saved Params object with the method :meth:`save_to_file`.
+
+        Parameters
+        ----------
+        filename: str
+            The file name where the Params object was saved.
+        kwargs: dict
+            Keyword arguments to pass to the :mod:`pickle` module method.
+        """
+        f = open(filename, 'rb')
+        tmp_dict = pickle.load(f, **kwargs)
+        f.close()
+
+        self.__dict__.clear()
+        self.__dict__.update(tmp_dict)
+
+    def save_to_file(self, filename, **kwargs):
+        """Function to save the Params object to a file with the :mod:`pickle` module.
+
+        Parameters
+        ----------
+        filename: str
+            The file name where to save the Params object.
+        kwargs: dict
+            Keyword arguments to pass to the :mod:`pickle` module method.
+        """
+        f = open(filename, 'wb')
+        pickle.dump(self.__dict__, f, **kwargs)
+        f.close()
 
 
 class ScaleParams(Params):
@@ -151,7 +229,7 @@ class ScaleParams(Params):
     rra: Parameter
         Earth radius, in meters [:math:`m`].
     phi0_npi: Parameter
-        Latitude exprimed in fraction of :math:`\pi` .
+        Latitude expressed in fraction of :math:`\pi` .
     deltap: Parameter
         Difference of pressure between the center of the two atmospheric layers, in [:math:`Pa`].
     """
@@ -171,7 +249,7 @@ class ScaleParams(Params):
                             return_dimensional=True)
         self.n = Parameter(1.3e0, input_dimensional=False, description="aspect ratio (n = 2 L_y / L_x)")
         self.rra = Parameter(6370.e3, units='[m]', description="earth radius", return_dimensional=True)
-        self.phi0_npi = Parameter(0.25e0, input_dimensional=False, description="latitude exprimed in fraction of pi")
+        self.phi0_npi = Parameter(0.25e0, input_dimensional=False, description="latitude expressed in fraction of pi")
         self.deltap = Parameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
                                 return_dimensional=True)
         self.set_params(dic)
@@ -226,9 +304,9 @@ class AtmosphericParams(Params):
 
     Attributes
     ----------
-    k: Parameter
+    kd: Parameter
         Atmosphere bottom friction coefficient [:math:`s^{-1}`].
-    kp: Parameter
+    kdp: Parameter
         Atmosphere internal friction coefficient [:math:`s^{-1}`].
     sigma: Parameter
         Static stability of the atmosphere [:math:`[m^2 s^{-2} Pa^{-2}`].
@@ -254,6 +332,7 @@ class AtmosphericParams(Params):
 
     @property
     def sig0(self):
+        """Parameter: Static stability of the atmosphere divided by 2."""
         return Parameter(self.sigma / 2, input_dimensional=False, scale_object=self._scale_params, units='[m^2][s^-2][Pa^-2]',
                          description="0.5 * static stability of the atmosphere")
 
@@ -270,23 +349,30 @@ class AtmosphericTemperatureParams(Params):
 
     Attributes
     ----------
-    hd: Parameter
+    hd: None or Parameter
         Newtonian cooling coefficient.
-        Used if an orography is provided.
-    thetas: ~numpy.ndarray(float)
+        Newtonian cooling is disabled if `None`.
+    thetas: None or ~numpy.ndarray(float)
         Coefficients of the Newtonian cooling spectral decomposition (non-dimensional).
-    gamma: Parameter
+        Newtonian cooling is disabled if `None`.
+    gamma: None or Parameter
         Specific heat capacity of the atmosphere [:math:`J m^{-2} K^{-1}`].
-    C: ~numpy.ndarray(Parameter)
+        Heat exchange scheme is disabled if `None`.
+    C: None or ~numpy.ndarray(Parameter)
         Spectral decomposition of the constant short-wave radiation of the atmosphere [:math:`W m^{-2}`].
-    eps: Parameter
+        Heat exchange scheme is disabled if `None`.
+    eps: None or Parameter
         Emissivity coefficient for the grey-body atmosphere
-    T0: Parameter
+        Heat exchange scheme is disabled if `None`.
+    T0: None or Parameter
         Stationary solution for the 0-th order atmospheric temperature [:math:`K`].
-    sc: Parameter
+        Heat exchange scheme is disabled if `None`.
+    sc: None or Parameter
         Ratio of surface to atmosphere temperature
-    hlambda: Parameter
+        Heat exchange scheme is disabled if `None`.
+    hlambda: None or Parameter
         Sensible + turbulent heat exchange between ocean and atmosphere [:math:`W m^{-2} K^{-1}`].
+        Heat exchange scheme is disabled if `None`.
     """
     _name = "Atmospheric Temperature"
 
@@ -315,9 +401,10 @@ class AtmosphericTemperatureParams(Params):
 
         Parameters
         ----------
-        value: float, int or ~numpy.ndarray(Parameter)
+        value: float, int or iterable
             Value to set. If a scalar is given, the `pos` parameter should be provided to indicate which component to set.
-        pos: int
+            If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
+        pos: int, optional
             Indicate in which component to set the `value`.
         """
 
@@ -325,18 +412,36 @@ class AtmosphericTemperatureParams(Params):
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere",
                                     return_dimensional=True)
-        elif isinstance(value, np.ndarray):
-            self.C = value
+        elif hasattr(value, "__iter__"):
+            self._create_insolation(value)
+        else:
+            warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
+                          'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
+                          'Please specify it or give a vector as `value`.')
+
+    def _create_insolation(self, values):
+
+        if hasattr(values, "__iter__"):
+            dim = len(values)
+        else:
+            dim = values
+            values = dim * [0.]
+
+        d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
+
+        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                          description=d, return_dimensional=True)
 
     def set_thetas(self, value, pos=None):
-        """Function to define the spectral decomposition of the Newtonian cooling.
-         :math:`\\theta^\\star` (:attr:`~.AtmosphericTemperatureParams.thetas`).
+        """Function to define the spectral decomposition of the Newtonian cooling
+        :math:`\\theta^\\star` (:attr:`~.AtmosphericTemperatureParams.thetas`).
 
         Parameters
         ----------
-        value: float, int or ~numpy.ndarray(Parameter)
+        value: float, int or iterable
             Value to set. If a scalar is given, the `pos` parameter should be provided to indicate which component to set.
-        pos: int
+            If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
+        pos: int, optional
             Indicate in which component to set the `value`.
         """
 
@@ -344,8 +449,25 @@ class AtmosphericTemperatureParams(Params):
             self.thetas[pos] = Parameter(value, scale_object=self._scale_params,
                                          description="spectral components "+str(pos+1)+" of the temperature profile",
                                          return_dimensional=False, input_dimensional=False)
-        elif isinstance(value, np.ndarray):
-            self.thetas = value
+        elif hasattr(value, "__iter__"):
+            self._create_thetas(value)
+        else:
+            warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
+                          'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
+                          'Please specify it or give a vector as `value`.')
+
+    def _create_thetas(self, values):
+
+        if hasattr(values, "__iter__"):
+            dim = len(values)
+        else:
+            dim = values
+            values = dim * [0.]
+
+        d = ["spectral component "+str(pos+1)+" of the temperature profile" for pos in range(dim)]
+
+        self.thetas = self.create_params_array(values, scale_object=self._scale_params,
+                                               description=d, return_dimensional=False, input_dimensional=False)
 
 
 class OceanicParams(Params):
@@ -401,12 +523,15 @@ class OceanicTemperatureParams(Params):
 
     Attributes
     ----------
-    gamma: Parameter
+    gamma: None or Parameter
         Specific heat capacity of the ocean [:math:`J m^{-2} K^{-1}`].
-    C: ~numpy.ndarray(Parameter)
+        Heat exchange scheme is disabled if `None`.
+    C: None or ~numpy.ndarray(Parameter)
         Spectral Decomposition of the constant short-wave radiation of the ocean [:math:`W m^{-2}`].
-    T0: Parameter
+        Heat exchange scheme is disabled if `None`.
+    T0: None or Parameter
         Stationary solution for the 0-th order oceanic temperature [:math:`K`].
+        Heat exchange scheme is disabled if `None`.
     """
 
     _name = "Oceanic Temperature"
@@ -432,9 +557,10 @@ class OceanicTemperatureParams(Params):
 
         Parameters
         ----------
-        value: float, int or ~numpy.ndarray(Parameter)
+        value: float, int or iterable
             Value to set. If a scalar is given, the `pos` parameter should be provided to indicate which component to set.
-        pos: int
+            If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
+        pos: int, optional
             Indicate in which component to set the `value`.
         """
 
@@ -442,8 +568,25 @@ class OceanicTemperatureParams(Params):
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+1)+" of the short-wave radiation of the ocean",
                                     return_dimensional=True)
-        elif isinstance(value, np.ndarray):
-            self.C = value
+        elif hasattr(value, "__iter__"):
+            self._create_insolation(value)
+        else:
+            warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
+                          'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
+                          'Please specify it or give a vector as `value`.')
+
+    def _create_insolation(self, values):
+
+        if hasattr(values, "__iter__"):
+            dim = len(values)
+        else:
+            dim = values
+            values = dim * [0.]
+
+        d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the ocean" for pos in range(dim)]
+
+        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                 description=d, return_dimensional=True)
 
 
 class GroundParams(Params):
@@ -458,8 +601,12 @@ class GroundParams(Params):
 
     Attributes
     ----------
-    hk: ~numpy.ndarray(float)
+    hk: None or ~numpy.ndarray(float)
         Orography spectral decomposition coefficients (non-dimensional), an array of shape (:attr:`~QgParams.nmod` [0],).
+        Orography is disabled (flat) if `None`.
+    orographic_basis: str
+        String to select which component basis modes to use to develop the orography in series.
+        Can be either 'atmospheric' or 'ground'. Default to 'atmospheric'.
     """
     _name = "Ground"
 
@@ -471,17 +618,20 @@ class GroundParams(Params):
 
         self.hk = None  # spectral orography coefficients
 
+        self.orographic_basis = "atmospheric"
+
         self.set_params(dic)
 
     def set_orography(self, value, pos=None):
         """Function to define the spectral decomposition of the orography profile
-         :math:`h_k` (:attr:`~.GroundParams.hk`).
+        :math:`h_k` (:attr:`~.GroundParams.hk`).
 
         Parameters
         ----------
-        value: float, int or ~numpy.ndarray(Parameter)
+        value: float, int or iterable
             Value to set. If a scalar is given, the `pos` parameter should be provided to indicate which component to set.
-        pos: int
+            If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
+        pos: int, optional
             Indicate in which component to set the `value`.
         """
 
@@ -489,8 +639,25 @@ class GroundParams(Params):
             self.hk[pos] = Parameter(value, scale_object=self._scale_params,
                                      description="spectral components "+str(pos+1)+" of the orography",
                                      return_dimensional=False, input_dimensional=False)
-        elif isinstance(value, np.ndarray):
-            self.hk = value
+        elif hasattr(value, "__iter__"):
+            self._create_orography(value)
+        else:
+            warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
+                          'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
+                          'Please specify it or give a vector as `value`.')
+
+    def _create_orography(self, values):
+
+        if hasattr(values, "__iter__"):
+            dim = len(values)
+        else:
+            dim = values
+            values = dim * [0.]
+
+        d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
+
+        self.hk = self.create_params_array(values, scale_object=self._scale_params,
+                                           description=d, return_dimensional=False, input_dimensional=False)
 
 
 class GroundTemperatureParams(Params):
@@ -505,12 +672,15 @@ class GroundTemperatureParams(Params):
 
     Attributes
     ----------
-    gamma: Parameter
+    gamma: None or Parameter
         Specific heat capacity of the ground [:math:`J m^{-2} K^{-1}`].
-    C: ~numpy.ndarray(Parameter)
+        Heat exchange scheme is disabled if `None`.
+    C: None or ~numpy.ndarray(Parameter)
         Spectral decomposition of the constant short-wave radiation of the ground [:math:`W m^{-2}`].
-    T0: Parameter
+        Heat exchange scheme is disabled if `None`.
+    T0: None or Parameter
         Stationary solution for the 0-th order ground temperature [:math:`K`].
+        Heat exchange scheme is disabled if `None`.
     """
 
     _name = "Ground Temperature"
@@ -536,9 +706,10 @@ class GroundTemperatureParams(Params):
 
         Parameters
         ----------
-        value: float, int or ~numpy.ndarray(Parameter)
+        value: float, int or iterable
             Value to set. If a scalar is given, the `pos` parameter should be provided to indicate which component to set.
-        pos: int
+            If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
+        pos: int, optional
             Indicate in which component to set the `value`.
         """
 
@@ -546,57 +717,100 @@ class GroundTemperatureParams(Params):
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+1)+" of the short-wave radiation of the ground",
                                     return_dimensional=True)
-        elif isinstance(value, np.ndarray):
-            self.C = value
+        elif hasattr(value, "__iter__"):
+            self._create_insolation(value)
+        else:
+            warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
+                          'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
+                          'Please specify it or give a vector as `value`.')
+
+    def _create_insolation(self, values):
+
+        if hasattr(values, "__iter__"):
+            dim = len(values)
+        else:
+            dim = values
+            values = dim * [0.]
+
+        d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the ground" for pos in range(dim)]
+
+        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                          description=d, return_dimensional=True)
 
 
 class QgParams(Params):
-    """General qgs parameters container
+    """General qgs parameters container.
 
     Parameters
     ----------
     dic: dict(float or Parameter), optional
         A dictionary with the parameters names and values to be assigned.
-    scale_params: ScaleParams
+    scale_params: None or ScaleParams, optional
         Scale parameters instance.
-    atmospheric_params: AtmosphericParams
+        If `None`, create a new ScaleParams instance. Default to None.
+        Default to `None`.
+    atmospheric_params: bool, None or AtmosphericParams, optional
         Atmospheric parameters instance.
-    atemperature_params: AtmosphericTemperatureParams
+        If 'True`, create a new AtmosphericParams instance.
+        If `None`, atmospheric parameters are disabled.
+        Default to `True`.
+    atemperature_params: bool, None or AtmosphericTemperatureParams, optional
         Atmospheric temperature parameters instance.
-    oceanic_params: OceanicParams
-         Oceanic parameters instance.
-    otemperature_params: OceanicTemperatureParams
-         Oceanic temperature parameters instance.
-    ground_params: GroundParams
-         Ground parameters instance.
-    gtemperature_params: GroundTemperatureParams
-         Ground temperature parameters instance.
+        If 'True`, create a new AtmosphericTemperatureParams instance.
+        If `None`, atmospheric temperature parameters are disabled.
+        Default to `True`.
+    oceanic_params: bool, None or OceanicParams, optional
+        Oceanic parameters instance.
+        If 'True`, create a new OceanicParams instance.
+        If `None`, oceanic parameters are disabled.
+        Default to `None`.
+    otemperature_params: bool, None or OceanicTemperatureParams, optional
+        Oceanic temperature parameters instance.
+        If 'True`, create a new OceanicTemperatureParams instance.
+        If `None`, oceanic temperature parameters are disabled.
+        Default to `None`.
+    ground_params: bool, None or GroundParams, optional
+        Ground parameters instance.
+        If 'True`, create a new GroundParams instance.
+        If `None`, ground parameters are disabled.
+        Default to `True`.
+    gtemperature_params: bool, None or GroundTemperatureParams, optional
+        Ground temperature parameters instance.
+        If 'True`, create a new GroundTemperatureParams instance.
+        If `None`, ground temperature parameters are disabled.
+        Default to `None`.
 
     Attributes
     ----------
     scale_params: ScaleParams
         Scale parameters instance.
-    atmospheric_params: AtmosphericParams
+    atmospheric_params: None or AtmosphericParams
         Atmospheric parameters instance.
-    atemperature_params: AtmosphericTemperatureParams
+        If `None`, atmospheric parameters are disabled.
+    atemperature_params: None or AtmosphericTemperatureParams
         Atmospheric temperature parameters instance.
-    oceanic_params: OceanicParams
+        If `None`, atmospheric temperature parameters are disabled.
+    oceanic_params: None or OceanicParams
         Oceanic parameters instance.
-    ground_params: GroundParams
+        If `None`, oceanic parameters are disabled.
+    ground_params: None or GroundParams
         Ground parameters instance
-    gotemperature_params: OceanicTemperatureParams or GroundTemperatureParams
-         Ground or Oceanic temperature parameters instance.
+        If `None`, ground parameters are disabled.
+    gotemperature_params: None, OceanicTemperatureParams or GroundTemperatureParams
+        Ground or Oceanic temperature parameters instance.
+        If `None`, ground and oceanic temperature parameters are disabled.
     time_unit: float
         Dimensional unit of time to be used to represent the data.
     rr: Parameter
         `Gas constant`_ of `dry air`_ in [:math:`J \, kg^{-1} \, K^{-1}`].
     sb: float
-        `Stefan-Boltzmann constant`_ in [:math:`J \, m^{-2} \, s^{-1} \, K^{-4}`]
+        `Stefan-Boltzmann constant`_ in [:math:`J \, m^{-2} \, s^{-1} \, K^{-4}`].
 
 
     .. _Gas constant: https://en.wikipedia.org/wiki/Gas_constant
     .. _dry air: https://en.wikipedia.org/wiki/Gas_constant#Specific_gas_constant
     .. _Stefan-Boltzmann constant: https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_constant
+
     """
     _name = "General"
 
@@ -645,12 +859,17 @@ class QgParams(Params):
         else:
             self.gotemperature_params = gtemperature_params
 
+        self._atmospheric_basis = None
+        self._oceanic_basis = None
+        self._ground_basis = None
         self._number_of_dimensions = 0
+
         self._number_of_atmospheric_modes = 0
         self._number_of_oceanic_modes = 0
         self._number_of_ground_modes = 0
         self._ams = None
-        self._goms = None
+        self._oms = None
+        self._gms = None
 
         self._atmospheric_latex_var_string = list()
         self._atmospheric_var_string = list()
@@ -887,56 +1106,87 @@ class QgParams(Params):
             return [self._number_of_atmospheric_modes, self._number_of_ground_modes]
 
     @property
-    def ablocks(self):
-        """~numpy.ndarray(int): Spectral blocks detailing the model's atmospheric modes x- and y-wavenumber.
-         Array of shape (:attr:`~QgParams.nmod` [0], 2)."""
-        return self._ams
+    def var_string(self):
+        """list(str): List of model's variable names."""
+        ls = list()
+        for var in self._atmospheric_var_string+self._oceanic_var_string+self._ground_var_string:
+            ls.append(var)
 
-    @ablocks.setter
-    def ablocks(self, value):
-        self._ams = value
-
-        namod = 0
-        for i in range(self.ablocks.shape[0]):
-            if self.ablocks[i, 0] == 1:
-                namod += 3
-            else:
-                namod += 2
-
-        self._number_of_atmospheric_modes = namod
-        self._number_of_dimensions = 2 * (namod + self._number_of_oceanic_modes)
-
-        self.ground_params.hk = np.array(namod * [Parameter(0.e0, scale_object=self.scale_params,
-                                         description="spectral components of the orography",
-                                         return_dimensional=False, input_dimensional=False)], dtype=object)
-        self.ground_params.set_orography(0.1, 1)
-        if self.atemperature_params is not None:
-            self.atemperature_params.thetas = np.array(namod * [Parameter(0.e0, scale_object=self.scale_params,
-                                                                          description="spectral components of the temperature profile",
-                                                                          return_dimensional=False, input_dimensional=False)], dtype=object)
-            self.atemperature_params.set_thetas(0.1, 0)
+        return ls
 
     @property
-    def goblocks(self):
-        """~numpy.ndarray(int): Spectral blocks detailing the model's oceanic modes x- and y-wavenumber.
-         Array of shape (:attr:`~QgParams.nmod` [1], 2)."""
-        return self._goms
+    def latex_var_string(self):
+        """list(str): List of model's variable names, ready for use in latex."""
+        ls = list()
+        for var in self._atmospheric_latex_var_string+self._oceanic_latex_var_string+self._ground_latex_var_string:
+            ls.append(r'{\ '[0:-1] + var + r'}')
 
-    @goblocks.setter
-    def goblocks(self, value):
-        self._goms = value
+        return ls
+
+    @property
+    def dimensional_time(self):
+        """float: Return the conversion factor between the non-dimensional time and the dimensional time unit specified
+        in :attr:`.time_unit`"""
+        c = 24 * 3600
+        if self.time_unit == 'hours':
+            c = 3600
+        if self.time_unit == 'days':
+            c = 24 * 3600
+        if self.time_unit == 'years':
+            c = 24 * 3600 * 365
+        return 1 / (self.scale_params.f0 * c)
+
+    # -------------------------------------------------------------------
+    # Config setters to be used with symbolic inner products
+    # -------------------------------------------------------------------
+
+    @property
+    def atmospheric_basis(self):
+        """Basis: The atmospheric basis of functions used to project the PDEs onto."""
+        return self._atmospheric_basis
+
+    @atmospheric_basis.setter
+    def atmospheric_basis(self, basis):
+        self._ams = None
+        self._oms = None
+        self._gms = None
+
+        self._atmospheric_basis = basis
+        self._number_of_atmospheric_modes = len(basis.functions)
+        self._number_of_dimensions = 2 * self._number_of_atmospheric_modes
+        if self._number_of_oceanic_modes != 0:
+            self._number_of_dimensions += 2 * self._number_of_oceanic_modes
+        if self._number_of_ground_modes != 0:
+            self._number_of_dimensions += self._number_of_ground_modes
+
+        if self.ground_params is not None and self.ground_params.orographic_basis == "atmospheric_basis":
+            self.ground_params.set_orography(self._number_of_atmospheric_modes * [0.e0])
+
+        if self.atemperature_params is not None:
+            self.atemperature_params.set_thetas(self._number_of_atmospheric_modes * [0.e0])
+
+    @property
+    def oceanic_basis(self):
+        """Basis: The oceanic basis of functions used to project the PDEs onto."""
+        return self._oceanic_basis
+
+    @oceanic_basis.setter
+    def oceanic_basis(self, basis):
+        self._ams = None
+        self._oms = None
+        self._gms = None
+
+        self._oceanic_basis = basis
 
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
-            self.atemperature_params.thetas = None  # np.zeros(self.nmod[0])
-            self.atemperature_params.hd = None  # Parameter(0.0, input_dimensional=False)
+            self.atemperature_params.thetas = None
+            self.atemperature_params.hd = None
 
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
                                                        return_dimensional=True)
-            self.atemperature_params.C = np.array(self.nmod[0] * [Parameter(0.e0, units='[W][m^-2]', scale_object=self.scale_params,
-                                                                         description="spectral components of the short-wave radiation of the atmosphere",
-                                                                         return_dimensional=True)], dtype=object)
+            self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.atemperature_params.set_insolation(100.0, 0)
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
                                                      description="emissivity coefficient for the grey-body atmosphere")
@@ -950,42 +1200,72 @@ class QgParams(Params):
                                                          description="sensible+turbulent heat exchange between ocean and atmosphere")
 
         if self.gotemperature_params is not None:
+            self._number_of_ground_modes = 0
+            self._number_of_oceanic_modes = len(basis)
+            self._number_of_dimensions = 2 * self._number_of_atmospheric_modes + 2 * self._number_of_oceanic_modes
+            self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.gotemperature_params.set_insolation(350.0, 0)
             # if setting an ocean, then disable the orography
-            if self.gotemperature_params._name == "Oceanic Temperature":
-                self._number_of_ground_modes = 0
-                self._number_of_oceanic_modes = self.goblocks.shape[0]
-                self._number_of_dimensions = 2 * (self._number_of_oceanic_modes + self._number_of_atmospheric_modes)
+            if self.ground_params is not None:
                 self.ground_params.hk = None
-                self.gotemperature_params.C = np.array(self.nmod[1] * [Parameter(0.e0, units='[W][m^-2]', scale_object=self.scale_params,
-                                                                                 return_dimensional=True,
-                                                                                 description="spectral components of the short-wave radiation of the ocean")],
-                                                       dtype=object)
-            else:
-                nomod = 0
-                for i in range(self.goblocks.shape[0]):
-                    if self.ablocks[i, 0] == 1:
-                        nomod += 3
-                    else:
-                        nomod += 2
-                self._number_of_ground_modes = nomod
-                self._number_of_oceanic_modes = 0
-                self._number_of_dimensions = 2 * self._number_of_atmospheric_modes + self._number_of_ground_modes
-                self.gotemperature_params.C = np.array(self.nmod[1] * [Parameter(0.e0, units='[W][m^-2]', scale_object=self.scale_params,
-                                                                                 return_dimensional=True,
-                                                                                 description="spectral components of the short-wave radiation of the ground")],
-                                                       dtype=object)
-                self.gotemperature_params.set_insolation(350.0, 0)
 
-    def set_atmospheric_modes(self, nxmax, nymax, auto=False):
-        """Function to configure contiguous spectral blocks of atmospheric modes.
+    @property
+    def ground_basis(self):
+        """Basis: The ground basis of functions used to project the PDEs onto."""
+        return self._ground_basis
+
+    @ground_basis.setter
+    def ground_basis(self, basis):
+        self._ams = None
+        self._oms = None
+        self._gms = None
+
+        self._ground_basis = basis
+
+        if self.atemperature_params is not None:
+            # disable the Newtonian cooling
+            self.atemperature_params.thetas = None
+            self.atemperature_params.hd = None
+
+            self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
+                                                       description='specific heat capacity of the atmosphere',
+                                                       return_dimensional=True)
+            self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.atemperature_params.set_insolation(100.0, 0)
+            self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
+                                                     description="emissivity coefficient for the grey-body atmosphere")
+            self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
+                                                    return_dimensional=True,
+                                                    description="stationary solution for the 0-th order atmospheric temperature")
+            self.atemperature_params.sc = Parameter(1., input_dimensional=False,
+                                                    description="ratio of surface to atmosphere temperature")
+            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
+                                                         return_dimensional=True,
+                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+
+        if self.gotemperature_params is not None:
+            self._number_of_ground_modes = len(basis)
+            self._number_of_oceanic_modes = 0
+            self._number_of_dimensions = 2 * self._number_of_atmospheric_modes + 2 * self._number_of_oceanic_modes
+            # if orography is disabled, enable it!
+            if self.ground_params is not None:
+                if self.ground_params.hk is None:
+                    if self.ground_params.orographic_basis == 'atmospheric':
+                        self.ground_params.set_orography(self._number_of_atmospheric_modes * [0.e0])
+                    else:
+                        self.ground_params.set_orography(self._number_of_ground_modes * [0.e0])
+                    self.ground_params.set_orography(0.1, 1)
+            self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.gotemperature_params.set_insolation(350.0, 0)
+
+    def set_atmospheric_modes(self, basis, auto=False):
+        """Function to configure the atmospheric modes (basis functions) used to project the PDEs onto.
 
         Parameters
         ----------
-        nxmax: int
-            Maximum x-wavenumber to fill the spectral block up to.
-        nymax: int
-            Maximum y-wavenumber to fill the spectral block up to.
-        auto: bool
+        basis: Basis
+            Basis object containing the definition of the atmospheric modes.
+        auto: bool, optional
             Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
             Default is False.
 
@@ -993,14 +1273,405 @@ class QgParams(Params):
         --------
 
         >>> from params.params import QgParams
+        >>> from basis.fourier import contiguous_channel_basis
         >>> q = QgParams()
-        >>> q.set_atmospheric_modes(2,2)
+        >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
+        >>> q.set_atmospheric_modes(atm_basis)
+        >>> q.atmospheric_basis
+        [sqrt(2)*cos(y), 2*sin(y)*cos(n*x), 2*sin(y)*sin(n*x), sqrt(2)*cos(2*y), 2*sin(2*y)*cos(n*x), 2*sin(2*y)*sin(n*x), 2*sin(y)*cos(2*n*x), 2*sin(y)*sin(2*n*x), 2*sin(2*y)*cos(2*n*x), 2*sin(2*y)*sin(2*n*x)]
+
+        """
+
+        if auto:
+            if self.atemperature_params is None:
+                self.atemperature_params = AtmosphericTemperatureParams(self.scale_params)
+            if self.atmospheric_params is None:
+                self.atmospheric_params = AtmosphericParams(self.scale_params)
+
+        self.atmospheric_basis = basis
+
+        self._atmospheric_latex_var_string = list()
+        self._atmospheric_var_string = list()
+        for i in range(self.nmod[0]):
+            self._atmospheric_latex_var_string.append(r'psi_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_var_string.append(r'psi_a_' + str(i + 1))
+        for i in range(self.nmod[0]):
+            self._atmospheric_latex_var_string.append(r'theta_{\rm a,' + str(i + 1) + "}")
+            self._atmospheric_var_string.append(r'theta_a_' + str(i + 1))
+
+    def set_oceanic_modes(self, basis, auto=True):
+        """Function to configure the oceanic modes (basis functions) used to project the PDEs onto.
+
+        Parameters
+        ----------
+        basis: Basis
+            Basis object containing the definition of the oceanic modes.
+        auto: bool, optional
+            Automatically instantiate or not the parameters container needed to describe the oceanic models parameters.
+            Default is True.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+        >>> q = QgParams()
+        >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
+        >>> oc_basis = contiguous_basin_basis(2, 4, 1.5)
+        >>> q.set_atmospheric_modes(atm_basis)
+        >>> q.set_oceanic_modes(oc_basis)
+        >>> q.oceanic_basis
+        [2*sin(y)*sin(0.5*n*x), 2*sin(2*y)*sin(0.5*n*x), 2*sin(3*y)*sin(0.5*n*x), 2*sin(4*y)*sin(0.5*n*x), 2*sin(y)*sin(1.0*n*x), 2*sin(2*y)*sin(1.0*n*x), 2*sin(3*y)*sin(1.0*n*x), 2*sin(4*y)*sin(1.0*n*x)]
+
+        """
+        if self._atmospheric_basis is None:  # Presently, the ocean can not yet be set independently of an atmosphere.
+            print('Atmosphere modes not set up. Add an atmosphere before adding an ocean!')
+            print('Oceanic setup aborted.')
+            return
+
+        if auto:
+            if self.gotemperature_params is None or isinstance(self.gotemperature_params, GroundTemperatureParams):
+                self.gotemperature_params = OceanicTemperatureParams(self.scale_params)
+            if self.oceanic_params is None:
+                self.oceanic_params = OceanicParams(self.scale_params)
+
+            self.ground_params = None
+
+        self.oceanic_basis = basis
+
+        self._oceanic_latex_var_string = list()
+        self._oceanic_var_string = list()
+        self._ground_latex_var_string = list()
+        self._ground_var_string = list()
+        for i in range(self.nmod[1]):
+            self._oceanic_latex_var_string.append(r'psi_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_var_string.append(r'psi_o_' + str(i + 1))
+        for i in range(self.nmod[1]):
+            self._oceanic_latex_var_string.append(r'theta_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_var_string.append(r'theta_o_' + str(i + 1))
+
+    def set_ground_modes(self, basis=None, auto=True):
+        """Function to configure the ground modes (basis functions) used to project the PDEs onto.
+
+        Parameters
+        ----------
+        basis: None or Basis, optional
+            Basis object containing the definition of the ground modes. If `None`, use the basis of the atmosphere.
+            Default to `None`.
+        auto: bool, optional
+            Automatically instantiate or not the parameters container needed to describe the ground models parameters.
+            Default is True.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+        >>> q = QgParams()
+        >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
+        >>> q.set_atmospheric_modes(atm_basis)
+        >>> q.set_ground_modes()
+        >>> q.ground_basis
+        [sqrt(2)*cos(y), 2*sin(y)*cos(n*x), 2*sin(y)*sin(n*x), sqrt(2)*cos(2*y), 2*sin(2*y)*cos(n*x), 2*sin(2*y)*sin(n*x), 2*sin(y)*cos(2*n*x), 2*sin(y)*sin(2*n*x), 2*sin(2*y)*cos(2*n*x), 2*sin(2*y)*sin(2*n*x)]
+        """
+        if self._atmospheric_basis is None:  # Presently, the ground can not yet be set independently of an atmosphere.
+            print('Atmosphere modes not set up. Add an atmosphere before adding the ground!')
+            print('Ground setup aborted.')
+            return
+
+        if auto:
+            if self.gotemperature_params is None or isinstance(self.gotemperature_params, OceanicTemperatureParams):
+                self.gotemperature_params = GroundTemperatureParams(self.scale_params)
+            if self.ground_params is None:
+                self.ground_params = GroundParams(self.scale_params)
+
+            self.oceanic_params = None
+
+        if basis is not None:
+            self.ground_basis = basis
+        else:
+            self.ground_basis = self._atmospheric_basis
+
+        self._oceanic_var_string = list()
+        self._oceanic_latex_var_string = list()
+        self._ground_latex_var_string = list()
+        self._ground_var_string = list()
+        for i in range(self.nmod[1]):
+            self._ground_latex_var_string.append(r'theta_{\rm g,' + str(i + 1) + "}")
+            self._ground_var_string.append(r'theta_g_' + str(i + 1))
+
+    # -------------------------------------------------------------------
+    # Specific basis setters
+    # -------------------------------------------------------------------
+
+    def set_atmospheric_channel_fourier_modes(self, nxmax, nymax, auto=False, mode='analytic'):
+        """Function to configure and set the basis for contiguous spectral blocks of atmospheric modes on a channel.
+
+        Parameters
+        ----------
+        nxmax: int
+            Maximum x-wavenumber to fill the spectral block up to.
+        nymax: int
+            Maximum :math:`y`-wavenumber to fill the spectral block up to.
+        auto: bool, optional
+            Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
+            Default is `False`.
+        mode: str, optional
+            Mode to set the inner products: Either `analytic` or `symbolic`:
+            `analytic` for inner products computed with formula or `symbolic` using `Sympy`_.
+            Default to `analytic`.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> q = QgParams()
+        >>> q.set_atmospheric_channel_fourier_modes(2, 2)
         >>> q.ablocks
         array([[1, 1],
                [1, 2],
                [2, 1],
                [2, 2]])
+
+        .. _Sympy: https://www.sympy.org/
+
         """
+
+        if mode == 'symbolic':
+            basis = contiguous_channel_basis(nxmax, nymax, self.scale_params.n)
+            self.set_atmospheric_modes(basis, auto)
+        else:
+            self._set_atmospheric_analytic_fourier_modes(nxmax, nymax, auto)
+
+    def set_oceanic_basin_fourier_modes(self, nxmax, nymax, auto=True, mode='analytic'):
+        """Function to configure and set the basis for contiguous spectral blocks of oceanic modes on a closed basin.
+
+        Parameters
+        ----------
+        nxmax: int
+            Maximum x-wavenumber to fill the spectral block up to.
+        nymax: int
+            Maximum :math:`y`-wavenumber to fill the spectral block up to.
+        auto: bool, optional
+            Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
+            Default is `True`.
+        mode: str, optional
+            Mode to set the inner products: Either `analytic` or `symbolic`.
+            `analytic` for inner products computed with formula or `symbolic` using `Sympy`_.
+            Default to `analytic`.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> q = QgParams()
+        >>> q.set_atmospheric_channel_fourier_modes(2, 2)
+        >>> q.set_oceanic_basin_fourier_modes(2, 4)
+        >>> q.oblocks
+        array([[1, 1],
+               [1, 2],
+               [1, 3],
+               [1, 4],
+               [2, 1],
+               [2, 2],
+               [2, 3],
+               [2, 4]])
+
+        .. _Sympy: https://www.sympy.org/
+        """
+
+        if mode == 'symbolic':
+            basis = contiguous_basin_basis(nxmax, nymax, self.scale_params.n)
+            self.set_oceanic_modes(basis, auto)
+        else:
+            self._set_oceanic_analytic_fourier_modes(nxmax, nymax, auto)
+
+    def set_ground_channel_fourier_modes(self, nxmax=None, nymax=None, auto=True, mode='analytic'):
+        """Function to configure and set the basis for contiguous spectral blocks of ground modes on a channel.
+
+        Parameters
+        ----------
+        nxmax: int
+            Maximum x-wavenumber to fill the spectral block up to.
+        nymax: int
+            Maximum :math:`y`-wavenumber to fill the spectral block up to.
+        auto: bool, optional
+            Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
+            Default is `True`.
+        mode: str, optional
+            Mode to set the inner products: Either `analytic` or `symbolic`.
+            `analytic` for inner products computed with formula or `symbolic` using `Sympy`_.
+            Default to `analytic`.
+
+        Examples
+        --------
+
+        >>> from params.params import QgParams
+        >>> q = QgParams()
+        >>> q.set_atmospheric_channel_fourier_modes(2,4)
+        >>> q.set_ground_channel_fourier_modes()
+        >>> q.gblocks
+        array([[1, 1],
+               [1, 2],
+               [1, 3],
+               [1, 4],
+               [2, 1],
+               [2, 2],
+               [2, 3],
+               [2, 4]])
+
+        .. _Sympy: https://www.sympy.org/
+        """
+
+        if mode == "symbolic":
+            if nxmax is not None and nymax is not None:
+                basis = contiguous_channel_basis(nxmax, nymax, self.scale_params.n)
+            else:
+                basis = None
+            self.set_ground_modes(basis, auto)
+        else:
+            self._set_ground_analytic_fourier_modes(nxmax, nymax, auto)
+
+    # -------------------------------------------------------------------
+    # Model configs setter to be used with analytic inner products
+    # -------------------------------------------------------------------
+
+    @property
+    def ablocks(self):
+        """~numpy.ndarray(int): Spectral blocks detailing the model's atmospheric modes :math:`x`- and :math:`y`-wavenumber.
+         Array of shape (:attr:`~QgParams.nmod` [0], 2)."""
+        return self._ams
+
+    @ablocks.setter
+    def ablocks(self, value):
+        self._ams = value
+        basis = ChannelFourierBasis(self._ams, self.scale_params.n)
+        self._atmospheric_basis = basis
+
+        namod = 0
+        for i in range(self.ablocks.shape[0]):
+            if self.ablocks[i, 0] == 1:
+                namod += 3
+            else:
+                namod += 2
+
+        self._number_of_atmospheric_modes = namod
+        self._number_of_dimensions = 2 * namod
+        if self._number_of_oceanic_modes != 0:
+            self._number_of_dimensions += self._number_of_oceanic_modes
+        if self._number_of_ground_modes != 0:
+            self._number_of_dimensions += self._number_of_ground_modes
+        if self.ground_params is not None:
+            self.ground_params.orographic_basis = 'atmospheric'
+            self.ground_params.set_orography(namod * [0.e0])
+            self.ground_params.set_orography(0.1, 1)
+        if self.atemperature_params is not None:
+            self.atemperature_params.set_thetas(namod * [0.e0])
+            self.atemperature_params.set_thetas(0.1, 0)
+
+    @property
+    def oblocks(self):
+        """~numpy.ndarray(int): Spectral blocks detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber.
+         Array of shape (:attr:`~QgParams.nmod` [1], 2)."""
+        return self._oms
+
+    @oblocks.setter
+    def oblocks(self, value):
+        self._oms = value
+        self._gms = None
+        basis = BasinFourierBasis(self._oms, self.scale_params.n)
+        self._oceanic_basis = basis
+        self._ground_basis = None
+
+        if self.atemperature_params is not None:
+            # disable the Newtonian cooling
+            self.atemperature_params.thetas = None  # np.zeros(self.nmod[0])
+            self.atemperature_params.hd = None  # Parameter(0.0, input_dimensional=False)
+
+            self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
+                                                       description='specific heat capacity of the atmosphere',
+                                                       return_dimensional=True)
+            self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.atemperature_params.set_insolation(100.0, 0)
+            self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
+                                                     description="emissivity coefficient for the grey-body atmosphere")
+            self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
+                                                    return_dimensional=True,
+                                                    description="stationary solution for the 0-th order atmospheric temperature")
+            self.atemperature_params.sc = Parameter(1., input_dimensional=False,
+                                                    description="ratio of surface to atmosphere temperature")
+            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
+                                                         return_dimensional=True,
+                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+
+        if self.gotemperature_params is not None:
+            self._number_of_ground_modes = 0
+            self._number_of_oceanic_modes = self.oblocks.shape[0]
+            self._number_of_dimensions = 2 * (self._number_of_oceanic_modes + self._number_of_atmospheric_modes)
+            self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.gotemperature_params.set_insolation(350.0, 0)
+            # if setting an ocean, then disable the orography
+            if self.ground_params is not None:
+                self.ground_params.hk = None
+
+    @property
+    def gblocks(self):
+        """~numpy.ndarray(int): Spectral blocks detailing the model's ground modes :math:`x`-and :math:`y`-wavenumber.
+         Array of shape (:attr:`~QgParams.nmod` [1], 2)."""
+        return self._gms
+
+    @gblocks.setter
+    def gblocks(self, value):
+        self._oms = None
+        self._gms = value
+        basis = ChannelFourierBasis(self._gms, self.scale_params.n)
+        self._oceanic_basis = None
+        self._ground_basis = basis
+
+        if self.atemperature_params is not None:
+            # disable the Newtonian cooling
+            self.atemperature_params.thetas = None  # np.zeros(self.nmod[0])
+            self.atemperature_params.hd = None  # Parameter(0.0, input_dimensional=False)
+
+            self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]',
+                                                       scale_object=self.scale_params,
+                                                       description='specific heat capacity of the atmosphere',
+                                                       return_dimensional=True)
+            self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.atemperature_params.set_insolation(100.0, 0)
+            self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
+                                                     description="emissivity coefficient for the grey-body atmosphere")
+            self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
+                                                    return_dimensional=True,
+                                                    description="stationary solution for the 0-th order atmospheric temperature")
+            self.atemperature_params.sc = Parameter(1., input_dimensional=False,
+                                                    description="ratio of surface to atmosphere temperature")
+            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]',
+                                                         scale_object=self.scale_params,
+                                                         return_dimensional=True,
+                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+
+        if self.gotemperature_params is not None:
+            gmod = 0
+            for i in range(self.gblocks.shape[0]):
+                if self.ablocks[i, 0] == 1:
+                    gmod += 3
+                else:
+                    gmod += 2
+            self._number_of_ground_modes = gmod
+            self._number_of_oceanic_modes = 0
+            self._number_of_dimensions = 2 * self._number_of_atmospheric_modes + self._number_of_ground_modes
+            # if orography is disabled, enable it!
+            if self.ground_params is not None:
+                self.ground_params.orographic_basis = 'atmospheric'
+                if self.ground_params.hk is None:
+                    self.ground_params.set_orography(self.nmod[0] * [0.e0])
+                    self.ground_params.set_orography(0.1, 1)
+            self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
+            self.gotemperature_params.set_insolation(350.0, 0)
+
+    def _set_atmospheric_analytic_fourier_modes(self, nxmax, nymax, auto=False):
+
         res = np.zeros((nxmax * nymax, 2), dtype=np.int)
         i = 0
         for nx in range(1, nxmax + 1):
@@ -1008,6 +1679,12 @@ class QgParams(Params):
                 res[i, 0] = nx
                 res[i, 1] = ny
                 i += 1
+
+        if auto:
+            if self.atemperature_params is None:
+                self.atemperature_params = AtmosphericTemperatureParams(self.scale_params)
+            if self.atmospheric_params is None:
+                self.atmospheric_params = AtmosphericParams(self.scale_params)
 
         self.ablocks = res
 
@@ -1020,42 +1697,8 @@ class QgParams(Params):
             self._atmospheric_latex_var_string.append(r'theta_{\rm a,' + str(i + 1) + "}")
             self._atmospheric_var_string.append(r'theta_a_' + str(i + 1))
 
-        if auto:
-            if self.atemperature_params is None:
-                self.atemperature_params = AtmosphericTemperatureParams(self.scale_params)
-            if self.atmospheric_params is None:
-                self.atmospheric_params = AtmosphericParams(self.scale_params)
+    def _set_oceanic_analytic_fourier_modes(self, nxmax, nymax, auto=True):
 
-    def set_oceanic_modes(self, nxmax, nymax, auto=True):
-        """Function to configure contiguous spectral blocks of oceanic modes.
-
-        Parameters
-        ----------
-        nxmax: int
-            Maximum x-wavenumber to fill the spectral block up to.
-        nymax: int
-            Maximum y-wavenumber to fill the spectral block up to.
-        auto: bool
-            Automatically instantiate or not the parameters container needed to describe the oceanic models parameters.
-            Default is True.
-
-        Examples
-        --------
-
-        >>> from params.params import QgParams
-        >>> q = QgParams()
-        >>> q.set_atmospheric_modes(2,2)
-        >>> q.set_oceanic_modes(2,4)
-        >>> q.goblocks
-        array([[1, 1],
-               [1, 2],
-               [1, 3],
-               [1, 4],
-               [2, 1],
-               [2, 2],
-               [2, 3],
-               [2, 4]])
-        """
         if self._ams is None:
             print('Atmosphere modes not set up. Add an atmosphere before adding an ocean!')
             print('Oceanic setup aborted.')
@@ -1074,16 +1717,9 @@ class QgParams(Params):
             if self.oceanic_params is None:
                 self.oceanic_params = OceanicParams(self.scale_params)
 
-            self.goblocks = res
-            # if setting an ocean, then disable the orography
-            self.ground_params.hk = None
-            self.gotemperature_params.C = np.array(self.nmod[0] * [Parameter(0.e0, units='[W][m^-2]', scale_object=self.scale_params,
-                                                                             return_dimensional=True,
-                                                                             description="spectral components of the short-wave radiation of the ocean")],
-                                                   dtype=object)
-            self.gotemperature_params.set_insolation(350.0, 0)
-        else:
-            self.goblocks = res
+            self.ground_params = None
+
+        self.oblocks = res
 
         self._oceanic_latex_var_string = list()
         self._oceanic_var_string = list()
@@ -1096,36 +1732,8 @@ class QgParams(Params):
             self._oceanic_latex_var_string.append(r'theta_{\rm o,' + str(i + 1) + "}")
             self._oceanic_var_string.append(r'theta_o_' + str(i + 1))
 
-    def set_ground_modes(self, nxmax=None, nymax=None, auto=True):
-        """Function to automatically configure contiguous spectral blocks of ground modes based on the atmospheric modes.
+    def _set_ground_analytic_fourier_modes(self, nxmax=None, nymax=None, auto=True):
 
-        Parameters
-        ----------
-        nxmax: int or None
-            Maximum x-wavenumber to fill the spectral block up to. If None, use the atmospheric blocks instead.
-        nymax: int or None
-            Maximum y-wavenumber to fill the spectral block up to.  If None, use the atmospheric blocks instead.
-        auto: bool
-            Automatically instantiate or not the parameters container needed to describe the ground models parameters.
-            Default is True.
-
-        Examples
-        --------
-
-        >>> from params.params import QgParams
-        >>> q = QgParams()
-        >>> q.set_atmospheric_modes(2,4)
-        >>> q.set_ground_modes()
-        >>> q.goblocks
-        array([[1, 1],
-               [1, 2],
-               [1, 3],
-               [1, 4],
-               [2, 1],
-               [2, 2],
-               [2, 3],
-               [2, 4]])
-        """
         if self._ams is None:
             print('Atmosphere modes not set up. Add an atmosphere before adding the ground!')
             print('Ground setup aborted.')
@@ -1150,21 +1758,7 @@ class QgParams(Params):
 
             self.oceanic_params = None
 
-            self.goblocks = res
-            self.gotemperature_params.C = np.array(self.nmod[0] * [Parameter(0.e0, units='[W][m^-2]', scale_object=self.scale_params,
-                                                                             return_dimensional=True,
-                                                                             description="spectral components of the short-wave radiation of the ocean")],
-                                                   dtype=object)
-            self.gotemperature_params.set_insolation(350.0, 0)
-
-            # if orography is disabled, enable it!
-            if self.ground_params.hk is None:
-                self.ground_params.hk = np.array(self.nmod[0] * [Parameter(0.e0, scale_object=self.scale_params,
-                                                                           description="spectral components of the orography",
-                                                                           return_dimensional=False, input_dimensional=False)], dtype=object)
-                self.ground_params.set_orography(0.1, 1)
-        else:
-            self.goblocks = res
+        self.gblocks = res
 
         self._oceanic_var_string = list()
         self._oceanic_latex_var_string = list()
@@ -1173,37 +1767,3 @@ class QgParams(Params):
         for i in range(self.nmod[1]):
             self._ground_latex_var_string.append(r'theta_{\rm g,' + str(i + 1) + "}")
             self._ground_var_string.append(r'theta_g_' + str(i + 1))
-
-
-    @property
-    def var_string(self):
-        """list(str): List of model's variable names."""
-        l = list()
-        for var in self._atmospheric_var_string+self._oceanic_var_string+self._ground_var_string:
-            l.append(var)
-
-        return l
-
-    @property
-    def latex_var_string(self):
-        """list(str): List of model's variable names, ready for use in latex."""
-        l = list()
-        for var in self._atmospheric_latex_var_string+self._oceanic_latex_var_string+self._ground_latex_var_string:
-            l.append(r'{\ '[0:-1] + var + r'}')
-
-        return l
-
-    @property
-    def dimensional_time(self):
-        """float: Return the conversion factor between the non-dimensional time and the dimensional time unit specified
-        in :attr:`.time_unit`"""
-        c = 24 * 3600
-        if self.time_unit == 'hours':
-            c = 3600
-        if self.time_unit == 'days':
-            c = 24 * 3600
-        if self.time_unit == 'years':
-            c = 24 * 3600 * 365
-        return 1 / (self.scale_params.f0 * c)
-
-

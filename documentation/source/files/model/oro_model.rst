@@ -175,7 +175,7 @@ The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :
   b_{i, j, m} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, J\left(F_j(x,y), \nabla^2 F_m(x,y)\right) \, \mathrm{d} x \, \mathrm{d} y \\
   c_{i, j} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, \frac{\partial}{\partial x} F_j(x,y) \, \mathrm{d} x \, \mathrm{d} y
 
-These inner products are computed according to formulas found in :cite:`om-CT1987` and stored in the :class:`~inner_products.analytic.AtmosphericInnerProducts` object.
+These inner products are computed according to formulas found in :cite:`om-CT1987` and stored in the :class:`~inner_products.analytic.AtmosphericAnalyticInnerProducts` object.
 
 The vertical velocity :math:`\omega_i` can be eliminated, leading to the final equations
 

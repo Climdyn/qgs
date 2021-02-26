@@ -1,6 +1,6 @@
 """
-    Inner products module (analytic)
-    ================================
+    Analytic Inner products module
+    ==============================
 
     Inner products
 
@@ -9,13 +9,13 @@
         (S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} S(x,y)\\, G(x,y)\\, \\mathrm{d} x \\, \\mathrm{d} y
 
 
-    between the truncated set of basis functions :math:`\phi_i` for the ocean streamfunctions and
-    :math:`F_i` for the atmosphere streamfunction and temperature fields (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
+    between the truncated set of basis functions :math:`\phi_i` for the ocean and land fields, and
+    :math:`F_i` for the atmosphere fields (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
 
     Notes
     -----
 
-    These are computed using the analytical expressions from:
+    These inner products are computed using the analytical expressions from:
 
     * De Cruz, L., Demaeyer, J. and Vannitsem, S.: *The Modular Arbitrary-Order Ocean-Atmosphere Model: MAOOAM v1.0*,
       Geosci. Model Dev., **9**, 2793-2808, `doi:10.5194/gmd-9-2793-2016 <http://dx.doi.org/10.5194/gmd-9-2793-2016>`_, 2016.
@@ -26,576 +26,857 @@
     Description of the classes
     --------------------------
 
-    There is one class to define the wavenumber of the basis function of the model: :class:`WaveNumber`.
+    The three classes computing and holding the inner products of the basis functions are:
 
-    The two classes computing and holding the inner products of the basis functions are:
-
-    * :class:`AtmosphericInnerProducts`
-    * :class:`OceanicInnerProducts`
+    * :class:`AtmosphericAnalyticInnerProducts`
+    * :class:`OceanicAnalyticInnerProducts`
+    * :class:`GroundAnalyticInnerProducts`
 
 """
-
-# TODO : inner products should be sparse tensor.
 
 import numpy as np
 import sparse as sp
 
+from params.params import QgParams
+from basis.fourier import channel_wavenumbers, basin_wavenumbers
+from inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 
-class WaveNumber(object):
-    """Class to define model base functions wavenumber. The basis function available are:
-
-    * `'A'` for a function of the form :math:`F^A_{P} (x, y) =  \sqrt{2}\, \cos(P y) = \sqrt{2}\, \cos(n_y\, y)`
-    * `'K'` for a function of the form :math:`F^K_{M,P} (x, y) =  2\cos(M nx)\, \sin(P y) = 2\cos(n_x\,  n\, x)\, \sin(n_y\, y)`
-    * `'L'` for a function of the form :math:`F^L_{H,P} (x, y) = 2\sin(H nx)\, \sin(P y) = 2\sin(n_x\, n \,x)\, \sin(n_y\, y)`
-
-    where :math:`x` and :math:`y` are the nondimensional model's domain coordinates (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
-
-    Parameters
-    ----------
-    function_type: str
-        One character string to define the type of basis function. It can be `'A'`, `'K'` or `'L'`.
-    P: int
-        The :math:`y` wavenumber integer.
-    M: int
-        The :math:`x` wavenumber integer.
-    H: int
-        The :math:`x` wavenumber integer.
-    nx: float
-        The :math:`x` wavenumber.
-    ny: float
-        The :math:`y` wavenumber.
-
-    Attributes
-    ----------
-    function_type: str
-        One character string to define the type of basis function. It can be `'A'`, `'K'` or `'L'`.
-    P: int
-        The :math:`y` wavenumber integer.
-    M: int
-        The :math:`x` wavenumber integer.
-    H: int
-        The :math:`x` wavenumber integer.
-    nx: float
-        The :math:`x` wavenumber.
-    ny: float
-        The :math:`y` wavenumber.
-
-    """
-
-    def __init__(self, function_type, P, M, H, nx, ny):
-        self.type = function_type
-        self.P = P
-        self.M = M
-        self.H = H
-        self.nx = nx
-        self.ny = ny
-
-    def __repr__(self):
-        return "type = {}, P = {}, M= {},H={}, nx= {}, ny={}".format(self.type, self.P, self.M, self.H, self.nx, self.ny)
+# TODO: Add warnings if trying to connect analytic and symbolic inner products together
 
 
-class AtmosphericInnerProducts(object):
+class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
     """Class which contains all the atmospheric inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
-
-    Warnings
-    --------
-
-    * Atmospheric :attr:`g` tensor and :attr:`a` matrix must be computed before computing the :attr:`b` tensor.
-    * Atmospheric :attr:`s` matrix and oceanic :attr:`OceanInnerProducts.M` matrix must be computed before computing :attr:`d`.
+    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: ~params.params.QgParams
-        An instance of model's parameters object.
+    params: None or ~params.params.QgParams or list, optional
+        An instance of model's parameters object or a list in the form [aspect_ratio, ablocks, natm].
+        If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
+        detailing the model's atmospheric modes :math:`x`-and :math:`y`-wavenumber as an array of shape (natm, 2), and `natm` is
+        the number of modes in the atmosphere.
+        If `None`, an empty object is initialized.
+    stored: bool, optional
+        Indicate if the inner products must be computed and stored at the initialization. Default to `True`.
 
     Attributes
     ----------
+    n: float
+        The aspect ratio of the domain.
+    ocean_inner_products: None or OceanicInnerAnalyticProducts
+            The inner products of the ocean. `None` if no ocean.
     connected_to_ocean: bool
         Indicate if the atmosphere is connected to an ocean.
-    params: ~params.params.QgParams
-        An instance of model's parameters object.
+    ground_inner_products: None or GroundInnerAnalyticProducts
+            The inner products of the ground. `None` if no ground.
+    connected_to_ground: bool
+        Indicate if the atmosphere is connected to the ground.
+    stored: bool
+        Indicate if the inner products are stored in the object.
     atmospheric_wavenumbers: ~numpy.ndarray(WaveNumber)
         An array of shape (:attr:`~params.params.QgParams.nmod` [0], ) of the wavenumber object of each mode.
-    a: sparse.DOK(float)
-        Matrix of the eigenvalues of the Laplacian (atmospheric): :math:`a_{i, j} = (F_i, {\\nabla}^2 F_j)`. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    c: ~sparse.DOK(float)
-        Matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \partial_x F_j)`. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    b: ~sparse.DOK(float)
-        Tensors holding the Jacobian inner products: :math:`b_{i, j, k} = (F_i, J(F_j, \\nabla^2 F_k))`.
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0],
-        :attr:`~params.params.QgParams.nmod` [0]).
-    g: ~sparse.DOK(float)
-        Tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, F_k))`. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0],
-        :attr:`~params.params.QgParams.nmod` [0]).
-    d: None or ~sparse.DOK(float)
-        Forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`. \n
-        Not defined if no ocean is present. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
-    s: None or ~sparse.DOK(float)
-        Forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`. \n
-        Not defined if no ocean is present. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [0], :attr:`~params.params.QgParams.nmod` [0]).
     """
 
-    def __init__(self, params):
+    def __init__(self, params=None, stored=True):
 
+        AtmosphericInnerProducts.__init__(self)
+
+        if params is not None:
+            if isinstance(params, QgParams):
+                self.n = params.scale_params.n
+                self._natm = params.nmod[0]
+                ams = params.ablocks
+            else:
+                self.n = params[0]
+                self._natm = params[2]
+                ams = params[1]
+        else:
+            self.n = None
+            stored = False
+            ams = None
+
+        self.ocean_inner_products = None
         self.connected_to_ocean = False
-        self.params = params
-        natm, noc = self.params.nmod
 
-        if natm == 0:
-            exit("*** Problem with inner products : natm==0!***")
-
-        self.a = sp.zeros((natm, natm), dtype=float, format='dok')
-        self.c = sp.zeros((natm, natm), dtype=float, format='dok')
-        self.b = sp.zeros((natm, natm, natm), dtype=float, format='dok')
-        self.g = sp.zeros((natm, natm, natm), dtype=float, format='dok')
-        self.d = None
-        self.s = None
-
-        # initialization of the variables
-        atmospheric_wavenumbers = np.empty(natm, dtype=object)
-
-        j = -1
+        self.ground_inner_products = None
+        self.connected_to_ground = False
 
         # Atmospheric wavenumbers definition
+        if ams is not None:
+            self.atmospheric_wavenumbers = channel_wavenumbers(ams)
+        else:
+            self.atmospheric_wavenumbers = None
 
-        ams = self.params.ablocks
-
-        for i in range(ams.shape[0]):  # function type is limited to AKL for the moment: atmosphere is a channel
-
-            if ams[i, 0] == 1:
-
-                atmospheric_wavenumbers[j + 1] = WaveNumber(
-                    'A', ams[i, 1], 0, 0, 0, ams[i, 1])
-
-                atmospheric_wavenumbers[j + 2] = WaveNumber(
-                    'K', ams[i, 1], ams[i, 0], 0, ams[i, 0], ams[i, 1])
-
-                atmospheric_wavenumbers[j + 3] = WaveNumber(
-                    'L', ams[i, 1], 0, ams[i, 0], ams[i, 0], ams[i, 1])
-
-                j = j+3
-
-            else:
-
-                atmospheric_wavenumbers[j + 1] = WaveNumber(
-                    'K', ams[i, 1], ams[i, 0], 0, ams[i, 0], ams[i, 1])
-
-                atmospheric_wavenumbers[j + 2] = WaveNumber(
-                    'L', ams[i, 1], 0, ams[i, 0], ams[i, 0], ams[i, 1])
-
-                j = j+2
-
-        self.atmospheric_wavenumbers = atmospheric_wavenumbers
-
-        self._calculate_a()
-        self._calculate_g()
-        self._calculate_b()
-        self._calculate_c()
+        self.stored = stored
+        if stored:
+            self.compute_inner_products()
 
     def connect_to_ocean(self, ocean_inner_products):
         """Connect the atmosphere to an ocean.
 
         Parameters
         ----------
-        ocean_inner_products: OceanicInnerProducts
+        ocean_inner_products: OceanicInnerAnalyticProducts
             The inner products of the ocean.
         """
 
-        natm, noc = self.params.nmod
+        self.ground_inner_products = None
+        self.connected_to_ground = False
+        self.ocean_inner_products = ocean_inner_products
+        self.connected_to_ocean = True
 
-        self.d = sp.zeros((natm, noc), dtype=float, format='dok')
-        self.s = sp.zeros((natm, noc), dtype=float, format='dok')
+        if self.stored:
+            noc = ocean_inner_products.noc
+            self._s = sp.zeros((self.natm, noc), dtype=float, format='dok')
+            self._d = sp.zeros((self.natm, noc), dtype=float, format='dok')
 
-        self._calculate_s(ocean_inner_products)
+            args_list = [(i, j) for i in range(self.natm) for j in range(noc)]
+
+            for arg in args_list:
+                # s inner products
+                self._s[arg] = self._s_comp(*arg)
+                # d inner products
+                self._d[arg] = self._d_comp(*arg)
+
+            self._s = self._s.to_coo()
+            self._d = self._d.to_coo()
 
         # ensure that the ocean is connected as well
         if not ocean_inner_products.connected_to_atmosphere:
             ocean_inner_products.connect_to_atmosphere(self)
 
-        self._calculate_d(ocean_inner_products)
-        self.connected_to_ocean = True
+        if self.stored:
+            self.ocean_inner_products = None
+
+    def connect_to_ground(self, ground_inner_products):
+        """Connect the atmosphere to the ground.
+
+        Parameters
+        ----------
+        ground_inner_products: GroundAnalyticInnerProducts
+            The inner products of the ground.
+        """
+
+        self.ocean_inner_products = None
+        self.connected_to_ocean = False
+        self.ground_inner_products = ground_inner_products
+        self.connected_to_ground = True
+
+        if self.stored:
+            ngr = ground_inner_products.ngr
+            self._s = sp.zeros((self.natm, ngr), dtype=float, format='dok')
+            args_list = [(i, j) for i in range(self.natm) for j in range(ngr)]
+
+            # s inner products
+            for arg in args_list:
+                self._s[arg] = self._s_comp(*arg)
+
+            self._s = self._s.to_coo()
+
+        # ensure that the ocean is connected as well
+        if not ground_inner_products.connected_to_atmosphere:
+            ground_inner_products.connect_to_atmosphere(self)
+
+        if self.stored:
+            self.ground_inner_products = None
+
+    def compute_inner_products(self):
+        """Function computing and storing all the inner products at once."""
+
+        self._a = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
+        self._u = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
+        self._c = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
+        self._b = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
+        self._g = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
+
+        args_list = [(i, j) for i in range(self.natm) for j in range(self.natm)]
+
+        for arg in args_list:
+            # a inner products
+            self._a[arg] = self._a_comp(*arg)
+            # u inner products
+            self._u[arg] = self._u_comp(*arg)
+            # c inner products
+            self._c[arg] = self._c_comp(*arg)
+
+        args_list = [(i, j, k) for i in range(self.natm) for j in range(self.natm) for k in range(self.natm)]
+
+        for arg in args_list:
+            # g inner products
+            val = self._g_comp(*arg)
+            self._g[arg] = val
+            # b inner products
+            self._b[arg] = val * self._a[arg[-1], arg[-1]]
+
+        self._a = self._a.to_coo()
+        self._u = self._u.to_coo()
+        self._c = self._c.to_coo()
+        self._g = self._g.to_coo()
+        self._b = self._b.to_coo()
+
+    @property
+    def natm(self):
+        """Number of atmospheric modes."""
+        return self._natm
 
     # !-----------------------------------------------------!
     # ! Inner products in the equations for the atmosphere  !
     # !-----------------------------------------------------!
 
-    def _calculate_a(self):
-        nmod = self.params.nmod[0]
-        n = self.params.scale_params.n
-        for i in range(0, nmod):
+    def a(self, i, j):
+        """Function to compute the matrix of the eigenvalues of the Laplacian (atmospheric): :math:`a_{i, j} = (F_i, {\\nabla}^2 F_j)`."""
+        if self.stored and self._a is not None:
+            return self._a[i, j]
+        else:
+            return self._a_comp(i, j)
+
+    def _a_comp(self, i, j):
+        if i == j:
+            n = self.n
             Ti = self.atmospheric_wavenumbers[i]
-            self.a[i, i] = - (n**2) * Ti.nx**2 - Ti.ny**2
+            return - (n ** 2) * Ti.nx ** 2 - Ti.ny ** 2
+        else:
+            return 0
 
-    def _calculate_b(self):
-        nmod = self.params.nmod[0]
-        for i in range(0, nmod):
-            for j in range(0, nmod):
-                for k in range(0, nmod):
-                    val = self.a[k, k]*self.g[i, j, k]
-                    self.b[i, j, k] = val
+    def u(self, i, j):
+        """Function to compute the matrix of inner product: :math:`u_{i, j} = (F_i, F_j)`."""
+        if self.stored and self._u is not None:
+            return self._u[i, j]
+        else:
+            return self._u_comp(i, j)
 
-    def _calculate_c(self):
-        nmod = self.params.nmod[0]
-        n = self.params.scale_params.n
-        for i in range(0, nmod):
-            for j in range(0, nmod):
-                val = 0.
-                Ti = self.atmospheric_wavenumbers[i]
-                Tj = self.atmospheric_wavenumbers[j]
+    def _u_comp(self, i, j):
+        return _delta(i - j)
 
-                if (Ti.type, Tj.type) == ('K', 'L'):
-                    val = _delta(Ti.M - Tj.H) * _delta(Ti.P - Tj.P)
-                    val = n * Ti.M * val
+    def b(self, i, j, k):
+        """Function to compute the tensors holding the Jacobian inner products: :math:`b_{i, j, k} = (F_i, J(F_j, \\nabla^2 F_k))`."""
+        if self.stored and self._b is not None:
+            return self._b[i, j, k]
+        else:
+            return self._b_comp(i, j, k)
 
-                if val != 0.:
-                    self.c[i, j] = val
-                    self.c[j, i] = -val
+    def _b_comp(self, i, j, k):
+        return self._a_comp(k, k) * self._g_comp(i, j, k)
 
-    def _calculate_g(self):
-        """
+    def c(self, i, j):
+        """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \partial_x F_j)`."""
+        if self.stored and self._c is not None:
+            return self._c[i, j]
+        else:
+            return self._c_comp(i, j)
 
-        Warnings
-        --------
-        This is a strict function: it only accepts AKL, KKL and LLL types.
-        For any other combination, it will not calculate anything.
-        """
+    def _c_comp(self, i, j):
+        n = self.n
+        Ti = self.atmospheric_wavenumbers[i]
+        Tj = self.atmospheric_wavenumbers[j]
 
-        nmod = self.params.nmod[0]
-        sq2 = np.sqrt(2.)
-        pi = np.pi
-        n = self.params.scale_params.n
+        val = 0.
 
-        for i in range(0, nmod):
-            for j in range(0, nmod):
-                for k in range(0, nmod):
-                    Ti = self.atmospheric_wavenumbers[i]
-                    Tj = self.atmospheric_wavenumbers[j]
-                    Tk = self.atmospheric_wavenumbers[k]
-                    val = 0.
+        if (Ti.type, Tj.type) == ('K', 'L'):
+            val = _delta(Ti.M - Tj.H) * _delta(Ti.P - Tj.P)
+            val = n * Ti.M * val
+        elif (Ti.type, Tj.type) == ('L', 'K'):
+            val = _delta(Tj.M - Ti.H) * _delta(Tj.P - Ti.P)
+            val = - n * Tj.M * val
 
-                    if (Ti.type, Tj.type, Tk.type) == ('A', 'K', 'L'):
-                        vb1 = _B1(Ti.P, Tj.P, Tk.P)
-                        vb2 = _B2(Ti.P, Tj.P, Tk.P)
-                        val = -2 * (sq2 / pi) * Tj.M * _delta(Tj.M - Tk.H) \
-                              * _flambda(Ti.P + Tj.P + Tk.P)
-                        if val != 0:
-                            val = val * (((vb1**2) / (vb1**2 - 1)) - ((vb2**2)
-                            / (vb2**2 - 1)))
+        return val
 
-                    if (Ti.type, Tj.type, Tk.type) == ('K', 'K', 'L'):
-                        vs1 = _S1(Tj.P, Tk.P, Tj.M, Tk.H)
-                        vs2 = _S2(Tj.P, Tk.P, Tj.M, Tk.H)
-                        val = vs1 * (_delta(Ti.M - Tk.H - Tj.M)
-                                     * _delta(Ti.P - Tk.P + Tj.P)
-                                     - _delta(Ti.M - Tk.H - Tj.M)
-                                     * _delta(Ti.P + Tk.P - Tj.P)
-                                     + (_delta(Tk.H - Tj.M + Ti.M)
-                                        + _delta(Tk.H - Tj.M - Ti.M))
-                                     * _delta(Tk.P + Tj.P - Ti.P)) \
-                              + vs2 * (_delta(Ti.M - Tk.H - Tj.M)
-                                       * _delta(Ti.P - Tk.P - Tj.P)
-                                       + (_delta(Tk.H - Tj.M - Ti.M)
-                                          + _delta(Ti.M + Tk.H - Tj.M))
-                                       * (_delta(Ti.P - Tk.P + Tj.P)
-                                          - _delta(Tk.P - Tj.P + Ti.P)))
+    def g(self, i, j, k):
+        """Function to compute tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, F_k))`."""
+        if self.stored and self._g is not None:
+            return self._g[i, j, k]
+        else:
+            return self._g_comp(i, j, k)
 
-                    val = val * n
-
-                    if val != 0.:
-                        self.g[i, j, k] = val
-                        self.g[j, k, i] = val
-                        self.g[k, i, j] = val
-                        self.g[i, k, j] = -val
-                        self.g[j, i, k] = -val
-                        self.g[k, j, i] = -val
-
-        for i in range(0, nmod):
-            for j in range(i+1, nmod):
-                for k in range(j+1, nmod):
-
-                    Ti = self.atmospheric_wavenumbers[i]
-                    Tj = self.atmospheric_wavenumbers[j]
-                    Tk = self.atmospheric_wavenumbers[k]
-
-                    val = 0.
-
-                    if (Ti.type, Tj.type, Tk.type) == ('L', 'L', 'L'):
-                        vs3 = _S3(Tj.P, Tk.P, Tj.H, Tk.H)
-                        vs4 = _S4(Tj.P, Tk.P, Tj.H, Tk.H)
-                        val = vs3 * ((_delta(Tk.H - Tj.H - Ti.H)
-                                      - _delta(Tk.H - Tj.H + Ti.H))
-                                     * _delta(Tk.P + Tj.P - Ti.P)
-                                     + _delta(Tk.H + Tj.H - Ti.H)
-                                     * (_delta(Tk.P - Tj.P + Ti.P)
-                                        - _delta(Tk.P - Tj.P - Ti.P))) \
-                              + vs4 * ((_delta(Tk.H + Tj.H - Ti.H)
-                                        * _delta(Tk.P - Tj.P - Ti.P))
-                                       + (_delta(Tk.H - Tj.H + Ti.H)
-                                          - _delta(Tk.H - Tj.H - Ti.H))
-                                       * (_delta(Tk.P - Tj.P - Ti.P)
-                                          - _delta(Tk.P - Tj.P + Ti.P)))
-
-                    val = val * n
-
-                    if val != 0.:
-                        self.g[i, j, k] = val
-                        self.g[j, k, i] = val
-                        self.g[k, i, j] = val
-                        self.g[i, k, j] = -val
-                        self.g[j, i, k] = -val
-                        self.g[k, j, i] = -val
-
-    def _calculate_s(self, ocean_inner_products):
+    def _g_comp(self, i, j, k):
 
         sq2 = np.sqrt(2.)
         pi = np.pi
-        natm, noc = self.params.nmod
+        n = self.n
 
-        val = 0
+        Ti = self.atmospheric_wavenumbers[i]
+        Tj = self.atmospheric_wavenumbers[j]
+        Tk = self.atmospheric_wavenumbers[k]
 
-        for i in range(0, natm):
-            for j in range(0, noc):
+        val = 0.
+        par = 1
 
-                Ti = self.atmospheric_wavenumbers[i]
-                Dj = ocean_inner_products.oceanic_wavenumbers[j]
+        s = [Ti.type, Tj.type, Tk.type]
+        indices = [i, j, k]
 
-                val = 0.
+        if s == ['L', 'L', 'L']:
 
-                if Ti.type == 'A':
-                    val = _flambda(Dj.H) * _flambda(Dj.P + Ti.P)
-                    if val != 0.:
-                        val = val * 8 * sq2 * Dj.P / \
-                              (pi ** 2 * (Dj.P ** 2 - Ti.P ** 2) * Dj.H)
+            a, par = _piksort(indices)
 
-                if Ti.type == 'K':
-                    val = _flambda(2 * Ti.M + Dj.H) * _delta(Dj.P - Ti.P)
+            Ti = self.atmospheric_wavenumbers[a[0]]
+            Tj = self.atmospheric_wavenumbers[a[1]]
+            Tk = self.atmospheric_wavenumbers[a[2]]
 
-                    if val != 0:
-                        val = val * 4 * Dj.H / (pi * (-4 * Ti.M ** 2 + Dj.H ** 2))
+            vs3 = _S3(Tj.P, Tk.P, Tj.H, Tk.H)
+            vs4 = _S4(Tj.P, Tk.P, Tj.H, Tk.H)
+            val = vs3 * ((_delta(Tk.H - Tj.H - Ti.H)
+                          - _delta(Tk.H - Tj.H + Ti.H))
+                         * _delta(Tk.P + Tj.P - Ti.P)
+                         + _delta(Tk.H + Tj.H - Ti.H)
+                         * (_delta(Tk.P - Tj.P + Ti.P)
+                            - _delta(Tk.P - Tj.P - Ti.P))) \
+                  + vs4 * ((_delta(Tk.H + Tj.H - Ti.H)
+                            * _delta(Tk.P - Tj.P - Ti.P))
+                           + (_delta(Tk.H - Tj.H + Ti.H)
+                              - _delta(Tk.H - Tj.H - Ti.H))
+                           * (_delta(Tk.P - Tj.P - Ti.P)
+                              - _delta(Tk.P - Tj.P + Ti.P)))
+        else:
+            if 'A' in s and 'K' in s and 'L' in s:
 
-                if Ti.type == 'L':
-                    val = _delta(Dj.P - Ti.P) * _delta(2 * Ti.H - Dj.H)
+                ii = s.index('A')
+                jj = s.index('K')
+                kk = s.index('L')
 
+                Ti = self.atmospheric_wavenumbers[indices[ii]]
+                Tj = self.atmospheric_wavenumbers[indices[jj]]
+                Tk = self.atmospheric_wavenumbers[indices[kk]]
+
+                ss, par = _piksort(s)
+
+                vb1 = _B1(Ti.P, Tj.P, Tk.P)
+                vb2 = _B2(Ti.P, Tj.P, Tk.P)
+                val = -2 * (sq2 / pi) * Tj.M * _delta(Tj.M - Tk.H) \
+                      * _flambda(Ti.P + Tj.P + Tk.P)
+                if val != 0:
+                    val = val * (((vb1 ** 2) / (vb1 ** 2 - 1)) - ((vb2 ** 2)
+                                                                  / (vb2 ** 2 - 1)))
+
+            elif 'A' not in s:
+                K_indices = [i for i, x in enumerate(s) if x == "K"]
+                if len(K_indices) == 2:
+                    ss, par = _piksort(s)
+                    perm = np.argsort(s)
+
+                    Ti = self.atmospheric_wavenumbers[indices[perm[0]]]
+                    Tj = self.atmospheric_wavenumbers[indices[perm[1]]]
+                    Tk = self.atmospheric_wavenumbers[indices[perm[2]]]
+
+                    vs1 = _S1(Tj.P, Tk.P, Tj.M, Tk.H)
+                    vs2 = _S2(Tj.P, Tk.P, Tj.M, Tk.H)
+                    val = vs1 * (_delta(Ti.M - Tk.H - Tj.M)
+                                 * _delta(Ti.P - Tk.P + Tj.P)
+                                 - _delta(Ti.M - Tk.H - Tj.M)
+                                 * _delta(Ti.P + Tk.P - Tj.P)
+                                 + (_delta(Tk.H - Tj.M + Ti.M)
+                                    + _delta(Tk.H - Tj.M - Ti.M))
+                                 * _delta(Tk.P + Tj.P - Ti.P)) \
+                          + vs2 * (_delta(Ti.M - Tk.H - Tj.M)
+                                   * _delta(Ti.P - Tk.P - Tj.P)
+                                   + (_delta(Tk.H - Tj.M - Ti.M)
+                                      + _delta(Ti.M + Tk.H - Tj.M))
+                                   * (_delta(Ti.P - Tk.P + Tj.P)
+                                      - _delta(Tk.P - Tj.P + Ti.P)))
+
+        return val * n * par
+
+    def s(self, i, j):
+        """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`."""
+        if self.stored and self._s is not None:
+            return self._s[i, j]
+        else:
+            return self._s_comp(i, j)
+
+    def _s_comp(self, i, j):
+        if self.connected_to_ocean:
+            sq2 = np.sqrt(2.)
+            pi = np.pi
+
+            Ti = self.atmospheric_wavenumbers[i]
+            Dj = self.ocean_inner_products.oceanic_wavenumbers[j]
+
+            val = 0.
+
+            if Ti.type == 'A':
+                val = _flambda(Dj.H) * _flambda(Dj.P + Ti.P)
                 if val != 0.:
-                    self.s[i, j] = val
+                    val = val * 8 * sq2 * Dj.P / \
+                          (pi ** 2 * (Dj.P ** 2 - Ti.P ** 2) * Dj.H)
 
-    def _calculate_d(self, ocean_inner_products):
+            if Ti.type == 'K':
+                val = _flambda(2 * Ti.M + Dj.H) * _delta(Dj.P - Ti.P)
 
-        natm, noc = self.params.nmod
+                if val != 0:
+                    val = val * 4 * Dj.H / (pi * (-4 * Ti.M ** 2 + Dj.H ** 2))
 
-        for i in range(0, natm):
-            for j in range(0, noc):
-                self.d[i, j] = self.s[i, j] * ocean_inner_products.M[j, j]
+            if Ti.type == 'L':
+                val = _delta(Dj.P - Ti.P) * _delta(2 * Ti.H - Dj.H)
+
+        elif self.connected_to_ground:
+            val = 0
+            if i == j:
+                val = 1
+        else:
+            val = 0
+        return val
+
+    def d(self, i, j):
+        """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`."""
+        if self.stored and self._d is not None:
+            return self._d[i, j]
+        else:
+            return self._d_comp(i, j)
+
+    def _d_comp(self, i, j):
+        if self.connected_to_ocean:
+            return self._s_comp(i, j) * self.ocean_inner_products._M_comp(j, j)
+        else:
+            return 0
 
 
-class OceanicInnerProducts(object):
+class OceanicAnalyticInnerProducts(OceanicInnerProducts):
     """Class which contains all the oceanic inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
-
-    Warnings
-    --------
-
-    * The computation of the tensor :attr:`C` requires that the tensor :attr:`O` and the matrix :attr:`M` be computed beforehand.
-    * The computation of the matrix :attr:`W` requires that the matrix :attr:`AtmosphericInnerProducts.s` be computed beforehand.
-    * The computation of the matrix :attr:`K` requires that the matrices :attr:`AtmosphericInnerProducts.a`
-      and :attr:`AtmosphericInnerProducts.s` be computed beforhand.
+    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: ~params.params.QgParams
-        An instance of model's parameters object.
+    params: None or ~params.params.QgParams or list, optional
+        An instance of model's parameters object or a list in the form [aspect_ratio, oblocks, noc].
+        If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
+        detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (noc, 2), and `noc` is
+        the number of modes in the ocean.
+        If `None`, an empty object is initialized.
+    stored: bool, optional
+        Indicate if the inner products must be computed and stored at the initialization. Default to `True`.
 
     Attributes
     ----------
-    init: bool
-        Indicate if the initialization of the ocean inner products has been done.
+    n: float
+        The aspect ratio of the domain.
+    atmosphere_inner_products: None or AtmosphericInnerProducts
+            The inner products of the atmosphere. `None` if no atmosphere.
     connected_to_atmosphere: bool
         Indicate if the ocean is connected to an atmosphere.
-    params: ~params.params.QgParams
-        An instance of model's parameters object.
-    M: ~sparse.DOK(float)
-        Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    N: ~sparse.DOK(float)
-        Beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`.
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    O: ~sparse.DOK(float)
-        Temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`.
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
-        :attr:`~params.params.QgParams.nmod` [1]).
-    C: ~sparse.DOK(float)
-        Tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1],
-        :attr:`~params.params.QgParams.nmod` [1]).
-    K: None or ~sparse.DOK(float)
-        Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`.
-        Not defined if no atmosphere is present. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
-    W: None or ~sparse.DOK(float)
-        Short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`. \n
-        Not defined if no atmosphere is present. \n
-        Array of shape (:attr:`~params.params.QgParams.nmod` [1], :attr:`~params.params.QgParams.nmod` [1]).
+    stored: bool
+        Indicate if the inner products are stored in the object.
+    oceanic_wavenumbers: ~numpy.ndarray(WaveNumber)
+        An array of shape (:attr:`~params.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
 
     """
-    def __init__(self, params):
 
-        self.init = False
+    def __init__(self, params=None, stored=True):
+
+        OceanicInnerProducts.__init__(self)
+
+        if params is not None:
+            if isinstance(params, QgParams):
+                self.n = params.scale_params.n
+                self._noc = params.nmod[1]
+                oms = params.oblocks
+            else:
+                self.n = params[0]
+                self._noc = params[2]
+                oms = params[1]
+        else:
+            self.n = None
+            stored = False
+            oms = None
+
         self.connected_to_atmosphere = False
-        self.params = params
-        natm, noc = self.params.nmod
-
-        self.M = sp.zeros((noc, noc), dtype=float, format='dok')
-        self.N = sp.zeros((noc, noc), dtype=float, format='dok')
-
-        self.O = sp.zeros((noc, noc, noc), dtype=float, format='dok')
-        self.C = sp.zeros((noc, noc, noc), dtype=float, format='dok')
-
-        self.K = None
-        self.W = None
-
-        # initialization of the variables
-        oceanic_wavenumbers = np.empty(noc, dtype=object)
+        self.atmosphere_inner_products = None
 
         # Oceanic wavenumbers definition
-        oms = self.params.goblocks
+        if oms is not None:
+            self.oceanic_wavenumbers = basin_wavenumbers(oms)
+        else:
+            self.oceanic_wavenumbers = None
 
-        for i in range(oms.shape[0]):  # function type is limited to L for the moment: ocean is a closed basin
-            oceanic_wavenumbers[i] = WaveNumber('L', oms[i, 1], 0, oms[i, 0], oms[i, 0] / 2., oms[i, 1])
-
-        self.oceanic_wavenumbers = oceanic_wavenumbers
-
-        self._calculate_M()
-        self._calculate_N()
-        self._calculate_O()
-        self._calculate_C()
+        self.stored = stored
+        if stored:
+            self.compute_inner_products()
 
     def connect_to_atmosphere(self, atmosphere_inner_products):
         """Connect the ocean to an atmosphere.
 
         Parameters
         ----------
-        atmosphere_inner_products: AtmosphericInnerProducts
+        atmosphere_inner_products: AtmosphericAnalyticInnerProducts
             The inner products of the atmosphere.
         """
 
-        natm, noc = self.params.nmod
-
-        self.K = sp.zeros((noc, natm), dtype=float, format='dok')
-        self.W = sp.zeros((noc, natm), dtype=float, format='dok')
-
-        if atmosphere_inner_products.s is None:
-            atmosphere_inner_products.s = sp.zeros((natm, noc), dtype=float, format='dok')
-            atmosphere_inner_products._calculate_s(self)
-
-        self._calculate_W(atmosphere_inner_products)
-        self._calculate_K(atmosphere_inner_products)
-
+        self.atmosphere_inner_products = atmosphere_inner_products
         self.connected_to_atmosphere = True
 
-    def _calculate_K(self, atmosphere_inner_products):
+        if self.stored:
+            natm = atmosphere_inner_products.natm
+            self._K = sp.zeros((self.noc, natm), dtype=float, format='dok')
+            self._W = sp.zeros((self.noc, natm), dtype=float, format='dok')
 
-        natm, noc = self.params.nmod
+            args_list = [(i, j) for i in range(self.noc) for j in range(natm)]
 
-        for i in range(0, noc):
-            for j in range(0, natm):
-                self.K[i, j] = atmosphere_inner_products.s[j, i] * atmosphere_inner_products.a[j, j]
+            for arg in args_list:
+                # K inner products
+                self._K[arg] = self._K_comp(*arg)
+                # W inner products
+                self._W[arg] = self._W_comp(*arg)
 
-    def _calculate_M(self):
+            self._K = self._K.to_coo()
+            self._W = self._W.to_coo()
 
-        nmod = self.params.nmod[1]
-        n = self.params.scale_params.n
-        for i in range(nmod):
+            self.atmosphere_inner_products = None
+
+    def compute_inner_products(self):
+        """Function computing and storing all the inner products at once."""
+
+        self._M = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
+        self._U = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
+        self._N = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
+        self._O = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
+        self._C = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
+
+        args_list = [(i, j) for i in range(self.noc) for j in range(self.noc)]
+
+        for arg in args_list:
+            # M inner products
+            self._M[arg] = self._M_comp(*arg)
+            # U inner products
+            self._U[arg] = self._U_comp(*arg)
+            # N inner products
+            self._N[arg] = self._N_comp(*arg)
+
+        args_list = [(i, j, k) for i in range(self.noc) for j in range(self.noc) for k in range(self.noc)]
+
+        for arg in args_list:
+            # O inner products
+            val = self._O_comp(*arg)
+            self._O[arg] = val
+            # C inner products
+            self._C[arg] = val * self._M[arg[-1], arg[-1]]
+
+        self._M = self._M.to_coo()
+        self._U = self._U.to_coo()
+        self._N = self._N.to_coo()
+        self._O = self._O.to_coo()
+        self._C = self._C.to_coo()
+
+    @property
+    def noc(self):
+        """Number of oceanic modes."""
+        return self._noc
+
+    # !-----------------------------------------------------!
+    # ! Inner products in the equations for the ocean       !
+    # !-----------------------------------------------------!
+
+    def K(self, i, j):
+        """Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`."""
+        if self.stored and self._K is not None:
+            return self._K[i, j]
+        else:
+            return self._K_comp(i, j)
+
+    def _K_comp(self, i, j):
+        if self.connected_to_atmosphere:
+            return self.atmosphere_inner_products._s_comp(j, i) * self.atmosphere_inner_products._a_comp(j, j)
+        else:
+            return 0
+
+    def M(self, i, j):
+        """Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`."""
+        if self.stored and self._M is not None:
+            return self._M[i, j]
+        else:
+            return self._M_comp(i, j)
+
+    def _M_comp(self, i, j):
+        if i == j:
+            n = self.n
             Di = self.oceanic_wavenumbers[i]
-            self.M[i, i] = - (n**2) * Di.nx**2 - Di.ny**2
+            return - (n ** 2) * Di.nx ** 2 - Di.ny ** 2
+        else:
+            return 0
 
-    def _calculate_N(self):
+    def U(self, i, j):
+        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        if self.stored and self._U is not None:
+            return self._U[i, j]
+        else:
+            return self._U_comp(i, j)
 
-        nmod = self.params.nmod[1]
-        n = self.params.scale_params.n
+    def _U_comp(self, i, j):
+        return _delta(i - j)
+
+    def N(self, i, j):
+        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`."""
+        if self.stored and self._N is not None:
+            return self._N[i, j]
+        else:
+            return self._N_comp(i, j)
+
+    def _N_comp(self, i, j):
+        n = self.n
         pi = np.pi
 
-        val = 0.
+        Di = self.oceanic_wavenumbers[i]
+        Dj = self.oceanic_wavenumbers[j]
+        val = _delta(Di.P - Dj.P) * _flambda(Di.H + Dj.H)
 
-        for i in range(0, nmod):
-            for j in range(0, nmod):
-                Di = self.oceanic_wavenumbers[i]
-                Dj = self.oceanic_wavenumbers[j]
-                val = _delta(Di.P - Dj.P) * _flambda(Di.H + Dj.H)
+        if val != 0:
+            val = val * (-2) * Dj.H * Di.H * n / ((Dj.H ** 2 - Di.H ** 2) * pi)
 
-                if val != 0.:
-                    self.N[i, j] = val * (-2) * Dj.H * Di.H * n / \
-                                   ((Dj.H**2 - Di.H**2) * pi)
+        return val
 
-    def _calculate_O(self):
+    def O(self, i, j, k):
+        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`"""
+        if self.stored and self._O is not None:
+            return self._O[i, j, k]
+        else:
+            return self._O_comp(i, j, k)
 
-        nmod = self.params.nmod[1]
-        n = self.params.scale_params.n
+    def _O_comp(self, i, j, k):
+        n = self.n
 
-        val = 0.
+        indices = [i, j, k]
+        a, par = _piksort(indices)
 
-        for i in range(0, nmod):
-            for j in range(i, nmod):
-                for k in range(i, nmod):
+        Di = self.oceanic_wavenumbers[a[0]]
+        Dj = self.oceanic_wavenumbers[a[1]]
+        Dk = self.oceanic_wavenumbers[a[2]]
 
-                    Di = self.oceanic_wavenumbers[i]
-                    Dj = self.oceanic_wavenumbers[j]
-                    Dk = self.oceanic_wavenumbers[k]
+        vs3 = _S3(Dj.P, Dk.P, Dj.H, Dk.H)
 
-                    vs3 = _S3(Dj.P, Dk.P, Dj.H, Dk.H)
+        vs4 = _S4(Dj.P, Dk.P, Dj.H, Dk.H)
 
-                    vs4 = _S4(Dj.P, Dk.P, Dj.H, Dk.H)
+        val = vs3 * ((_delta(Dk.H - Dj.H - Di.H)
+                      - _delta(Dk.H - Dj.H + Di.H))
+                     * _delta(Dk.P + Dj.P - Di.P)
+                     + _delta(Dk.H + Dj.H - Di.H)
+                     * (_delta(Dk.P - Dj.P + Di.P)
+                        - _delta(Dk.P - Dj.P - Di.P))) \
+              + vs4 * ((_delta(Dk.H + Dj.H - Di.H)
+                        * _delta(Dk.P - Dj.P - Di.P))
+                       + (_delta(Dk.H - Dj.H + Di.H)
+                          - _delta(Dk.H - Dj.H - Di.H))
+                       * (_delta(Dk.P - Dj.P - Di.P)
+                          - _delta(Dk.P - Dj.P + Di.P)))
 
-                    val = vs3*((_delta(Dk.H - Dj.H - Di.H)
-                                - _delta(Dk.H - Dj.H + Di.H))
-                               * _delta(Dk.P + Dj.P - Di.P)
-                               + _delta(Dk.H + Dj.H - Di.H)
-                               * (_delta(Dk.P - Dj.P + Di.P)
-                                  - _delta(Dk.P - Dj.P - Di.P))) \
-                        + vs4 * ((_delta(Dk.H + Dj.H - Di.H)
-                                  * _delta(Dk.P - Dj.P - Di.P))
-                                 + (_delta(Dk.H - Dj.H + Di.H)
-                                    - _delta(Dk.H - Dj.H - Di.H))
-                                 * (_delta(Dk.P - Dj.P - Di.P)
-                                    - _delta(Dk.P - Dj.P + Di.P)))
+        return par * val * n / 2
 
-                    val = val * n / 2
+    def C(self, i, j, k):
+        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`."""
+        if self.stored and self._C is not None:
+            return self._C[i, j, k]
+        else:
+            return self._C_comp(i, j, k)
 
-                    if val != 0:
-                        self.O[i, j, k] = val
-                        self.O[j, k, i] = val
-                        self.O[k, i, j] = val
-                        self.O[i, k, j] = -val
-                        self.O[j, i, k] = -val
-                        self.O[k, j, i] = -val
+    def _C_comp(self, i, j, k):
+        return self._M_comp(k, k) * self._O_comp(i, j, k)
 
-    def _calculate_C(self):
+    def W(self, i, j):
+        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        if self.stored and self._W is not None:
+            return self._W[i, j]
+        else:
+            return self._W_comp(i, j)
 
-        nmod = self.params.nmod[1]
+    def _W_comp(self, i, j):
+        if self.connected_to_atmosphere:
+            return self.atmosphere_inner_products._s_comp(j, i)
+        else:
+            return 0
 
-        val = 0.
 
-        for i in range(0, nmod):
-            for j in range(0, nmod):
-                for k in range(0, nmod):
+class GroundAnalyticInnerProducts(GroundInnerProducts):
+    """Class which contains all the ground inner products coefficients needed for the tendencies
+    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
-                    val = self.M[k, k] * self.O[i, j, k]
+    Parameters
+    ----------
+    params: None or ~params.params.QgParams or list, optional
+        An instance of model's parameters object or a list in the form [aspect_ratio, gblocks, ngr].
+        If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `gblocks` is a spectral blocks
+        detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (ngr, 2), and `ngr` is
+        the number of modes in the ocean.
+        If `None`, an empty object is initialized.
+    stored: bool, optional
+        Indicate if the inner products must be computed and stored at the initialization. Default to `True`.
 
-                    if val != 0:
-                        self.C[i, j, k] = val
+    Attributes
+    ----------
+    n: float
+        The aspect ratio of the domain.
+    atmosphere_inner_products: None or AtmosphericInnerProducts
+            The inner products of the atmosphere. `None` if no atmosphere.
+    connected_to_atmosphere: bool
+        Indicate if the ocean is connected to an atmosphere.
+    stored: bool
+        Indicate if the inner products are stored in the object.
+    ground_wavenumbers: ~numpy.ndarray(WaveNumber)
+        An array of shape (:attr:`~params.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
 
-    def _calculate_W(self, atmosphere_inner_products):
+    """
 
-        natm, noc = self.params.nmod
+    def __init__(self, params=None, stored=True):
 
-        for i in range(0, noc):
-            for j in range(0, natm):
-                self.W[i, j] = atmosphere_inner_products.s[j, i]
+        GroundInnerProducts.__init__(self)
+
+        if params is not None:
+            if isinstance(params, QgParams):
+                self.n = params.scale_params.n
+                self._ngr = params.nmod[1]
+                gms = params.oblocks
+            else:
+                self.n = params[0]
+                self._ngr = params[2]
+                gms = params[1]
+        else:
+            self.n = None
+            stored = False
+            gms = None
+
+        self.connected_to_atmosphere = False
+        self.atmosphere_inner_products = None
+
+        # Ground wavenumbers definition
+        if gms is not None:
+            self.ground_wavenumbers = channel_wavenumbers(gms)
+        else:
+            self.ground_wavenumbers = None
+
+        self.stored = stored
+
+        if stored:
+            self.compute_inner_products()
+
+    def compute_inner_products(self):
+        """Function computing and storing all the inner products at once."""
+        self._U = sp.zeros((self.ngr, self.ngr), dtype=float, format='dok')
+
+        args_list = [(i, j) for i in range(self.ngr) for j in range(self.ngr)]
+
+        for arg in args_list:
+            # U inner products
+            self._U[arg] = self._U_comp(*arg)
+
+        self._U = self._U.to_coo()
+
+    def connect_to_atmosphere(self, atmosphere_inner_products):
+        """Connect the ground to an atmosphere.
+
+        Parameters
+        ----------
+        atmosphere_inner_products: AtmosphericAnalyticInnerProducts
+            The inner products of the atmosphere.
+        """
+
+        self.atmosphere_inner_products = atmosphere_inner_products
+        self.connected_to_atmosphere = True
+
+        if self.stored:
+            natm = atmosphere_inner_products.natm
+            self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
+
+            args_list = [(i, j) for i in range(self.ngr) for j in range(natm)]
+
+            for arg in args_list:
+                # W inner products
+                self._W[arg] = self._W_comp(*arg)
+
+            self._W = self._W.to_coo()
+
+            self.atmosphere_inner_products = None
+
+    @property
+    def ngr(self):
+        """Number of ground modes."""
+        return self._ngr
+
+    # !-----------------------------------------------------!
+    # ! Inner products in the equations for the ground      !
+    # !-----------------------------------------------------!
+
+    def K(self, i, j):
+        """:math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`
+
+        Warnings
+        --------
+        Not defined and not used."""
+        return 0
+
+    def M(self, i, j):
+        """:math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`
+
+        Warnings
+        --------
+        Not defined and not used.
+        """
+        return 0
+
+    def U(self, i, j):
+        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        if self.stored and self._U is not None:
+            return self._U[i, j]
+        else:
+            return self._U_comp(i, j)
+
+    def _U_comp(self, i, j):
+        return _delta(i - j)
+
+    def N(self, i, j):
+        """:math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`
+
+        Warnings
+        --------
+        Not defined and not used.
+        """
+        return 0
+
+    def O(self, i, j, k):
+        """:math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`
+
+        Warnings
+        --------
+        Not defined and not used.
+        """
+        return 0
+
+    def C(self, i, j, k):
+        """:math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`
+
+        Warnings
+        --------
+        Not defined and not used.
+        """
+        return 0
+
+    def W(self, i, j):
+        """Function to compute the short-wave radiative forcing of the ground: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        if self.stored and self._W is not None:
+            return self._W[i, j]
+        else:
+            return self._W_comp(i, j)
+
+    def _W_comp(self, i, j):
+        if self.connected_to_atmosphere:
+            return self.atmosphere_inner_products._s_comp(j, i)
+        else:
+            return 0
+
+
+def _piksort(arr):
+    k = len(arr)
+    arro = arr.copy()
+
+    par = 1
+
+    for i in range(1, k):
+        a = arro[i]
+        l = i - 1
+        for j in range(i - 1, -1, -1):
+            if arro[j] <= a:
+                l = j
+                break
+            arro[j + 1] = arro[j]
+            par = -par
+            l = j - 1
+        arro[l + 1] = a
+    return arro, par
+
 
 #  !-----------------------------------------------------!
 #  !                                                     !
@@ -606,15 +887,14 @@ class OceanicInnerProducts(object):
 
 
 def _B1(Pi, Pj, Pk):
-    return (Pk+Pj)/float(Pi)
+    return (Pk + Pj) / float(Pi)
 
 
 def _B2(Pi, Pj, Pk):
-    return (Pk-Pj)/float(Pi)
+    return (Pk - Pj) / float(Pi)
 
 
 def _delta(r):
-
     if r == 0:
         return 1.
 
@@ -623,7 +903,6 @@ def _delta(r):
 
 
 def _flambda(r):
-
     if r % 2 == 0:
         return 0.
 
@@ -649,9 +928,10 @@ def _S4(Pj, Pk, Hj, Hk):
 
 if __name__ == '__main__':
     from params.params import QgParams
+
     pars = QgParams()
-    pars.set_atmospheric_modes(2, 2)
-    aip = AtmosphericInnerProducts(pars)
-    pars.set_oceanic_modes(2, 2)
-    oip = OceanicInnerProducts(pars)
+    pars._set_atmospheric_analytic_fourier_modes(2, 2)
+    pars._set_oceanic_analytic_fourier_modes(2, 4)
+    aip = AtmosphericAnalyticInnerProducts(pars)
+    oip = OceanicAnalyticInnerProducts(pars)
     aip.connect_to_ocean(oip)

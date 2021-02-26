@@ -87,6 +87,10 @@ or ::
 
     python qgs_maooam.py
 
+For more advanced usages, please read the User Guide.
+
+.. TODO: add more details and a link to it when the User Guide is ready.
+
 Examples
 --------
 
@@ -108,6 +112,7 @@ qgs needs mainly:
 * `Numpy`_ for numeric support
 * `sparse`_ for sparse multidimensional arrays support
 * `Numba`_ for code acceleration
+* `Sympy`_ for symbolic manipulation of inner products
 
 Check the yaml file `environment.yml <../../../../environment.yml>`_ for the full list of dependencies.
 

@@ -93,6 +93,7 @@ Usage
 
 qgs can be used by editing and running the script `qgs_rp.py` and `qgs_maooam.py` found in the main folder.
 
+For more advanced usages, please read the User Guides (TODO).
 
 Examples
 --------
@@ -115,6 +116,7 @@ qgs needs mainly:
    * [Numpy](https://numpy.org/) for numeric support
    * [sparse](https://sparse.pydata.org/) for sparse multidimensional arrays support
    * [Numba](https://numba.pydata.org/) for code acceleration
+   * [Sympy](https://www.sympy.org/) for symbolic manipulation of inner products
    
 Check the yaml file [environment.yml](./environment.yml) for the dependencies.
 

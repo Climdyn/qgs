@@ -66,7 +66,7 @@ class TestBase(unittest.TestCase):
         pass
 
     @staticmethod
-    def match_flt(s1, s2):
+    def match_flt(s1, s2, eps=real_eps):
 
         s1p = s1.split('=')
         s2p = s2.split('=')
@@ -74,7 +74,7 @@ class TestBase(unittest.TestCase):
         v1 = float(s1p[1])
         v2 = float(s2p[1])
 
-        return abs(v1 - v2) < real_eps
+        return abs(v1 - v2) < eps
 
     @staticmethod
     def match_str(s1, s2, cmax=1):

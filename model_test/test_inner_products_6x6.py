@@ -1,6 +1,4 @@
 
-# TODO: - Should be rewrited with a string composition function
-
 import sys
 import os
 
@@ -42,14 +40,14 @@ class TestAnalyticInnerProducts6x6(TestBase):
             tfunc = output_func
 
         pars = QgParams()
-        pars.set_atmospheric_modes(6, 6)
-        pars.set_oceanic_modes(6, 6)
+        pars.set_atmospheric_channel_fourier_modes(6, 6)
+        pars.set_oceanic_basin_fourier_modes(6, 6)
 
         # Setting MAOOAM default parameters
-        pars.set_params({'k': 0.02, 'kp': 0.04, 'n': 1.5})
+        pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
 
-        aip = analytic.AtmosphericInnerProducts(pars)
-        oip = analytic.OceanicInnerProducts(pars)
+        aip = analytic.AtmosphericAnalyticInnerProducts(pars)
+        oip = analytic.OceanicAnalyticInnerProducts(pars)
         aip.connect_to_ocean(oip)
 
         natm = pars.nmod[0]
@@ -57,52 +55,36 @@ class TestAnalyticInnerProducts6x6(TestBase):
 
         for i in range(natm):
             for j in range(natm):
-                if abs(aip.a[i, j]) >= real_eps:
-                    tfunc("a["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % aip.a[i, j])
-                if abs(aip.c[i, j]) >= real_eps:
-                    tfunc("c["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % aip.c[i, j])
-                for k in range(0, natm):
-                    if abs(aip.b[i, j, k]) >= real_eps:
-                        tfunc(
-                            "b["+str(i+1)+"]["+str(j+1)+"]["+str(k+1)+"] = % .5E"
-                            % aip.b[i, j, k])
-                    if abs(aip.g[i, j, k]) >= real_eps:
+                _ip_string_format(tfunc, "a", [i, j], aip.a(i, j))
+                _ip_string_format(tfunc, "c", [i, j], aip.c(i, j))
+                for k in range(natm):
+                    _ip_string_format(tfunc, "b", [i, j, k], aip.b(i, j, k))
+                    _ip_string_format(tfunc, "g", [i, j, k], aip.g(i, j, k))
 
-                        tfunc(
-                            "g["+str(i+1)+"]["+str(j+1)+"]["+str(k+1)+"] = % .5E"
-                            % aip.g[i, j, k])
-
-        for i in range(natm):
-            for j in range(0, noc):
-                if abs(aip.d[i, j]) >= real_eps:
-                    tfunc("d["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % aip.d[i, j])
-                if abs(aip.s[i, j]) >= real_eps:
-                    tfunc("s["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % aip.s[i, j])
+            for j in range(noc):
+                _ip_string_format(tfunc, "d", [i, j], aip.d(i, j))
+                _ip_string_format(tfunc, "s", [i, j], aip.s(i, j))
 
         for i in range(noc):
             for j in range(noc):
-                if abs(oip.M[i, j]) >= real_eps:
-                    tfunc("M["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % oip.M[i, j])
-                if abs(oip.N[i, j]) >= real_eps:
-                    tfunc("N["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E" % oip.N[i, j])
+                _ip_string_format(tfunc, "M", [i, j], oip.M(i, j))
+                _ip_string_format(tfunc, "N", [i, j], oip.N(i, j))
                 for k in range(noc):
-                    if abs(oip.O[i, j, k]) >= real_eps:
-                        tfunc(
-                            "O["+str(i+1)+"]["+str(j+1)+"]["+str(k+1)+"] = % .5E"
-                            % oip.O[i, j, k])
-                    if abs(oip.C[i, j, k]) >= real_eps:
-                        tfunc(
-                            "C["+str(i+1)+"]["+str(j+1)+"]["+str(k+1)+"] = % .5E"
-                            % oip.C[i, j, k])
+                    _ip_string_format(tfunc, "O", [i, j, k], oip.O(i, j, k))
+                    _ip_string_format(tfunc, "C", [i, j, k], oip.C(i, j, k))
+
             for j in range(natm):
-                if abs(oip.K[i, j]) >= real_eps:
-                    tfunc(
-                        "K["+str(i+1)+"]"+"["+str(j+1)+"] = % .5E"
-                        % oip.K[i, j])
-                if abs(oip.W[i, j]) >= real_eps:
-                    tfunc(
-                        "W["+str(i+1)+"]" + "["+str(j+1)+"] = % .5E"
-                        % oip.W[i, j])
+                _ip_string_format(tfunc, "K", [i, j], oip.K(i, j))
+                _ip_string_format(tfunc, "W", [i, j], oip.W(i, j))
+
+
+def _ip_string_format(func, symbol, indices, value):
+    if abs(value) >= real_eps:
+        s = symbol
+        for i in indices:
+            s += "[" + str(i + 1) + "]"
+        s += " = % .5E" % value
+        func(s)
 
 
 if __name__ == "__main__":

@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'qgs'
-copyright = '2020, Jonathan Demaeyer and Lesley De Cruz'
+copyright = '2021, qgs Developers and Contributors'
 author = 'Jonathan Demaeyer and Lesley De Cruz'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.2.1'
+release = 'v0.2.2'  # temporary
 version = release
 
 
@@ -73,7 +73,8 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('https://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org', None),
-                       'sparse': ('https://sparse.pydata.org/en/stable/', None)}
+                       'sparse': ('https://sparse.pydata.org/en/stable/', None),
+                       'sympy': ('https://docs.sympy.org/latest/', None)}
 
 # Napoleon settings
 napoleon_google_docstring = True

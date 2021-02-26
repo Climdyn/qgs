@@ -1,4 +1,6 @@
 
+# TODO : document this module !
+
 import numpy as np
 
 

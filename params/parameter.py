@@ -41,6 +41,8 @@
     ----------
 """
 
+import warnings
+
 
 class Parameter(float):
     """Base class of model's parameter.
@@ -57,7 +59,7 @@ class Parameter(float):
         Empty by default.
     scale_object: ScaleParams, optional
         A scale parameters object to compute the conversion between dimensional and nondimensional value.
-        `None` by default.
+        `None` by default. If `None`, cannot transform between dimensional and nondimentional value.
     description: str, optional
         String describing the parameter.
     return_dimensional: bool, optional
@@ -68,26 +70,41 @@ class Parameter(float):
     Parameter is immutable. Once instantiated, it cannot be altered. To create a new parameter, one must
     re-instantiate it.
 
+    Warnings
+    --------
+    If no scale_object argument is provided, cannot transform between the dimensional and nondimentional value !
+
     """
 
     def __new__(cls, value, input_dimensional=True, units="", scale_object=None, description="",
                 return_dimensional=False):
+
+        no_scale = False
+
         if return_dimensional:
             if input_dimensional:
                 evalue = value
             else:
                 if scale_object is None:
-                    return None
+                    return_dimensional = False
+                    evalue = value
+                    no_scale = True
                 else:
                     evalue = value / cls._conversion_factor(units, scale_object)
         else:
             if input_dimensional:
                 if scale_object is None:
-                    return None
+                    return_dimensional = True
+                    evalue = value
+                    no_scale = True
                 else:
                     evalue = value * cls._conversion_factor(units, scale_object)
             else:
                 evalue = value
+
+        if no_scale:
+            warnings.warn("Parameter configured to perform dimensional conversion " +
+                          "but without specifying a ScaleParams object: Conversion disabled!")
 
         f = float.__new__(cls, evalue)
         f._input_dimensional = input_dimensional

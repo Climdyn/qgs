@@ -2,7 +2,7 @@
 Integration modules
 ===================
 
-The module used to numerically integrate the model forward in time.
+The modules used to numerically integrate the model forward in time.
 Users may add their own recipes here.
 
 .. automodule:: integrators.integrate

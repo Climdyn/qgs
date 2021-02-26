@@ -2,7 +2,7 @@
 Examples
 ========
 
-Some basic examples are available in this section
+Some basic examples are available in this section:
 
 .. toctree::
    :maxdepth: 1
@@ -12,4 +12,4 @@ Some basic examples are available in this section
    examples/Lietal
    examples/diffeq
    examples/tgls
-
+   examples/VSPD

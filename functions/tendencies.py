@@ -10,9 +10,10 @@
 import numpy as np
 from numba import njit
 
-from inner_products.analytic import AtmosphericInnerProducts, OceanicInnerProducts
+from inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts, GroundAnalyticInnerProducts
+from inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
 from tensors.qgtensor import QgsTensor
-from functions.sparse import sparse_mul3, sparse_mul2
+from functions.sparse_mul import sparse_mul3, sparse_mul2
 
 
 def create_tendencies(params, return_inner_products=False, return_qgtensor=False):
@@ -53,19 +54,34 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
     """
 
     if params.ablocks is not None:
-        aip = AtmosphericInnerProducts(params)
+        aip = AtmosphericAnalyticInnerProducts(params)
+    elif params.atmospheric_basis is not None:
+        aip = AtmosphericSymbolicInnerProducts(params)
     else:
         aip = None
 
-    if params.goblocks is not None and params.gotemperature_params._name == "Oceanic Temperature":
-        oip = OceanicInnerProducts(params)
+    if params.oblocks is not None:
+        oip = OceanicAnalyticInnerProducts(params)
+    elif params.oceanic_basis is not None:
+        oip = OceanicSymbolicInnerProducts(params)
     else:
         oip = None
 
-    if aip is not None and oip is not None:
-        aip.connect_to_ocean(oip)
+    if params.gblocks is not None:
+        gip = GroundAnalyticInnerProducts(params)
+    elif params.ground_basis is not None:
+        gip = GroundSymbolicInnerProducts(params)
+    else:
+        gip = None
 
-    agotensor = QgsTensor(aip, oip)
+    if aip is not None and oip is not None:
+        if not aip.connected_to_ocean:
+            aip.connect_to_ocean(oip)
+    elif aip is not None and gip is not None:
+        if not aip.connected_to_ground:
+            aip.connect_to_ground(gip)
+
+    agotensor = QgsTensor(params, aip, oip, gip)
 
     coo = agotensor.tensor.coords.T
     val = agotensor.tensor.data
@@ -90,9 +106,16 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
     ret.append(f)
     ret.append(Df)
     if return_inner_products:
-        ret.append((aip, oip))
+        ret.append((aip, oip, gip))
     if return_qgtensor:
         ret.append(agotensor)
     return ret
 
 
+if __name__ == '__main__':
+    from params.params import QgParams
+
+    params = QgParams()
+    params.set_atmospheric_channel_fourier_modes(2, 2)
+    params.set_oceanic_basin_fourier_modes(2, 4)
+    f, Df = create_tendencies(params)
