@@ -27,11 +27,11 @@ the vertical velocity :math:`\omega = \text{d}p/\text{d}t`, read
     & = +k'_d \nabla^2 (\psi^1_{\rm a}-\psi^3_{\rm a}) - \quad \ \frac{f_0}{\Delta p}  \omega \nonumber \\
 
 where :math:`\nabla^2` is the horizontal Laplacian.
-The Coriolis parameter :math:`f` is linearized around a value :math:`f_0` (:attr:`~params.params.ScaleParams.f0`) evaluated at
-latitude :math:`\phi_0` (:attr:`~params.params.ScaleParams.phi0_npi`), :math:`f = f_0 + \beta y`, with
-:math:`\beta=\text{d}f/\text{d}y` (:attr:`~params.params.ScaleParams.beta`). The parameter :math:`k'_d`
-(:attr:`~params.params.AtmosphericParams.kdp`) quantify the friction between the two atmospheric layers,
-and :math:`\Delta p = 500` hPa (:attr:`~params.params.ScaleParams.deltap`) is the pressure difference between the atmospheric layers.
+The Coriolis parameter :math:`f` is linearized around a value :math:`f_0` (:attr:`~.params.ScaleParams.f0`) evaluated at
+latitude :math:`\phi_0` (:attr:`~.params.ScaleParams.phi0_npi`), :math:`f = f_0 + \beta y`, with
+:math:`\beta=\text{d}f/\text{d}y` (:attr:`~.params.ScaleParams.beta`). The parameter :math:`k'_d`
+(:attr:`~.params.AtmosphericParams.kdp`) quantify the friction between the two atmospheric layers,
+and :math:`\Delta p = 500` hPa (:attr:`~.params.ScaleParams.deltap`) is the pressure difference between the atmospheric layers.
 Finally, :math:`J` is the Jacobian :math:`J(S, G) = \partial_x S\, \partial_y G - \partial_y S\, \partial_x G`.
 
 

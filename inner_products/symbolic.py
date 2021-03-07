@@ -30,10 +30,11 @@ from inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, 
 from inner_products.definition import StandardSymbolicInnerProductDefinition
 from sympy import symbols
 
-_n = symbols('n')
+_n = symbols('n', real=True, nonnegative=True)
 _x, _y = symbols('x y')
 
-# TODO: Add warnings if trying to connect analytic and symbolic inner products together
+# TODO: - Add warnings if trying to connect analytic and symbolic inner products together
+#       - Switch to numerical integration of the inner products if the symbolic one is to long (to be done when NumericBasis is ready)
 
 
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
@@ -42,14 +43,23 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
     Parameters
     ----------
-    params: ~params.params.QgParams or list
+    params: ~.params.QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, atmospheric_basis, basis, oog, oro_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `atmospheric_basis` is a SymbolicBasis with
         the modes of the atmosphere, and `ocean_basis` is either `None` or a SymbolicBasis object with the modes of
         the ocean or the ground. Finally `oog` indicates if it is an ocean or a ground component that is connected,
         by setting it to `ocean` or to 'ground', and in this latter case, `oro_basis` indicates on which basis the orography is developed.
+    stored: bool, optional
+        Indicate if the inner product must be stored or computed on the fly. Default to `True`
     inner_product_definition: None or InnerProductDefinition, optional
         The definition of the inner product being used. If `None`, use the canonical StandardInnerProductDefinition object.
+        Default to `None`.
+    interaction_inner_product_definition: None or InnerProductDefinition, optional
+        The definition of the inner product being used for the interaction with the other components, i.e. to compute the inner products with the other component base of funcitons.
+        If `None`, use the `inner_product_definition` provided.
+        Default to `None`.
+    num_threads: int or None, optional
+        Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
         Default to `None`.
 
     Attributes
@@ -62,14 +72,18 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         Object holding the symbolic modes of the ocean (or `None` if there is no ocean).
     connected_to_ocean: bool
         Indicate if the atmosphere is connected to an ocean.
+    stored: bool
+        Indicate if the inner product must be stored or computed on the fly.
     ip: InnerProductDefinition
         Object defining the inner product.
+    iip: InnerProductDefinition
+        Object defining the interaction inner product.
     subs: list(tuple)
         List of 2-tuples containing the substitutions to be made with the functions after the inner products
         symbolic computation.
     """
 
-    def __init__(self, params=None, stored=True, inner_product_definition=None, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
 
         AtmosphericInnerProducts.__init__(self)
 
@@ -117,6 +131,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         else:
             self.ip = inner_product_definition
 
+        if interaction_inner_product_definition is None:
+            self.iip = self.ip
+        else:
+            self.iip = interaction_inner_product_definition
+
         self.stored = stored
         if stored:
             self.compute_inner_products(num_threads)
@@ -142,6 +161,9 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         ----------
         ocean_basis: SymbolicBasis or OceanicSymbolicInnerProducts
             Basis of function of the ocean or a symbolic oceanic inner products object containing the basis.
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
         """
         if isinstance(ocean_basis, OceanicSymbolicInnerProducts):
             ocean_basis = ocean_basis.oceanic_basis
@@ -163,7 +185,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             self._s = sp.zeros((self.natm, noc), dtype=float, format='dok')
 
             # d inner products
-            args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
+            args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(noc)]
 
             result = pool.map(apply, args_list)
@@ -173,7 +195,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                                         .subs(self.oceanic_basis.substitutions))
 
             # s inner products
-            args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
+            args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(noc)]
 
             result = pool.map(apply, args_list)
@@ -197,6 +219,9 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         orographic_basis: str
             String to select which component basis modes to use to develop the orography in series.
             Can be either 'atmospheric' or 'ground'.
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
         """
 
         if isinstance(ground_basis, GroundSymbolicInnerProducts):
@@ -223,7 +248,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             self._s = sp.zeros((self.natm, ngr), dtype=float, format='dok')
 
             # s inner products
-            args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
+            args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(ngr)]
 
             result = pool.map(apply, args_list)
@@ -233,7 +258,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                                         .subs(self.ground_basis.substitutions))
 
             # gh inner products
-            args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
+            args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
                          for j in range(self.natm) for k in range(ngr)]
 
             result = pool.map(apply, args_list)
@@ -249,6 +274,14 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             pool.terminate()
 
     def compute_inner_products(self, num_threads=None):
+        """Function computing and storing all the inner products at once.
+
+        Parameters
+        ----------
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        """
 
         self._a = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
         self._u = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
@@ -373,7 +406,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             if self.stored and self._gh is not None:
                 return self._gh[i, j, k]
             else:
-                res = self.ip.ip_jac(self._F(i), self._F(j), self._phi(k))
+                res = self.iip.ip_jac(self._F(i), self._F(j), self._phi(k))
                 return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
 
         else:
@@ -392,7 +425,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             if self.stored and self._s is not None:
                 return self._s[i, j]
             else:
-                res = self.ip.symbolic_inner_product(self._F(i), self._phi(j))
+                res = self.iip.symbolic_inner_product(self._F(i), self._phi(j))
                 return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
         else:
             return 0
@@ -410,7 +443,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             if self.stored and self._d is not None:
                 return self._d[i, j]
             else:
-                res = self.ip.ip_lap(self._F(i), self._phi(j))
+                res = self.iip.ip_lap(self._F(i), self._phi(j))
                 return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
         else:
             return 0
@@ -422,13 +455,22 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
     Parameters
     ----------
-    params: ~params.params.QgParams or list
+    params: ~.params.QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, ocean_basis, atmospheric_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ocean_basis` is a SymbolicBasis object
         with the modes of the ocean, and `atmospheric_basis` is either a SymbolicBasis with the modes of the atmosphere
         or `None` if there is no atmosphere.
+    stored: bool, optional
+        Indicate if the inner product must be stored or computed on the fly. Default to `True`
     inner_product_definition: None or InnerProductDefinition, optional
         The definition of the inner product being used. If `None`, use the canonical StandardInnerProductDefinition object.
+        Default to `None`.
+    interaction_inner_product_definition: None or InnerProductDefinition, optional
+        The definition of the inner product being used for the interaction with the other components, i.e. to compute the inner products with the other component base of funcitons.
+        If `None`, use the `inner_product_definition` provided.
+        Default to `None`.
+    num_threads: int or None, optional
+        Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
         Default to `None`.
 
     Attributes
@@ -441,13 +483,17 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         Object holding the symbolic modes of the atmosphere (or `None` if there is no atmosphere).
     connected_to_atmosphere: bool
         Indicate if the ocean is connected to an atmosphere.
+    stored: bool
+        Indicate if the inner product must be stored or computed on the fly.
     ip: InnerProductDefinition
         Object defining the inner product.
+    iip: InnerProductDefinition
+        Object defining the interaction inner product.
     subs: list(tuple)
         List of 2-tuples containing the substitutions to be made with the functions after the inner products
         symbolic computation.
     """
-    def __init__(self, params=None, inner_product_definition=None, stored=True, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
 
         OceanicInnerProducts.__init__(self)
 
@@ -476,6 +522,11 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         else:
             self.ip = inner_product_definition
 
+        if interaction_inner_product_definition is None:
+            self.iip = self.ip
+        else:
+            self.iip = interaction_inner_product_definition
+
         self.stored = stored
         if stored:
             self.compute_inner_products(num_threads)
@@ -498,6 +549,9 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         ----------
         atmosphere_basis: SymbolicBasis or AtmosphericSymbolicInnerProducts
             Basis of function of the atmosphere or a symbolic atmospheric inner products object containing the basis.
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
         """
 
         if isinstance(atmosphere_basis, AtmosphericSymbolicInnerProducts):
@@ -515,7 +569,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             self._W = sp.zeros((self.noc, natm), dtype=float, format='dok')
 
             # K inner products
-            l = [[(i, j), self.ip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
+            l = [[(i, j), self.iip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
                  for j in range(natm)]
 
             result = pool.map(apply, l)
@@ -525,7 +579,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                                         .subs(self.atmospheric_basis.substitutions))
 
             # W inner products
-            l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
+            l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
                  for j in range(natm)]
 
             result = pool.map(apply, l)
@@ -540,6 +594,14 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             pool.terminate()
 
     def compute_inner_products(self, num_threads=None):
+        """Function computing and storing all the inner products at once.
+
+        Parameters
+        ----------
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        """
 
         self._M = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
         self._U = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
@@ -652,7 +714,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         """Function to commpute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.ip.ip_lap(self._phi(i), self._F(j))
+                res = self.iip.ip_lap(self._phi(i), self._F(j))
                 return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions).subs(self.atmospheric_basis.substitutions))
             else:
                 return self._K[i, j]
@@ -663,7 +725,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.ip.symbolic_inner_product(self._phi(i), self._F(j))
+                res = self.iip.symbolic_inner_product(self._phi(i), self._F(j))
                 return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(self.oceanic_basis.substitutions))
             else:
                 return self._W[i, j]
@@ -677,13 +739,22 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
     Parameters
     ----------
-    params: ~params.params.QgParams or list
+    params: ~.params.QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, ground_basis, atmospheric_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ground_basis` is a SymbolicBasis object
         with the modes of the ground, and `atmospheric_basis` is either a SymbolicBasis with the modes of the atmosphere
         or `None` if there is no atmosphere.
+    stored: bool, optional
+        Indicate if the inner product must be stored or computed on the fly. Default to `True`
     inner_product_definition: None or InnerProductDefinition, optional
         The definition of the inner product being used. If `None`, use the canonical StandardInnerProductDefinition object.
+        Default to `None`.
+    interaction_inner_product_definition: None or InnerProductDefinition, optional
+        The definition of the inner product being used for the interaction with the other components, i.e. to compute the inner products with the other component base of funcitons.
+        If `None`, use the `inner_product_definition` provided.
+        Default to `None`.
+    num_threads: int or None, optional
+        Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
         Default to `None`.
 
     Attributes
@@ -696,13 +767,17 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         Object holding the symbolic modes of the atmosphere (or `None` if there is no atmosphere).
     connected_to_atmosphere: bool
         Indicate if the ground is connected to an atmosphere.
+    stored: bool
+        Indicate if the inner product must be stored or computed on the fly.
     ip: InnerProductDefinition
         Object defining the inner product.
+    iip: InnerProductDefinition
+        Object defining the interaction inner product.
     subs: list(tuple)
         List of 2-tuples containing the substitutions to be made with the functions after the inner products
         symbolic computation.
     """
-    def __init__(self, params=None, inner_product_definition=None, stored=True, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
 
         GroundInnerProducts.__init__(self)
 
@@ -731,7 +806,12 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         else:
             self.ip = inner_product_definition
 
+        if interaction_inner_product_definition is None:
+            self.iip = self.ip
+        else:
+            self.iip = interaction_inner_product_definition
         self.stored = stored
+
         if stored:
             self.compute_inner_products(num_threads)
 
@@ -753,6 +833,9 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         ----------
         atmosphere_basis: SymbolicBasis or AtmosphericSymbolicInnerProducts
             Basis of function of the atmosphere or a symbolic atmospheric inner products object containing the basis.
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
         """
         if isinstance(atmosphere_basis, AtmosphericSymbolicInnerProducts):
             atmosphere_basis = atmosphere_basis.atmospheric_basis
@@ -769,7 +852,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
 
             # W inner products
-            l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
+            l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
                  for j in range(natm)]
 
             result = pool.map(apply, l)
@@ -783,6 +866,14 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             pool.terminate()
 
     def compute_inner_products(self, num_threads=None):
+        """Function computing and storing all the inner products at once.
+
+        Parameters
+        ----------
+        num_threads: int or None, optional
+            Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        """
 
         self._U = sp.zeros((self.ngr, self.ngr), dtype=float, format='dok')
 
@@ -802,7 +893,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
     @property
     def ngr(self):
-        """Number of oceanic modes."""
+        """Number of ground modes."""
         return len(self.ground_basis)
 
     # !-----------------------------------------------------!
@@ -861,7 +952,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.ip.symbolic_inner_product(self._phi(i), self._F(j))
+                res = self.iip.symbolic_inner_product(self._phi(i), self._F(j))
                 return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(self.ground_basis.substitutions))
             else:
                 return self._W[i, j]

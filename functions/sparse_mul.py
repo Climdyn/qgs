@@ -29,14 +29,14 @@ def sparse_mul3(coo, value, vec_a, vec_b):
     value: ~numpy.ndarray(float)
         A 1D array of shape (n_elems,), a list of value in the tensor
     vec_a: ~numpy.ndarray(float)
-        The vector :math:`a_j` to contract the tensor with. Must be of shape (:attr:`~params.params.QgParams.ndim` + 1,).
+        The vector :math:`a_j` to contract the tensor with. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
     vec_b: ~numpy.ndarray(float)
-        The vector :math:`b_k` to contract the tensor with. Must be of shape (:attr:`~params.params.QgParams.ndim` + 1,).
+        The vector :math:`b_k` to contract the tensor with. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
     ~numpy.ndarray(float)
-        The vector :math:`v_i`, of shape (:attr:`~params.params.QgParams.ndim` + 1,).
+        The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,).
     """
     res = np.zeros_like(vec_a)
     n_elems = coo.shape[0]
@@ -65,12 +65,12 @@ def sparse_mul2(coo, value, vec):
     value: ~numpy.ndarray(float)
         A 1D array of shape (n_elems,), a list of value in the tensor
     vec: ~numpy.ndarray(float)
-        The vector :math:`a_k` to contract the tensor with. Must be of shape (:attr:`~params.params.QgParams.ndim` + 1,).
+        The vector :math:`a_k` to contract the tensor with. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
     ~numpy.ndarray(float)
-        The matrix :math:`A_{i,j}`, of shape (:attr:`~params.params.QgParams.ndim` + 1, :attr:`~params.params.QgParams.ndim` + 1).
+        The matrix :math:`A_{i,j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1).
     """
 
     res = np.zeros((len(vec), len(vec)))

@@ -3,7 +3,7 @@ Model with an orography and heat exchanges
 ==========================================
 
 In the :ref:`files/model/oro_model:Model with an orography and a temperature profile`, the radiative equilibrium temperature field at the middle of the atmosphere
-is specified by a given profile :math:`\theta^\star` (:attr:`~params.params.AtmosphericTemperatureParams.thetas`) and the system relaxes to
+is specified by a given profile :math:`\theta^\star` (:attr:`~.params.AtmosphericTemperatureParams.thetas`) and the system relaxes to
 this profile due to the `Newtonian cooling`_.
 
 In Li et al. :cite:`li-LHHBD2018`, another scheme for the temperature is proposed, based on the
@@ -51,8 +51,8 @@ All the modes of this model version are expanded on the set of Fourier modes :ma
 
 
 and as in MAOOAM, the fields, parameters and variables are non-dimensionalized
-by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
-the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
+by dividing time by :math:`f_0^{-1}` (:attr:`~.params.ScaleParams.f0`), distance by
+the characteristic length scale :math:`L` (:attr:`~.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~.params.ScaleParams.deltap`),
 temperature by :math:`f_0^2 L^2/R`, and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization, the
 fields :math:`\theta_{\rm a}` and :math:`\delta T_{\rm a}` can be identified: :math:`2 \theta_{\rm a} \equiv \delta T_{\rm a}`.
 
@@ -68,15 +68,15 @@ The equations of the system of ordinary differential equations for this model th
   \dot\delta T_{{\rm g},i} & = & - \left(\lambda'_{\rm g}+ s_{B,{\rm g}}\right) \, \delta T_{{\rm g},i} + \left(2 \,\lambda'_{\rm g} + s_{B,{\rm a}}\right) \, \theta_{{\rm a},i} + C'_{{\rm g},i}
 
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
-:math:`G = - L^2/L_R^2` (:attr:`~params.params.QgParams.G`),
-:math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.Lpa`),
-:math:`\lambda'_{{\rm g}} = \lambda/(\gamma_{\rm g} f_0)` (:attr:`~params.params.QgParams.Lpgo`),
-:math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpa`),
-:math:`S_{B,{\rm g}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpgo`),
-:math:`s_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm g} f_0)` (:attr:`~params.params.QgParams.sbpa`),
-:math:`s_{B,{\rm g}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm g} f_0)` (:attr:`~params.params.QgParams.sbpgo`),
-:math:`C'_{{\rm a},i} = R C_{{\rm a},i} / (2 \gamma_{\rm a} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpa`),
-:math:`C'_{{\rm g},i} = R C_{{\rm g},i} /   (\gamma_{\rm g} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpgo`).
+:math:`G = - L^2/L_R^2` (:attr:`~.params.QgParams.G`),
+:math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.Lpa`),
+:math:`\lambda'_{{\rm g}} = \lambda/(\gamma_{\rm g} f_0)` (:attr:`~.params.QgParams.Lpgo`),
+:math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.LSBpa`),
+:math:`S_{B,{\rm g}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.LSBpgo`),
+:math:`s_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm g} f_0)` (:attr:`~.params.QgParams.sbpa`),
+:math:`s_{B,{\rm g}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm g} f_0)` (:attr:`~.params.QgParams.sbpgo`),
+:math:`C'_{{\rm a},i} = R C_{{\rm a},i} / (2 \gamma_{\rm a} L^2 f_0^3)` (:attr:`~.params.QgParams.Cpa`),
+:math:`C'_{{\rm g},i} = R C_{{\rm g},i} /   (\gamma_{\rm g} L^2 f_0^3)` (:attr:`~.params.QgParams.Cpgo`).
 
 The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :math:`c_{i, j}` are the inner products of the Fourier modes :math:`F_i`:
 

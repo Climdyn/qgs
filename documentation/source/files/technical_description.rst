@@ -3,7 +3,7 @@ Code Description
 ================
 
 Presently, the `ordinary differential equations`_ (ODEs) of the qgs model are at most bilinear
-in their variables :math:`\eta_i` (:math:`1\leq i\leq` :attr:`~params.params.QgParams.ndim`).
+in their variables :math:`\eta_i` (:math:`1\leq i\leq` :attr:`~.params.QgParams.ndim`).
 This system of ODEs can therefore be expressed as the sum of
 a constant, a matrix multiplication, and a tensor contraction:
 
@@ -58,7 +58,7 @@ Computational flow
 
 The computational flow is as follows:
 
-1. The parameters are specified by instantiating a :class:`~params.params.QgParams` .
+1. The parameters are specified by instantiating a :class:`~.params.QgParams` .
 2. The inner products are computed and stored in :class:`~inner_products.analytic.AtmosphericInnerProducts` and :class:`~inner_products.analytic.OceanicInnerProducts` objects.
 3. The tensor of the tendencies terms are computed in a :class:`~tensors.qgtensor.QgsTensor` object.
 4. The functions :obj:`~functions.tendencies.create_tendencies` create Numba optimized functions that return the tendencies and the Jacobian matrix.

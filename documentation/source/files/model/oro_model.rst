@@ -27,7 +27,7 @@ It transforms the equations in :ref:`files/model/atmosphere:Atmospheric componen
     \frac{\partial}{\partial t} \left( \nabla^2 \psi^3_{\rm a} \right) + J(\psi^3_{\rm a}, \nabla^2 \psi^3_{\rm a}) + J(\psi^3_{\rm a}, f_0 \, h/H_{\rm a})  + \beta \frac{\partial \psi^3_{\rm a}}{\partial x}
     & = +k'_d \nabla^2 (\psi^1_{\rm a}-\psi^3_{\rm a}) - k_d \nabla^2 \psi^3_{\rm a} - \frac{f_0}{\Delta p}  \omega \nonumber \\
 
-where :math:`H_{\rm a}` is the characteristic depth of each fluid layer and the parameter :math:`k_d` (:attr:`~params.params.AtmosphericParams.kd`) quantifies the friction
+where :math:`H_{\rm a}` is the characteristic depth of each fluid layer and the parameter :math:`k_d` (:attr:`~.params.AtmosphericParams.kd`) quantifies the friction
 between the atmosphere and the surface. :math:`h` is the topographic height field.
 
 Mid-layer equations and the thermal wind relation
@@ -48,8 +48,8 @@ On the other hand, the thermodynamic equation governing the mean `potential temp
 
     2 \, \frac{\partial}{\partial t} T_{\rm a} + J(\psi_{\rm a}, 2 T_{\rm a}) = - \frac{\sigma}{H_{\rm a}} \,\omega + 2 h_d \, (T^\ast - T_{\rm a})
 
-where :math:`h_d` (:attr:`~params.params.AtmosphericTemperatureParams.hd`) is the `Newtonian cooling`_ coefficient indicating the tendency to return to the equilibrium temperature profile :math:`T^\ast`.
-:math:`\sigma` (:attr:`~params.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
+where :math:`h_d` (:attr:`~.params.AtmosphericTemperatureParams.hd`) is the `Newtonian cooling`_ coefficient indicating the tendency to return to the equilibrium temperature profile :math:`T^\ast`.
+:math:`\sigma` (:attr:`~.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
 The thermal wind relation
 
 .. math::
@@ -82,14 +82,14 @@ The fields are projected on Fourier modes respecting these boundary conditions:
 
 with integer values of :math:`M`, :math:`H`, :math:`P`.
 :math:`x` and :math:`y` are the horizontal adimensionalized coordinates, rescaled
-by dividing the dimensional coordinates by the characteristic length :math:`L` (:attr:`~params.params.ScaleParams.L`).
-The model's domain is then defined by :math:`(0 \leq x \leq \frac{2\pi}{n}, 0 \leq y \leq \pi)`, with :math:`n` (:attr:`~params.params.ScaleParams.n`) the aspect ratio
-between its meridional and zonal extents :math:`L_y` (:attr:`~params.params.ScaleParams.L_y`) and :math:`L_x` (:attr:`~params.params.ScaleParams.L_x`).
+by dividing the dimensional coordinates by the characteristic length :math:`L` (:attr:`~.params.ScaleParams.L`).
+The model's domain is then defined by :math:`(0 \leq x \leq \frac{2\pi}{n}, 0 \leq y \leq \pi)`, with :math:`n` (:attr:`~.params.ScaleParams.n`) the aspect ratio
+between its meridional and zonal extents :math:`L_y` (:attr:`~.params.ScaleParams.L_y`) and :math:`L_x` (:attr:`~.params.ScaleParams.L_x`).
 
 To easily manipulate these functions and the coefficients of the fields
 expansion, we number the basis functions along increasing values of :math:`M= H` and then :math:`P`. It allows to
 write the set as :math:`\left\{ F_i(x,y); 1 \leq i \leq n_\text{a}\right\}` where :math:`n_{\mathrm{a}}`
-(:attr:`~params.params.QgParams.nmod` [0]) is the number of modes of the spectral expansion.
+(:attr:`~.params.QgParams.nmod` [0]) is the number of modes of the spectral expansion.
 
 For example, with :math:`M=H=1` and :math:`P \in \{1,2\}`, one obtains the spectral truncation used by :cite:`om-CS1980`.
 The model derived in :cite:`om-RP1982` extended this set by two blocks of two functions each, and the
@@ -142,16 +142,16 @@ the vertical velocity :math:`\omega(x,y)` also have to be decomposed into the ei
     h(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, h_i \, F_i(x,y) \\
     \omega(x,y) & = & \sum_{i=1}^{n_{\mathrm{a}}} \, \omega_i \, F_i(x,y) .
 
-These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~params.params.GroundParams.hk`
-and :attr:`~params.params.AtmosphericTemperatureParams.thetas`. Note that :math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
+These fields can be specified in the model by setting the (non-dimensional) vectors :attr:`~.params.GroundParams.hk`
+and :attr:`~.params.AtmosphericTemperatureParams.thetas`. Note that :math:`h` is scaled by the characteristic height :math:`H_{\rm a}` of each layer,
 and :math:`\theta^\star` is scaled by :math:`A f_0^2 L^2` (see section below).
 
 Ordinary differential equations
 -------------------------------
 
 The fields, parameters and variables are non-dimensionalized
-by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
-the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
+by dividing time by :math:`f_0^{-1}` (:attr:`~.params.ScaleParams.f0`), distance by
+the characteristic length scale :math:`L` (:attr:`~.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~.params.ScaleParams.deltap`),
 temperature by :math:`A f_0^2 L^2`, and streamfunction by :math:`L^2 f_0`. As stated above, a result of this non-dimensionalization is that the
 field :math:`\theta_{\rm a}` is identified with :math:`T_{\rm a}`: :math:`\theta_{\rm a} \equiv T_{\rm a}`.
 

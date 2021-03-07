@@ -50,7 +50,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
 
     Parameters
     ----------
-    params: None or ~params.params.QgParams or list, optional
+    params: None or ~.params.QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, ablocks, natm].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
         detailing the model's atmospheric modes :math:`x`-and :math:`y`-wavenumber as an array of shape (natm, 2), and `natm` is
@@ -74,7 +74,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
     stored: bool
         Indicate if the inner products are stored in the object.
     atmospheric_wavenumbers: ~numpy.ndarray(WaveNumber)
-        An array of shape (:attr:`~params.params.QgParams.nmod` [0], ) of the wavenumber object of each mode.
+        An array of shape (:attr:`~.params.QgParams.nmod` [0], ) of the wavenumber object of each mode.
     """
 
     def __init__(self, params=None, stored=True):
@@ -435,7 +435,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
 
     Parameters
     ----------
-    params: None or ~params.params.QgParams or list, optional
+    params: None or ~.params.QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, oblocks, noc].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
         detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (noc, 2), and `noc` is
@@ -455,7 +455,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
     stored: bool
         Indicate if the inner products are stored in the object.
     oceanic_wavenumbers: ~numpy.ndarray(WaveNumber)
-        An array of shape (:attr:`~params.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
+        An array of shape (:attr:`~.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
 
     """
 
@@ -687,7 +687,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
 
     Parameters
     ----------
-    params: None or ~params.params.QgParams or list, optional
+    params: None or ~.params.QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, gblocks, ngr].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `gblocks` is a spectral blocks
         detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (ngr, 2), and `ngr` is
@@ -707,7 +707,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
     stored: bool
         Indicate if the inner products are stored in the object.
     ground_wavenumbers: ~numpy.ndarray(WaveNumber)
-        An array of shape (:attr:`~params.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
+        An array of shape (:attr:`~.params.QgParams.nmod` [1], ) of the wavenumber object of each mode.
 
     """
 

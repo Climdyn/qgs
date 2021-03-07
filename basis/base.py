@@ -19,6 +19,10 @@
     .. _abstract base class: https://docs.python.org/3/glossary.html#term-abstract-base-class
 
 """
+
+# TODO: define setters and init arguments
+# TODO: define NumericBasis class
+
 import sys
 
 from abc import ABC

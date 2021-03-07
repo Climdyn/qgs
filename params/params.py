@@ -408,6 +408,8 @@ class AtmosphericTemperatureParams(Params):
             Indicate in which component to set the `value`.
         """
 
+        # TODO: - check for the dimensionality of the arguments
+
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere",
@@ -444,6 +446,8 @@ class AtmosphericTemperatureParams(Params):
         pos: int, optional
             Indicate in which component to set the `value`.
         """
+
+        # TODO: - check for the dimensionality of the arguments
 
         if isinstance(value, (float, int)) and pos is not None and self.thetas is not None:
             self.thetas[pos] = Parameter(value, scale_object=self._scale_params,
@@ -622,7 +626,7 @@ class GroundParams(Params):
 
         self.set_params(dic)
 
-    def set_orography(self, value, pos=None):
+    def set_orography(self, value, pos=None, basis="atmospheric"):
         """Function to define the spectral decomposition of the orography profile
         :math:`h_k` (:attr:`~.GroundParams.hk`).
 
@@ -633,7 +637,15 @@ class GroundParams(Params):
             If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
         pos: int, optional
             Indicate in which component to set the `value`.
+        basis: str, optional
+            Indicate which basis should be used to decompose the orography. Can be either `atmospheric`, `oceanic` or `ground`.
+            Default to `atmospheric`.
         """
+
+        # TODO: - check for the dimensionality of the arguments
+        #       - check that inner products are symbolic if basis is not 'atmospheric'
+
+        self.orographic_basis = basis
 
         if isinstance(value, (float, int)) and pos is not None and self.hk is not None:
             self.hk[pos] = Parameter(value, scale_object=self._scale_params,
@@ -712,6 +724,8 @@ class GroundTemperatureParams(Params):
         pos: int, optional
             Indicate in which component to set the `value`.
         """
+
+        # TODO: - check for the dimensionality of the arguments
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,

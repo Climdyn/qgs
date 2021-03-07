@@ -87,9 +87,7 @@ or ::
 
     python qgs_maooam.py
 
-For more advanced usages, please read the User Guide.
-
-.. TODO: add more details and a link to it when the User Guide is ready.
+For more advanced usages, please read the :ref:`files/user_guide:User guide`.
 
 Examples
 --------
@@ -129,12 +127,7 @@ Forthcoming developments
 
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Symbolic inner products (using e.g. `Sympy`_)
-
-        - Arbitrary spatial mode basis of functions
-        - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
-        - Symbolic PDE equation specification
-
+    + Numerical basis of function
     + Visualisation tools, e.g. based on the `movie-script`_ package
 
 * Long-term development track
@@ -142,11 +135,12 @@ Forthcoming developments
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean
+    + Symbolic PDE equation specification
 
 Contributing to qgs
 -------------------
 
-If you want to contribute actively to the roadmap detailed above, please contact the authors.
+If you want to contribute actively to the roadmap detailed above, please contact the main authors.
 
 In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the `qgs Github repository <https://github.com/Climdyn/qgs>`_.
 
@@ -154,30 +148,13 @@ A review of your pull request will follow with possibly suggestions of changes b
 Please consider the following guidelines before submitting:
 
 * Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
-* For any changes to the core model files, please check your submission by :ref:`files/general_information:Running the tests` found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid. Please do not make changes to existing test cases.
+* For any changes to the core model files, please check your submission by running the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid (see the section :ref:`files/user_guide:5. Developers information` of the :ref:`files/user_guide:User guide`). Please do not make changes to existing test cases.
 * For substantial additions of code, including a test case (using `unittest`_) in the folder `model_test <../../../../model_test>`_ is recommended.
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
 * The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some time.
 
 For more information about git, Github and the pull request framework, a good source of information is the `contributing guide <https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html>`_ of the `MITgcm <https://github.com/MITgcm/MITgcm>`_.
-
-Running the tests
------------------
-
-.. TODO: move this to the user guide later.
-
-The model core tensors can be tested by running `pytest`_: ::
-
-    pytest
-
-This will run all the tests and return a report. The test cases are written using `unittest`_. Additionally, test cases can be executed separately by running: ::
-
-    python -m unittest model_test/test_name.py
-
-E.g., testing the MAOOAM inner products can be done by running: ::
-
-    python -m unittest model_test/test_inner_products.py
 
 Reporting issues with the software and getting support
 ------------------------------------------------------
@@ -217,5 +194,4 @@ References
 .. _beta-plane: https://en.wikipedia.org/wiki/Beta_plane
 .. _sparse: https://sparse.pydata.org/
 .. _sphinx: https://www.sphinx-doc.org/en/master/
-.. _pytest: https://docs.pytest.org/en/stable/
 .. _unittest: https://docs.python.org/3/library/unittest.html

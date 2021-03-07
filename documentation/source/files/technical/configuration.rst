@@ -2,9 +2,7 @@
 Model configuration
 ===================
 
-We describe here the modules used to configure the model. Please read the User Guide to learn how to use them.
-
-.. TODO: add more details and a link to it when the User Guide is ready.
+We describe here the modules used to configure the model. Please read the :ref:`files/user_guide:User guide` to learn how to use them.
 
 .. automodule:: params.params
     :show-inheritance:

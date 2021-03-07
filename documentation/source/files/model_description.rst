@@ -7,7 +7,7 @@ models the dynamics of a 2-layer `quasi-geostrophic`_ (QG) channel atmosphere
 on a `beta-plane`_, coupled to a simple land or `shallow-water`_ ocean
 component. 
 
-It currently has three modes of operation:
+It currently has three main modes of operation:
 
 * A QG atmosphere coupled to a land surface with topography through friction and with a simple thermal relaxation toward a climatological temperature.
   See :ref:`files/model/oro_model:Model with an orography and a temperature profile` for a description of this model version.
@@ -42,6 +42,9 @@ It currently has three modes of operation:
     `doi:10.1007/s13351-018-8012-y <https://doi.org/10.1007/s13351-018-8012-y>`_
 
 The shallow-water ocean can in principle be used as a stand-alone model, but this is not implemented for the moment.
+
+The modes over which the equations are projected can be modified, leading to other model version.
+See :ref:`files/examples/VSPD:Recovering the result of Vannitsem, Solé-Pomies and De Cruz (2019)` for an example.
 More developments are yet to come, see the :ref:`files/general_information:Forthcoming developments` section.
 
 Components description

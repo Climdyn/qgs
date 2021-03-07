@@ -93,7 +93,7 @@ Usage
 
 qgs can be used by editing and running the script `qgs_rp.py` and `qgs_maooam.py` found in the main folder.
 
-For more advanced usages, please read the User Guides (TODO).
+For more advanced usages, please read the [User Guides](https://qgs.readthedocs.io/en/latest/files/user_guide.html).
 
 Examples
 --------
@@ -130,36 +130,22 @@ Forthcoming developments
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Symbolic inner products (using e.g. [Sympy](https://www.sympy.org/))
-        - Arbitrary spatial mode basis of functions
-        - Automatic on-the-fly inner product calculation (numeric or analytic if possible)
-        - Symbolic PDE equation specification
+    + Numerical basis of function
     + Visualisation tools, e.g. based on the [movie-script](https://github.com/jodemaey/movie-script) package
 * Long-term development track
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
-    + Salinity in the ocean
-    
+    + Salinity in the ocean 
+    + Symbolic PDE equation specification
+  
 Contributing to qgs
 -------------------
 
-If you want to contribute actively to the roadmap detailed above, please contact the authors.
+If you want to contribute actively to the roadmap detailed above, please contact the main authors.
 
 In addition, if you have made changes that you think will be useful to others, please feel free to suggest these as a pull request on the [qgs Github repository](https://github.com/Climdyn/qgs).
 
-A review of your pull request will follow with possibly suggestions of changes before merging it in the master branch.
-Please consider the following guidelines before submitting:
-* Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
-* For any changes to the core model files, please run the tests found in the folder [model_test](./model_test) to ensure that the model tensors are still valid.
-* For substantial additions of code, including a test case in the folder [model_test](./model_test) is recommended.
-* Please do not make changes to existing test cases.
-* Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. 
-The documentation is done with [sphinx](https://www.sphinx-doc.org/en/master/) and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
-* If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
-* The team presently maintaining qgs is not working full-time on it, so please be patient as the review of the submission may take some time.
-
-For more information about git, Github and the pull request framework, a good source of information is the [contributing guide](https://mitgcm.readthedocs.io/en/latest/contributing/contributing.html) of the [MITgcm](https://github.com/MITgcm/MITgcm).
-
+More information and guidance about how to do a pull request for qgs can be found in the documentation [here](https://qgs.readthedocs.io/en/latest/files/general_information.html#contributing-to-qgs).
 
 Other atmospheric models in Python
 ----------------------------------

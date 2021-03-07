@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from sympy.simplify.fu import TR8, TR10
 from sympy import diff, integrate, symbols, pi
 
-_n = symbols('n')
+_n = symbols('n', real=True, nonnegative=True)
 _x, _y = symbols('x y')
 
 

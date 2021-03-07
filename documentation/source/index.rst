@@ -35,6 +35,13 @@ About
 Part of the code comes from the Python `MAOOAM`_ implementation by Maxime Tondeur and Jonathan Demaeyer.
 qgs is licensed under the `MIT`_ license:
 
+**Please cite the code description article if you use (a part of) this software for a publication:**
+
+* Demaeyer J., De Cruz, L. and Vannitsem, S. , (2020). qgs: A flexible Python framework of reduced-order multiscale climate models.
+  *Journal of Open Source Software*, **5**\(56), 2597, `https://doi.org/10.21105/joss.02597 <https://doi.org/10.21105/joss.02597>`_.
+
+Please consult the qgs `code repository <http://www.github.com/Climdyn/qgs>`_ for updates.
+
 .. code-block:: none
 
    The MIT License (MIT)

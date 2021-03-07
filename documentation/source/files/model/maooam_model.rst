@@ -25,9 +25,9 @@ The evolution equations for the atmospheric and oceanic streamfunctions defined 
     \frac{\partial}{\partial t} \left( \nabla^2 \psi_\text{o} - \frac{\psi_\text{o}}{L_\text{R}^2} \right) + J(\psi_\text{o}, \nabla^2 \psi_\text{o}) + \beta \frac{\partial \psi_\text{o}}{\partial x}
     & = -r \nabla^2 \psi_\text{o} +\frac{C}{\rho_{\rm o} h} \nabla^2 (\psi^3_\text{a}-\psi_\text{o}).\nonumber
 
-where :math:`\rho_{\rm o}` is the density of the ocean's water and :math:`h` is the depth of its layer (:attr:`~params.params.OceanicParams.h`).
+where :math:`\rho_{\rm o}` is the density of the ocean's water and :math:`h` is the depth of its layer (:attr:`~.params.OceanicParams.h`).
 The rightmost term of the last equation represents the impact of the wind stress on the ocean, and is modulated
-by the coefficient of the mechanical ocean-atmosphere coupling, :math:`d = C/(\rho_{\rm o} h)` (:attr:`~params.params.OceanicParams.d`).
+by the coefficient of the mechanical ocean-atmosphere coupling, :math:`d = C/(\rho_{\rm o} h)` (:attr:`~.params.OceanicParams.d`).
 
 As we did for the :ref:`files/model/oro_model:Model with an orography and a temperature profile`, we rewrite these equations in terms of the `barotropic`_ streamfunction :math:`\psi_{\rm a}` and `baroclinic`_ streamfunction :math:`\theta_{\rm a}`:
 
@@ -57,7 +57,7 @@ where :math:`\gamma_\text{a}` (:attr:`.AtmosphericTemperatureParams.gamma`) and 
 (:attr:`.OceanicTemperatureParams.gamma`) are the heat capacities of the
 atmosphere and the active ocean layer. :math:`\lambda` (:attr:`~.AtmosphericTemperatureParams.hlambda`) is the heat transfer coefficient at the
 ocean-atmosphere interface.
-:math:`\sigma` (:attr:`~params.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
+:math:`\sigma` (:attr:`~.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
 The quartic terms represent the long-wave
 radiation fluxes between the ocean, the atmosphere, and outer space, with
 :math:`\epsilon_\text{a}` (:attr:`~.AtmosphericTemperatureParams.eps`)  the emissivity of the grey-body atmosphere and
@@ -120,7 +120,7 @@ Again, :math:`x` and :math:`y` are the horizontal adimensionalized coordinates d
 To easily manipulate these functions and the coefficients of the fields
 expansion, we number the basis functions along increasing values of :math:`H_{\rm o}` and then :math:`P_{\rm o}`.
 It allows to write the set as :math:`\left\{ \phi_i(x,y); 1 \leq i \leq n_\text{o}\right\}` where :math:`n_{\mathrm{o}}`
-(:attr:`~params.params.QgParams.nmod` [1]) is the number of modes of the spectral expansion in the ocean.
+(:attr:`~.params.QgParams.nmod` [1]) is the number of modes of the spectral expansion in the ocean.
 
 For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`H_{\rm o} \in \{1,4\}`; :math:`P_{\rm o} \in \{1,2\}` and the set of basis functions is
 
@@ -205,8 +205,8 @@ Ordinary differential equations
 -------------------------------
 
 The fields, parameters and variables are non-dimensionalized
-by dividing time by :math:`f_0^{-1}` (:attr:`~params.params.ScaleParams.f0`), distance by
-the characteristic length scale :math:`L` (:attr:`~params.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~params.params.ScaleParams.deltap`),
+by dividing time by :math:`f_0^{-1}` (:attr:`~.params.ScaleParams.f0`), distance by
+the characteristic length scale :math:`L` (:attr:`~.params.ScaleParams.L`), pressure by the difference :math:`\Delta p` (:attr:`~.params.ScaleParams.deltap`),
 temperature by :math:`f_0^2 L^2/R`, and streamfunction by :math:`L^2 f_0`. As a result of this non-dimensionalization, the
 fields :math:`\theta_{\rm a}` and :math:`\delta T_{\rm a}` can be identified: :math:`2 \theta_{\rm a} \equiv \delta T_{\rm a}`.
 
@@ -225,15 +225,15 @@ The ordinary differential equations of the truncated model are:
   \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j} + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
-:math:`G = - L^2/L_R^2` (:attr:`~params.params.QgParams.G`),
-:math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.Lpa`),
-:math:`\lambda'_{{\rm o}} = \lambda/(\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.Lpgo`),
-:math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpa`),
-:math:`S_{B,{\rm o}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~params.params.QgParams.LSBpgo`),
-:math:`s_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.sbpa`),
-:math:`s_{B,{\rm o}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~params.params.QgParams.sbpgo`),
-:math:`C'_{{\rm a},i} = R C_{{\rm a},i} / (2 \gamma_{\rm a} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpa`),
-:math:`C'_{{\rm o},i} = R C_{{\rm o},i} /   (\gamma_{\rm o} L^2 f_0^3)` (:attr:`~params.params.QgParams.Cpgo`).
+:math:`G = - L^2/L_R^2` (:attr:`~.params.QgParams.G`),
+:math:`\lambda'_{{\rm a}} = \lambda/(\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.Lpa`),
+:math:`\lambda'_{{\rm o}} = \lambda/(\gamma_{\rm o} f_0)` (:attr:`~.params.QgParams.Lpgo`),
+:math:`S_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.LSBpa`),
+:math:`S_{B,{\rm o}} = 2\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm a} f_0)` (:attr:`~.params.QgParams.LSBpgo`),
+:math:`s_{B,{\rm a}} = 8\,\epsilon_{\rm a}\, \sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~.params.QgParams.sbpa`),
+:math:`s_{B,{\rm o}} = 4\,\sigma_B \, T_{{\rm a},0}^3 / (\gamma_{\rm o} f_0)` (:attr:`~.params.QgParams.sbpgo`),
+:math:`C'_{{\rm a},i} = R C_{{\rm a},i} / (2 \gamma_{\rm a} L^2 f_0^3)` (:attr:`~.params.QgParams.Cpa`),
+:math:`C'_{{\rm o},i} = R C_{{\rm o},i} /   (\gamma_{\rm o} L^2 f_0^3)` (:attr:`~.params.QgParams.Cpgo`).
 
 The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :math:`c_{i, j}` are the inner products of the Fourier modes :math:`F_i`:
 

@@ -8,7 +8,7 @@
     Description of the classes
     --------------------------
 
-    The two classes computing and holding the inner products of the basis functions are:
+    The three classes computing and holding the inner products of the basis functions are:
 
     * :class:`AtmosphericInnerProducts`
     * :class:`OceanicInnerProducts`
