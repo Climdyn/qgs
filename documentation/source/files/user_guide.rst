@@ -516,4 +516,4 @@ References
 .. _pickle: https://docs.python.org/3.8/library/pickle.html
 .. _basis functions: https://en.wikipedia.org/wiki/Basis_function
 .. _basis: https://en.wikipedia.org/wiki/Basis_(linear_algebra)
-    .. _Fourier modes: https://en.wikipedia.org/wiki/Fourier_series
+.. _Fourier modes: https://en.wikipedia.org/wiki/Fourier_series
