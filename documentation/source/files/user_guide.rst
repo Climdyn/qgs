@@ -34,9 +34,9 @@ The computational flow to compute the function :math:`\boldsymbol{f}` of the mod
 
     Sketch of the computational flow.
 
-This flow can be done step by step by the user, or can be automatically performed by the functions :meth:`~functions.tendencies.create_tendencies`.
+This flow can be implemented step by step by the user, or can be automatically performed by the functions :meth:`~.tendencies.create_tendencies`.
 This function takes a :class:`~.params.QgParams` parameters object and return the function :math:`\boldsymbol{f}` and its Jacobian matrix.
-Optionally, it can also return the byproducts of the tendencies generation process: objects containing the inner products
+Optionally, it can also return the byproducts of the tendencies generation process, i.e. the objects containing the inner products
 between the model's spatial modes and the tensors of the model's tendencies terms.
 
 This section of the user guide explains how to configure the :class:`~.params.QgParams` object to obtain the desired model version and
@@ -45,20 +45,19 @@ model's parameters.
 2.1 Two different computational methods and three different geophysical components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Two different methods are available to configure the models, related to two different methods of computing the inner products between
-the functions of the spatial basis of qgs:
+Two different methods are available to configure qgs, related to two different methods of computing the inner products between its spatial `basis functions`_:
 
-1. **Symbolic:** It is the main way to specify the basis. The user can specify an arbitrary base of functions on which the model's partial differential equations will be projected. Depending on the dimension of the model version and on the computing power available, it might take a while to initialize.
-2. **Analytic:** A legacy way of specifying the model version, in which the basis of functions are composed only of Fourier modes described in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)` and is thus limited in term of modelling capacity. It is nevertheless the fastest way since it relies on analytic formulas derived in :cite:`user-DDV2016` to compute the basis functions.
+1. **Symbolic:** It is the main way to specify the `basis`_. The user can specify an arbitrary basis of functions on which the model's partial differential equations will be projected. Depending on the dimension of the model version and on the computing power available, it might take a while to initialize.
+2. **Analytic:** The old method to specify the model version, in which the basis of functions are composed only of `Fourier modes`_ described in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)` and is thus limited in term of modelling capacity. It is nevertheless the fastest way since it relies on analytic formulas derived in :cite:`user-DDV2016` to compute the basis functions.
 
 There are also three different geophysical components presently available in qgs:
 
-1. **Atmosphere:** This component is mandatory and provides a two-layer `quasi-geostrophic`_ atmosphere. See :ref:`files/model/atmosphere:Atmospheric component` for more details.
+1. **Atmosphere:** This component is mandatory and provides a two-layers `quasi-geostrophic`_ atmosphere. See :ref:`files/model/atmosphere:Atmospheric component` for more details.
 2. **Ocean:** This component provides a `shallow-water`_ active oceanic layer. See :ref:`files/model/ocean:Oceanic component` for more details.
-3. **Ground:** This component provides a simple model for the ground (orography + heat exchange). It is activated by default if only the atmospheric component is defined, but then with only the orography (no heat exchange).
+3. **Ground:** This component provides a simple model for the ground (orography + heat exchange). It is present by default if only the atmospheric component is defined, but then with only the orography being activated (no heat exchange).
 
 The components needed by the user and their parameters have to be defined by instantiating a :class:`~.params.QgParams` object.
-Creating this object, initializing these components and setting the parameters of the model is the subject of the next sections.
+How to create this object, initialize these components and set the parameters of the model is the subject of the next sections.
 
 2.2 Initializing qgs
 ^^^^^^^^^^^^^^^^^^^^
@@ -70,27 +69,26 @@ The model initialization first step requires the creation of a :class:`~.params.
     from params.params import QgParams
     model_parameters = QgParams()
 
-This object contains basically all the information needed by qgs to construct the inner products and the tendencies tensor of the model,
-needed to finally produces the model's function :math:`\boldsymbol{f}`.
+This object contains basically all the information needed by qgs to construct the inner products and the tendencies tensor of the model, which are in turn needed to produces finally the model's function :math:`\boldsymbol{f}`.
 
 The different components required by the user need then to be specified, by providing information about the basis of functions used to project
-the partial differential equations of the model. As said before, two methods are available:
+the partial differential equations of qgs. As said before, two methods are available:
 
 2.2.1 The symbolic method
 """"""""""""""""""""""""""
 
-With this method, the user has to provide directly the basis of functions of each component with symbolic function expressions, using `Sympy`_.
+With this method, the user has to provide directly the basis of functions of each component. These functions have to be symbolic function expressions, and should be provided using `Sympy`_.
 This has to be done using a :class:`~basis.base.SymbolicBasis` object, which is basically a list of Sympy functions.
 
 The user can construct his own basis (see below) or use the various built-in Fourier basis provided with qgs: :class:`~basis.fourier.ChannelFourierBasis` or :class:`~basis.fourier.BasinFourierBasis`.
 In the latter case, convenient constructor functions have been defined to help the user get the Fourier basis: :meth:`~basis.fourier.contiguous_basin_basis` and :meth:`~basis.fourier.contiguous_channel_basis`.
-These functions create `contiguous` Fourier basis for two different kind of boundary conditions (a channel or a closed basin) shown on the first figure in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`.
+These functions create `contiguous` Fourier basis for two different kind of boundary conditions (a zonal channel or a closed basin) shown on the first figure in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`.
 
 .. note::
 
     A `contiguous` Fourier basis means here that the Fourier modes are all present in the model up to a given maximum wavenumber in each direction (`zonal and meridional`_).
-    Hence one has only to specify the maximum wavenumbers (and the model's domain aspect ratio) to these constructor functions. One can also create non-`contiguous` Fourier basis by specifying wavenumbers explicitely at
-    the :class:`~basis.fourier.ChannelFourierBasis` or :class:`~basis.fourier.BasinFourierBasis` instantiation.
+    Hence one has only to specify the maximum wavenumbers (and the model's domain aspect ratio) to these constructor functions. One can also create non-`contiguous` Fourier basis by specifying wavenumbers explicitly at
+    the :class:`~basis.fourier.ChannelFourierBasis` or :class:`~basis.fourier.BasinFourierBasis` instantiation (see the section :ref:`files/user_guide:3.1 A simple example` for an example).
 
 Once constructed, the basis has to be provided to the :class:`~.params.QgParams` object by using dedicated methods: :meth:`~.params.QgParams.set_atmospheric_modes`, :meth:`~.params.QgParams.set_oceanic_modes` and :meth:`~.params.QgParams.set_ground_modes`.
 With the constructor functions, one can activate the mandatory atmospheric layer by typing
@@ -129,7 +127,7 @@ These convenient methods can also initialize qgs with another method (called `an
 
 Computing the inner products of the symbolic functions defined with `Sympy`_ **can be very resources consuming**, therefore if the basis
 of functions that you intend to use are the ones described in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`, you might be interested to use
-the analytic method, which uses the analytic formula for the inner products given in :cite:`user-DDV2016`. This initializing mode can simply be used by using the
+the analytic method, which uses the analytic formula for the inner products given in :cite:`user-DDV2016`. This initialization mode is put in action by using the
 convenient methods of the :class:`~.params.QgParams` object: :meth:`~.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~.params.QgParams.set_ground_channel_fourier_modes`.
 
 For instance, to initialize a channel atmosphere with up to wavenumber 2 in both directions, one can simply write:
@@ -147,7 +145,7 @@ Note that it is the default mode, so removing the `mode` argument will result in
 2.3 Changing the default parameters of qgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section deals with how to change the parameters of qgs. As stated in the :ref:`files/technical/configuration:The model's parameters module` section of the :ref:`files/references:References`,
+Now, how to change the parameters of qgs? As stated in the :ref:`files/technical/configuration:The model's parameters module` section of the :ref:`files/references:References`,
 there are seven types of parameters arranged in classes:
 
 * :class:`~.params.ScaleParams` contains the model scale parameters.
@@ -168,16 +166,16 @@ These parameters classes are regrouped into the global structure :class:`~.param
 * :attr:`~.params.QgParams.ground_params` for :class:`~.params.GroundParams`.
 * :attr:`~.params.QgParams.otemperature_params` for :class:`~.params.GroundTemperatureParams`.
 
-The parameters inside these structures can be changed by passing a dictionnary of the new values to the :meth:`~.params.QgParams.set_params` method. For example, if one want to change the
+The parameters inside these structures can be changed by passing a dictionary of the new values to the :meth:`~.params.QgParams.set_params` method. For example, if one wants to change the
 Coriolis parameter :math:`f_0` and the static stability of the atmosphere :math:`\sigma`, one has to write:
 
 .. code:: ipython3
 
     model_parameters.set_params({'f0': 1.195e-4, 'sigma':0.14916})
 
-where :obj:`model_parameters` is an instance of the :class:`~.params.QgParams` class. This method will find where the parameters are stored and will peform the
-subsitution. However, some parameters may not have an unique name, for instance there is a parameter :attr:`T0` for the stationary solution :math:`T_0` of the 0-th order temperature for both the
-atmosphere and the ocean. In this case, one need to find to which parameter class the parameter belong, and then call the :meth:`set_params` of the corresponding object.
+where :obj:`model_parameters` is an instance of the :class:`~.params.QgParams` class. This method will find where the parameters are stored and will perform the
+substitution. However, some parameters may not have a unique name, for instance there is a parameter :attr:`T0` for the stationary solution :math:`T_0` of the 0-th order temperature for both the
+atmosphere and the ocean. In this case, one need to find out which part of the structure the parameter belongs to, and then call the :meth:`set_params` of the corresponding object.
 For example, changing the parameter :attr:`~.params.AtmosphericTemperatureParams.T0` in the atmosphere can be done with:
 
 .. code:: ipython3
@@ -202,7 +200,7 @@ which indicates that the first component [#component]_ of the radiative equilibr
     together doesn't make so much sense. Using the Newtonian cooling scheme is useful when one wants to use the atmospheric model alone, while using the heat exchange scheme is useful when the atmosphere is
     connected to another component lying beneath it (ocean or ground).
 
-Similarly, one activate the orography by typing:
+Similarly, one activates the orography by typing:
 
 .. code:: ipython3
 
@@ -219,8 +217,8 @@ Once your model is configured, you can review the list of parameters by calling 
 2.4 Creating the tendencies function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once you have configured your :class:`.QgParams`, it is very simple to obtain the model's tendencies :math:`\boldsymbol{f}` and the its
-Jacobian matrix :math:`\boldsymbol{\mathrm{Df}}`  by using the function :func:`.create_tendencies` and running:
+Once you have configured your :class:`.QgParams` instance, it is very simple to obtain the model's tendencies :math:`\boldsymbol{f}` and the its
+Jacobian matrix :math:`\boldsymbol{\mathrm{Df}}`. Just pass it to the function :func:`.create_tendencies`:
 
 .. code:: ipython3
 
@@ -229,7 +227,7 @@ Jacobian matrix :math:`\boldsymbol{\mathrm{Df}}`  by using the function :func:`.
     f, Df = create_tendencies(model_parameters)
 
 The function :meth:`f` hence produced can be used to generate the model's trajectories.
-See the section :ref:`files/user_guide:4. Using qgs (once configured)` for the possible usage.
+See the section :ref:`files/user_guide:4. Using qgs (once configured)` for the possible usages.
 
 2.5 Saving your model
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -244,8 +242,8 @@ Hence, using the same name as in the previous section, one can type:
     # saving the model
     model={'f': f, 'Df': Df, 'parameters': model_parameters}
 
-    with open('model.pickle', "wb") as ff:
-        pickle.dump(model, ff, pickle.HIGHEST_PROTOCOL)
+    with open('model.pickle', "wb") as file:
+        pickle.dump(model, file, pickle.HIGHEST_PROTOCOL)
 
 and it can be loaded again by typing
 
@@ -254,8 +252,8 @@ and it can be loaded again by typing
     from params.params import QgParams
 
     # loading the model
-    with open('model.pickle', "rb") as ff:
-        model = pickle.load(ff)
+    with open('model.pickle', "rb") as file:
+        model = pickle.load(file)
 
     f = model['f']
     model_parameters = model['parameters']
@@ -272,8 +270,8 @@ and it can be loaded again by typing
 
         # saving the model
 
-        with open('model_parameters.pickle', "wb") as ff:
-            pickle.dump(model_parameters, ff, pickle.HIGHEST_PROTOCOL)
+        with open('model_parameters.pickle', "wb") as file:
+            pickle.dump(model_parameters, file, pickle.HIGHEST_PROTOCOL)
 
 It is also possible to save the inner products and/or the tensor storing the terms of the model's tendencies. For instance, the function
 :func:`.create_tendencies` allows to obtain these information:
@@ -285,7 +283,7 @@ It is also possible to save the inner products and/or the tensor storing the ter
 The objects :class:`.QgParams`, the inner products, and the object :class:`.QgsTensor` hence obtained can be saved using `pickle`_ or the built-in
 :meth:`save_to_file` methods (respectively :meth:`.QgParams.save_to_file`, :meth:`.AtmosphericInnerProducts.save_to_file` and :meth:`.QgsTensor.save_to_file`).
 
-Using these object, it is possible to reconstruct by hand the model's tendencies (see the section :ref:`files/user_guide:3.2 A more involved example: Manually setting the basis and the inner products definition` for an example).
+Using these objects, it is possible to reconstruct by hand the model's tendencies (see the section :ref:`files/user_guide:3.2 A more involved example: Manually setting the basis and the inner products definition` for an example).
 
 3. Using user-defined symbolic basis
 --------------------------------------
@@ -293,16 +291,16 @@ Using these object, it is possible to reconstruct by hand the model's tendencies
 3.1 A simple example
 ^^^^^^^^^^^^^^^^^^^^^
 
-In this simple example, we are going to create an atmosphere-ocean coupled model like in :cite:`user-VDDG2015`, but with some atmospheric modes missing.
+In this simple example, we are going to create an atmosphere-ocean coupled model as in :cite:`user-VDDG2015`, but with some atmospheric modes missing.
 
-First we create the parameters object:
+First, we create the parameters object:
 
 .. code:: ipython3
 
     from params.params import QgParams
     model_parameters = QgParams({'n': 1.5})
 
-and we create a :class:`.ChannelFourierBasis` with all the modes up to wavenumber 2 in both except the ones with wavenumbers 1 and 2 in respectively the :math:`x` and :math:`y` direction:
+and we create a :class:`.ChannelFourierBasis` with all the modes up to wavenumber 2 in both directions, except the one with wavenumbers 1 and 2 in respectively the :math:`x` and :math:`y` direction:
 
 .. code:: ipython3
 
@@ -312,7 +310,7 @@ and we create a :class:`.ChannelFourierBasis` with all the modes up to wavenumbe
                                               [2,2]]),1.5)
     model_parameters.set_atmospheric_modes(atm_basis)
 
-Finally we add the same ocean as in  :cite:`user-VDDG2015`:
+Finally, we add the same ocean version as in :cite:`user-VDDG2015`:
 
 .. code:: ipython3
 
@@ -327,9 +325,9 @@ The model hence configured can be passed to the function creating the model's te
 
 .. warning::
 
-    This initialization method is not yet well-defined in the model. It builds the model block by block to construct an ad-hoc model version.
+    This initialization method is not yet well-defined in qgs. It builds the model block by block to construct an ad-hoc model version.
 
-In this section, we describe how to setup an user-defined basis for one of the model's component. We will do it for the ocean, but
+In this section, we describe how to setup a user-defined basis for one of the model's component. We will do it for the ocean, but
 the approach is similar for the other components. We will project the ocean equations on four modes proposed in :cite:`user-P2011`:
 
 .. math::
@@ -339,7 +337,7 @@ the approach is similar for the other components. We will project the ocean equa
     \tilde\phi_3(x,y) & = &  2\, e^{-\alpha x} \, \sin(\frac{n}{2} x)\, \sin(2 y), \nonumber \\
     \tilde\phi_4(x,y) & = &  2\, e^{-\alpha x} \, \sin(n x)\, \sin(2 y), \nonumber \\
 
-and connected it to the channel atmosphere defined in the sections above, using a symbolic base of functions.
+and connect it to the channel atmosphere defined in the sections above, using a symbolic basis of functions.
 First we create the parameters object and the atmosphere:
 
 .. code:: ipython3
@@ -359,7 +357,7 @@ We must then specify the function of the basis using `Sympy`_:
 
 .. code:: ipython3
 
-    from sympy import symbols, sin, cos, sqrt, exp
+    from sympy import symbols, sin, exp
     x, y = symbols('x y')  # x and y coordinates on the model's spatial domain
     n, al = symbols('n al')  # aspect ratio and alpha coefficients
     for i in range(1, 3):
@@ -373,7 +371,7 @@ We then set the value of the parameter :math:`\alpha` to a certain value (here :
 
     ocean_basis.substitutions.append(('al', 1.))
 
-The base of function hence defined needs to be passed to the model's parameter object:
+The basis of function hence defined needs to be passed to the model's parameter object:
 
 .. code:: ipython3
 
@@ -381,14 +379,14 @@ The base of function hence defined needs to be passed to the model's parameter o
 
 and the user can set the parameters according to it needs (as seen in the previous section).
 
-Additionally, for these particular basis function, special inner products needs to be defined instead of the standard one proposed in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`.
+Additionally, for these particular basis function, a special inner product needs to be defined instead of the standard one proposed in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`.
 We consider thus as in :cite:`user-P2011` and :cite:`user-VD2014` the following inner product:
 
 .. math::
 
     (S, G) = \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} e^{2 \alpha x} \, S(x,y)\, G(x,y)\, \mathrm{d} x \, \mathrm{d} y
 
-This can be specified in the model by creating a user-defined subclass of the :class:`.SymbolicInnerProductDefinition` class defining
+The special inner product can be specified in qgs by creating a user-defined subclass of the :class:`.SymbolicInnerProductDefinition` class defining
 the expression of the inner product:
 
 .. code:: ipython3
@@ -416,7 +414,7 @@ the expression of the inner product:
             return self.integrate_over_domain(self.optimizer(expr))
 
 
-and passing it to an :class:`.OceanicSymbolicInnerProducts` object:
+and passing it to a :class:`.OceanicSymbolicInnerProducts` object:
 
 .. code:: ipython3
 
@@ -428,8 +426,8 @@ and passing it to an :class:`.OceanicSymbolicInnerProducts` object:
     oip = OceanicSymbolicInnerProducts(model_parameters, inner_product_definition=ip)
 
 
-This will compute the inner products and may take a certain time (depending on your number of cpus available).
-Once computed, the corresponding tenedencies must then be created manually, first by creating the :class:`.QgsTensor` object:
+It will compute the inner products and may take a certain time (depending on your number of cpus available).
+Once computed, the corresponding tendencies must then be created manually, first by creating the :class:`.QgsTensor` object:
 
 .. code:: ipython3
 
@@ -452,14 +450,14 @@ and then finally creating the Python-`Numba`_ callable for the model's tendencie
 
         return xr[1:]
 
-This conclude this section, the function :meth:`f` hence produced can be used to generate the model's trajectories.
-See the following section for the possible usage.
+This concludes the initialization of qgs, the function :meth:`f` hence produced can be used to generate the model's trajectories.
+See the following section for the possible usages.
 
 4. Using qgs (once configured)
 ---------------------------------
 
 Once the function :math:`\boldsymbol{f}` giving the model's tendencies has been obtained, it is possible to use it with
-the qgs built-in integrator to obtain model's trajectories:
+the qgs built-in integrator to obtain the model's trajectories:
 
 .. code:: python3
 
@@ -473,9 +471,9 @@ the qgs built-in integrator to obtain model's trajectories:
     integrator.integrate(0., 3000000., 0.1, ic=ic, write_steps=1)
     time, trajectory = integrator.get_trajectories()
 
-Note that it is also possible to use other integrator available on the market, see for instance the :ref:`files/examples/diffeq_example:Example of DiffEqPy usage`.
+Note that it is also possible to use other ordinary differential equations integrators available on the market, see for instance the :ref:`files/examples/diffeq_example:Example of DiffEqPy usage`.
 
-Other examples of usage will be added to the present section soon.
+More use cases will be added to this section soon.
 
 5. Developers information
 -------------------------
@@ -516,3 +514,6 @@ References
 .. _unittest: https://docs.python.org/3/library/unittest.html
 .. _Numba: https://numba.pydata.org/
 .. _pickle: https://docs.python.org/3.8/library/pickle.html
+.. _basis functions: https://en.wikipedia.org/wiki/Basis_function
+.. _basis: https://en.wikipedia.org/wiki/Basis_(linear_algebra)
+    .. _Fourier modes: https://en.wikipedia.org/wiki/Fourier_series
