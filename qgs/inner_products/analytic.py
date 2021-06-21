@@ -37,9 +37,9 @@
 import numpy as np
 import sparse as sp
 
-from params.params import QgParams
-from basis.fourier import channel_wavenumbers, basin_wavenumbers
-from inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
+from qgs.params.params import QgParams
+from qgs.basis.fourier import channel_wavenumbers, basin_wavenumbers
+from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 
 # TODO: Add warnings if trying to connect analytic and symbolic inner products together
 
@@ -927,7 +927,7 @@ def _S4(Pj, Pk, Hj, Hk):
 
 
 if __name__ == '__main__':
-    from params.params import QgParams
+    from qgs.params.params import QgParams
 
     pars = QgParams()
     pars._set_atmospheric_analytic_fourier_modes(2, 2)

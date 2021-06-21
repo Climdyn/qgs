@@ -10,10 +10,10 @@
 import numpy as np
 from numba import njit
 
-from inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts, GroundAnalyticInnerProducts
-from inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-from tensors.qgtensor import QgsTensor
-from functions.sparse_mul import sparse_mul3, sparse_mul2
+from qgs.inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts, GroundAnalyticInnerProducts
+from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
+from qgs.tensors.qgtensor import QgsTensor
+from qgs.functions.sparse_mul import sparse_mul3, sparse_mul2
 
 
 def create_tendencies(params, return_inner_products=False, return_qgtensor=False):
@@ -113,7 +113,7 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
 
 
 if __name__ == '__main__':
-    from params.params import QgParams
+    from qgs.params.params import QgParams
 
     params = QgParams()
     params.set_atmospheric_channel_fourier_modes(2, 2)

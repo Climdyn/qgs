@@ -21,7 +21,7 @@ merge :math:`c_i`, :math:`m_{i,j}`, and :math:`t_{i,j,k}` into the tensor
 
     \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j,k=0}^{\mathrm{ndim}} \mathcal{T}_{i,j,k} \, \eta_j \, \eta_k
 
-The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
+The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~.tensors.qgtensor.QgsTensor`.
 Recasting the system of ordinary differential
 equations for :math:`\eta_i` in the form of a tensor contraction has certain
 advantages. Indeed, the symmetry of the tensor contraction allows for a unique representation
@@ -59,10 +59,10 @@ Computational flow
 The computational flow is as follows:
 
 1. The parameters are specified by instantiating a :class:`~.params.QgParams` .
-2. The inner products are computed and stored in :class:`~inner_products.analytic.AtmosphericInnerProducts` and :class:`~inner_products.analytic.OceanicInnerProducts` objects.
-3. The tensor of the tendencies terms are computed in a :class:`~tensors.qgtensor.QgsTensor` object.
-4. The functions :obj:`~functions.tendencies.create_tendencies` create Numba optimized functions that return the tendencies and the Jacobian matrix.
-5. These functions are passed to the numerical integrator in the module :mod:`~integrators.integrator` .
+2. The inner products are computed and stored in :class:`~.inner_products.base.AtmosphericInnerProducts` and :class:`~.inner_products.base.OceanicInnerProducts` objects.
+3. The tensor of the tendencies terms are computed in a :class:`~.tensors.qgtensor.QgsTensor` object.
+4. The functions :obj:`~.functions.tendencies.create_tendencies` create Numba optimized functions that return the tendencies and the Jacobian matrix.
+5. These functions are passed to the numerical integrator in the module :mod:`~.integrators.integrator` .
 
 .. figure:: figures/compuflow.png
     :scale: 70%

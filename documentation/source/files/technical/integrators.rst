@@ -5,9 +5,9 @@ Integration modules
 The modules used to numerically integrate the model forward in time.
 Users may add their own recipes here.
 
-.. automodule:: integrators.integrate
+.. automodule:: qgs.integrators.integrate
     :members:
 
-.. automodule:: integrators.integrator
+.. automodule:: qgs.integrators.integrator
     :show-inheritance:
     :members:

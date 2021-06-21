@@ -46,9 +46,9 @@ import pickle
 import warnings
 from abc import ABC
 
-from params.parameter import Parameter
-from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
-from basis.fourier import ChannelFourierBasis, BasinFourierBasis
+from qgs.params.parameter import Parameter
+from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
 
 class Params(ABC):
@@ -1286,8 +1286,8 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
-        >>> from basis.fourier import contiguous_channel_basis
+        >>> from qgs.params.params import QgParams
+        >>> from qgs.basis.fourier import contiguous_channel_basis
         >>> q = QgParams()
         >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
         >>> q.set_atmospheric_modes(atm_basis)
@@ -1327,8 +1327,8 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
-        >>> from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+        >>> from qgs.params.params import QgParams
+        >>> from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
         >>> q = QgParams()
         >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
         >>> oc_basis = contiguous_basin_basis(2, 4, 1.5)
@@ -1379,8 +1379,8 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
-        >>> from basis.fourier import contiguous_channel_basis, contiguous_basin_basis
+        >>> from qgs.params.params import QgParams
+        >>> from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
         >>> q = QgParams()
         >>> atm_basis = contiguous_channel_basis(2, 2, 1.5)
         >>> q.set_atmospheric_modes(atm_basis)
@@ -1438,7 +1438,7 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
+        >>> from qgs.params.params import QgParams
         >>> q = QgParams()
         >>> q.set_atmospheric_channel_fourier_modes(2, 2)
         >>> q.ablocks
@@ -1477,7 +1477,7 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
+        >>> from qgs.params.params import QgParams
         >>> q = QgParams()
         >>> q.set_atmospheric_channel_fourier_modes(2, 2)
         >>> q.set_oceanic_basin_fourier_modes(2, 4)
@@ -1520,7 +1520,7 @@ class QgParams(Params):
         Examples
         --------
 
-        >>> from params.params import QgParams
+        >>> from qgs.params.params import QgParams
         >>> q = QgParams()
         >>> q.set_atmospheric_channel_fourier_modes(2,4)
         >>> q.set_ground_channel_fourier_modes()

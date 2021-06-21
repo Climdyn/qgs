@@ -288,6 +288,8 @@ that are implemented by means of a tensorial contraction:
 with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta T_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
 The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
 
+.. TODO: section about MAOSOAM
+
 Example
 -------
 

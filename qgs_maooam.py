@@ -21,9 +21,9 @@ import sys
 import time
 
 # Importing the model's modules
-from params.params import QgParams
-from integrators.integrator import RungeKuttaIntegrator
-from functions.tendencies import create_tendencies
+from qgs.params.params import QgParams
+from qgs.integrators.integrator import RungeKuttaIntegrator
+from qgs.functions.tendencies import create_tendencies
 
 # Initializing the random number generator (for reproducibility). -- Disable if needed.
 np.random.seed(21217)

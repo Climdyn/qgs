@@ -12,8 +12,8 @@ else:
 import unittest
 import numpy as np
 
-from params.params import QgParams
-from inner_products import analytic, symbolic
+from qgs.params.params import QgParams
+from qgs.inner_products import analytic, symbolic
 
 from model_test.test_base import TestBase
 

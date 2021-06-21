@@ -23,7 +23,7 @@
 
 from numba import njit
 import numpy as np
-from functions.util import reverse
+from qgs.functions.util import reverse
 
 
 def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=None, c=None, a=None):
@@ -95,7 +95,7 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
 
     >>> from numba import njit
     >>> import numpy as np
-    >>> from integrators.integrate import integrate_runge_kutta
+    >>> from qgs.integrators.integrate import integrate_runge_kutta
     >>> a = 0.25
     >>> F = 16.
     >>> G = 3.
@@ -358,7 +358,7 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
 
     >>> from numba import njit
     >>> import numpy as np
-    >>> from integrators.integrate import integrate_runge_kutta_tgls
+    >>> from qgs.integrators.integrate import integrate_runge_kutta_tgls
     >>> a = 0.25
     >>> F = 16.
     >>> G = 3.

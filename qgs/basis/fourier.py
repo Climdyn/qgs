@@ -16,7 +16,7 @@
 """
 import numpy as np
 
-from basis.base import SymbolicBasis
+from qgs.basis.base import SymbolicBasis
 
 from sympy import symbols, sin, cos, sqrt
 

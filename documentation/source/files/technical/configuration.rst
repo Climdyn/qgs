@@ -4,18 +4,18 @@ Model configuration
 
 We describe here the modules used to configure the model. Please read the :ref:`files/user_guide:User guide` to learn how to use them.
 
-.. automodule:: params.params
+.. automodule:: qgs.params.params
     :show-inheritance:
     :members:
 
-.. automodule:: basis.base
+.. automodule:: qgs.basis.base
     :show-inheritance:
     :members:
 
-.. automodule:: basis.fourier
+.. automodule:: qgs.basis.fourier
     :show-inheritance:
     :members:
 
-.. automodule:: params.parameter
+.. automodule:: qgs.params.parameter
     :show-inheritance:
     :members:

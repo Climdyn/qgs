@@ -3,7 +3,7 @@
     ==============================
 
     This module supports operations and functions on the sparse tensors defined in
-    the :mod:`tensors.cootensor`.
+    the :class:`~.tensors.qgtensor.QgsTensor` objects.
 
 """
 import numpy as np

@@ -8,8 +8,8 @@
     Examples
     --------
 
-    >>> from params.params import ScaleParams
-    >>> from params.parameter import Parameter
+    >>> from qgs.params.params import ScaleParams
+    >>> from qgs.params.parameter import Parameter
     >>> # defining a scale object to help Parameter compute the nondimensionalization
     >>> sc = ScaleParams()
     >>> # creating a parameter initialized with a nondimensional value but returning a

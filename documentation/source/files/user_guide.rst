@@ -34,7 +34,7 @@ The computational flow to compute the function :math:`\boldsymbol{f}` of the mod
 
     Sketch of the computational flow.
 
-This flow can be implemented step by step by the user, or can be automatically performed by the functions :meth:`~.tendencies.create_tendencies`.
+This flow can be implemented step by step by the user, or can be automatically performed by the functions :meth:`~qgs.functions.tendencies.create_tendencies`.
 This function takes a :class:`~.params.QgParams` parameters object and return the function :math:`\boldsymbol{f}` and its Jacobian matrix.
 Optionally, it can also return the byproducts of the tendencies generation process, i.e. the objects containing the inner products
 between the model's spatial modes and the tensors of the model's tendencies terms.
@@ -66,7 +66,7 @@ The model initialization first step requires the creation of a :class:`~.params.
 
 .. code:: ipython3
 
-    from params.params import QgParams
+    from qgs.params.params import QgParams
     model_parameters = QgParams()
 
 This object contains basically all the information needed by qgs to construct the inner products and the tendencies tensor of the model, which are in turn needed to produces finally the model's function :math:`\boldsymbol{f}`.
@@ -78,24 +78,24 @@ the partial differential equations of qgs. As said before, two methods are avail
 """"""""""""""""""""""""""
 
 With this method, the user has to provide directly the basis of functions of each component. These functions have to be symbolic function expressions, and should be provided using `Sympy`_.
-This has to be done using a :class:`~basis.base.SymbolicBasis` object, which is basically a list of Sympy functions.
+This has to be done using a :class:`~.basis.base.SymbolicBasis` object, which is basically a list of Sympy functions.
 
-The user can construct his own basis (see below) or use the various built-in Fourier basis provided with qgs: :class:`~basis.fourier.ChannelFourierBasis` or :class:`~basis.fourier.BasinFourierBasis`.
-In the latter case, convenient constructor functions have been defined to help the user get the Fourier basis: :meth:`~basis.fourier.contiguous_basin_basis` and :meth:`~basis.fourier.contiguous_channel_basis`.
+The user can construct his own basis (see below) or use the various built-in Fourier basis provided with qgs: :class:`~.basis.fourier.ChannelFourierBasis` or :class:`~.basis.fourier.BasinFourierBasis`.
+In the latter case, convenient constructor functions have been defined to help the user get the Fourier basis: :meth:`~qgs.basis.fourier.contiguous_basin_basis` and :meth:`~qgs.basis.fourier.contiguous_channel_basis`.
 These functions create `contiguous` Fourier basis for two different kind of boundary conditions (a zonal channel or a closed basin) shown on the first figure in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`.
 
 .. note::
 
     A `contiguous` Fourier basis means here that the Fourier modes are all present in the model up to a given maximum wavenumber in each direction (`zonal and meridional`_).
     Hence one has only to specify the maximum wavenumbers (and the model's domain aspect ratio) to these constructor functions. One can also create non-`contiguous` Fourier basis by specifying wavenumbers explicitly at
-    the :class:`~basis.fourier.ChannelFourierBasis` or :class:`~basis.fourier.BasinFourierBasis` instantiation (see the section :ref:`files/user_guide:3.1 A simple example` for an example).
+    the :class:`~.basis.fourier.ChannelFourierBasis` or :class:`~.basis.fourier.BasinFourierBasis` instantiation (see the section :ref:`files/user_guide:3.1 A simple example` for an example).
 
-Once constructed, the basis has to be provided to the :class:`~.params.QgParams` object by using dedicated methods: :meth:`~.params.QgParams.set_atmospheric_modes`, :meth:`~.params.QgParams.set_oceanic_modes` and :meth:`~.params.QgParams.set_ground_modes`.
+Once constructed, the basis has to be provided to the :class:`~.params.QgParams` object by using dedicated methods: :meth:`~qgs.params.QgParams.set_atmospheric_modes`, :meth:`~qgs.params.QgParams.set_oceanic_modes` and :meth:`~qgs.params.QgParams.set_ground_modes`.
 With the constructor functions, one can activate the mandatory atmospheric layer by typing
 
 .. code:: ipython3
 
-    from basis.fourier import contiguous_channel_basis
+    from qgs.basis.fourier import contiguous_channel_basis
     basis = contiguous_channel_basis(2, 2, 1.5)
     model_parameters.set_atmospheric_modes(basis)
 
@@ -105,11 +105,11 @@ where we have defined a channel Fourier basis up to wavenumber 2 in both directi
 
     Please note that the aspect ratio of the basis object provided to qgs is not very important, because it is superseded by the aspect ratio sets in the :class:`~.params.QgParams` object.
 
-To activate the ocean or the ground components, the user has simply to use the method :meth:`~.params.QgParams.set_oceanic_modes` and :meth:`~.params.QgParams.set_ground_modes`.
+To activate the ocean or the ground components, the user has simply to use the method :meth:`~qgs.params.QgParams.set_oceanic_modes` and :meth:`~qgs.params.QgParams.set_ground_modes`.
 Note that providing a oceanic basis of functions automatically deactivate the ground component, and vice-versa.
 
 Finally, since the `MAOOAM`_ Fourier basis are used frequently in qgs, convenient methods of the :class:`~.params.QgParams` object allow one to create easily these basis inside this object
-(without the need to create them externally and then pass them to the qgs parameters object). These are the methods :meth:`~.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~.params.QgParams.set_ground_channel_fourier_modes`.
+(without the need to create them externally and then pass them to the qgs parameters object). These are the methods :meth:`~qgs.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~qgs.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~qgs.params.QgParams.set_ground_channel_fourier_modes`.
 For instance, the effect obtained with the 3 previous lines of code (activating the atmosphere) can also be obtained by typing:
 
 .. code:: ipython3
@@ -128,7 +128,7 @@ These convenient methods can also initialize qgs with another method (called `an
 Computing the inner products of the symbolic functions defined with `Sympy`_ **can be very resources consuming**, therefore if the basis
 of functions that you intend to use are the ones described in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`, you might be interested to use
 the analytic method, which uses the analytic formula for the inner products given in :cite:`user-DDV2016`. This initialization mode is put in action by using the
-convenient methods of the :class:`~.params.QgParams` object: :meth:`~.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~.params.QgParams.set_ground_channel_fourier_modes`.
+convenient methods of the :class:`~.params.QgParams` object: :meth:`~qgs.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~qgs.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~qgs.params.QgParams.set_ground_channel_fourier_modes`.
 
 For instance, to initialize a channel atmosphere with up to wavenumber 2 in both directions, one can simply write:
 
@@ -166,7 +166,7 @@ These parameters classes are regrouped into the global structure :class:`~.param
 * :attr:`~.params.QgParams.ground_params` for :class:`~.params.GroundParams`.
 * :attr:`~.params.QgParams.otemperature_params` for :class:`~.params.GroundTemperatureParams`.
 
-The parameters inside these structures can be changed by passing a dictionary of the new values to the :meth:`~.params.QgParams.set_params` method. For example, if one wants to change the
+The parameters inside these structures can be changed by passing a dictionary of the new values to the :meth:`~qgs.params.QgParams.set_params` method. For example, if one wants to change the
 Coriolis parameter :math:`f_0` and the static stability of the atmosphere :math:`\sigma`, one has to write:
 
 .. code:: ipython3
@@ -222,7 +222,7 @@ Jacobian matrix :math:`\boldsymbol{\mathrm{Df}}`. Just pass it to the function :
 
 .. code:: ipython3
 
-    from functions.tendencies import create_tendencies
+    from qgs.functions.tendencies import create_tendencies
 
     f, Df = create_tendencies(model_parameters)
 
@@ -249,7 +249,7 @@ and it can be loaded again by typing
 
 .. code:: ipython3
 
-    from params.params import QgParams
+    from qgs.params.params import QgParams
 
     # loading the model
     with open('model.pickle', "rb") as file:
@@ -297,14 +297,14 @@ First, we create the parameters object:
 
 .. code:: ipython3
 
-    from params.params import QgParams
+    from qgs.params.params import QgParams
     model_parameters = QgParams({'n': 1.5})
 
 and we create a :class:`.ChannelFourierBasis` with all the modes up to wavenumber 2 in both directions, except the one with wavenumbers 1 and 2 in respectively the :math:`x` and :math:`y` direction:
 
 .. code:: ipython3
 
-    from basis.fourier import ChannelFourierBasis
+    from qgs.basis.fourier import ChannelFourierBasis
     atm_basis = ChannelFourierBasis(np.array([[1,1],
                                               [2,1],
                                               [2,2]]),1.5)
@@ -342,7 +342,7 @@ First we create the parameters object and the atmosphere:
 
 .. code:: ipython3
 
-    from params.params import QgParams
+    from qgs.params.params import QgParams
     model_parameters = QgParams({'n': 1.5})
     model_parameters.set_atmospheric_channel_fourier_modes(2, 2, mode="symbolic")
 
@@ -350,7 +350,7 @@ Then we create a :class:`.SymbolicBasis` object:
 
 .. code:: ipython3
 
-    from basis.base import SymbolicBasis
+    from qgs.basis.base import SymbolicBasis
     ocean_basis = SymbolicBasis()
 
 We must then specify the function of the basis using `Sympy`_:
@@ -420,7 +420,7 @@ and passing it to a :class:`.OceanicSymbolicInnerProducts` object:
 
     ip = UserInnerProductDefinition()
 
-    from inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts
+    from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts
 
     aip = AtmosphericSymbolicInnerProducts(model_parameters)
     oip = OceanicSymbolicInnerProducts(model_parameters, inner_product_definition=ip)
@@ -431,7 +431,7 @@ Once computed, the corresponding tendencies must then be created manually, first
 
 .. code:: ipython3
 
-    from tensors.qgtensor import QgsTensor
+    from qgs.tensors.qgtensor import QgsTensor
 
     aotensor = QgsTensor(model_parameters, aip, oip)
 
@@ -461,7 +461,7 @@ the qgs built-in integrator to obtain the model's trajectories:
 
 .. code:: python3
 
-    from integrators.integrator import RungeKuttaIntegrator
+    from qgs.integrators.integrator import RungeKuttaIntegrator
     import numpy as np
 
     integrator = RungeKuttaIntegrator()

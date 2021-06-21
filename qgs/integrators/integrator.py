@@ -20,8 +20,8 @@
 import multiprocessing
 import numpy as np
 from numba import njit
-from integrators.integrate import _integrate_runge_kutta_jit, _integrate_runge_kutta_tgls_jit, _zeros_func
-from functions.util import reverse
+from qgs.integrators.integrate import _integrate_runge_kutta_jit, _integrate_runge_kutta_tgls_jit, _zeros_func
+from qgs.functions.util import reverse
 
 
 class RungeKuttaIntegrator(object):

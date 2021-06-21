@@ -13,9 +13,9 @@ else:
 import unittest
 import numpy as np
 
-from params.params import QgParams
-from inner_products import analytic
-from tensors.qgtensor import QgsTensor
+from qgs.params.params import QgParams
+from qgs.inner_products import analytic
+from qgs.tensors.qgtensor import QgsTensor
 
 from model_test.test_base import TestBase
 

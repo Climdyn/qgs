@@ -25,13 +25,10 @@
 import sparse as sp
 import multiprocessing
 
-from params.params import QgParams
-from inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
-from inner_products.definition import StandardSymbolicInnerProductDefinition
+from qgs.params.params import QgParams
+from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
+from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
 from sympy import symbols
-
-_n = symbols('n', real=True, nonnegative=True)
-_x, _y = symbols('x y')
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 #       - Switch to numerical integration of the inner products if the symbolic one is to long (to be done when NumericBasis is ready)
@@ -188,7 +185,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(noc)]
 
-            result = pool.map(apply, args_list)
+            result = pool.map(_apply, args_list)
 
             for res in result:
                 self._d[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
@@ -198,7 +195,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(noc)]
 
-            result = pool.map(apply, args_list)
+            result = pool.map(_apply, args_list)
 
             for res in result:
                 self._s[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
@@ -251,7 +248,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                          for j in range(ngr)]
 
-            result = pool.map(apply, args_list)
+            result = pool.map(_apply, args_list)
 
             for res in result:
                 self._s[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
@@ -261,7 +258,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
                          for j in range(self.natm) for k in range(ngr)]
 
-            result = pool.map(apply, args_list)
+            result = pool.map(_apply, args_list)
 
             for res in result:
                 self._gh[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
@@ -297,7 +294,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         # a inner products
         args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._F(j))] for i in range(self.natm)
                      for j in range(self.natm)]
-        result = pool.map(apply, args_list)
+        result = pool.map(_apply, args_list)
 
         for res in result:
             self._a[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
@@ -305,7 +302,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         # u inner products
         args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j))] for i in range(self.natm)
                      for j in range(self.natm)]
-        result = pool.map(apply, args_list)
+        result = pool.map(_apply, args_list)
 
         for res in result:
             self._u[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
@@ -313,7 +310,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         # c inner products
         args_list = [[(i, j), self.ip.ip_diff_x, (self._F(i), self._F(j))] for i in range(self.natm)
                      for j in range(self.natm)]
-        result = pool.map(apply, args_list)
+        result = pool.map(_apply, args_list)
 
         for res in result:
             self._c[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
@@ -322,7 +319,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                      for j in range(self.natm) for k in range(self.natm)]
 
-        result = pool.map(apply, args_list)
+        result = pool.map(_apply, args_list)
 
         for res in result:
             self._b[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
@@ -331,7 +328,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                      for j in range(self.natm) for k in range(self.natm)]
 
-        result = pool.map(apply, args_list)
+        result = pool.map(_apply, args_list)
 
         for res in result:
             self._g[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
@@ -572,7 +569,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             l = [[(i, j), self.iip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
                  for j in range(natm)]
 
-            result = pool.map(apply, l)
+            result = pool.map(_apply, l)
 
             for res in result:
                 self._K[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions)
@@ -582,7 +579,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
                  for j in range(natm)]
 
-            result = pool.map(apply, l)
+            result = pool.map(_apply, l)
 
             for res in result:
                 self._W[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions)
@@ -616,21 +613,21 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
         # N inner products
         l = [[(i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._N[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
 
         # M inner products
         l = [[(i, j), self.ip.ip_lap, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._M[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
 
         # U inner products
         l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._U[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
@@ -639,7 +636,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         l = [[(i, j, k), self.ip.ip_jac, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
              for j in range(self.noc) for k in range(self.noc)]
 
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._O[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
@@ -648,7 +645,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         l = [[(i, j, k), self.ip.ip_jac_lap, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
              for j in range(self.noc) for k in range(self.noc)]
 
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._C[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
@@ -855,7 +852,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
                  for j in range(natm)]
 
-            result = pool.map(apply, l)
+            result = pool.map(_apply, l)
 
             for res in result:
                 self._W[res[0]] = float(res[1].subs(self.subs).subs(self.ground_basis.substitutions)
@@ -884,7 +881,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
         # U inner products
         l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
-        result = pool.map(apply, l)
+        result = pool.map(_apply, l)
 
         for res in result:
             self._U[res[0]] = float(res[1].subs(self.subs).subs(self.ground_basis.substitutions))
@@ -960,12 +957,12 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             return 0
 
 
-def apply(ls):
+def _apply(ls):
     return ls[0], ls[1](*ls[2])
 
 
 if __name__ == '__main__':
-    from params.params import QgParams
+    from qgs.params.params import QgParams
     pars = QgParams()
     pars.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
     pars.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')

@@ -651,8 +651,8 @@ def _kronecker_delta(i, j):
 
 
 if __name__ == '__main__':
-    from params.params import QgParams
-    from inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts
+    from qgs.params.params import QgParams
+    from qgs.inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts
 
     params = QgParams()
     params.set_atmospheric_channel_fourier_modes(2, 2)
