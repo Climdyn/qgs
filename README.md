@@ -15,10 +15,12 @@ a 2-layer [quasi-geostrophic](https://en.wikipedia.org/wiki/Quasi-geostrophic_eq
 atmosphere on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane), coupled to a simple land or
 [shallow-water](https://en.wikipedia.org/wiki/Shallow_water_equations) ocean component. 
 
+![](./misc/figs/readme.gif)
+
 About
 -----
 
-(c) 2020 qgs Developers and Contributors
+(c) 2020-2021 qgs Developers and Contributors
 
 Part of the code originates from the Python [MAOOAM](https://github.com/Climdyn/MAOOAM) implementation by Maxime Tondeur and Jonathan Demaeyer.
 
@@ -130,13 +132,12 @@ Forthcoming developments
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Numerical basis of function
-    + Visualisation tools, e.g. based on the [movie-script](https://github.com/jodemaey/movie-script) package
 * Long-term development track
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean 
     + Symbolic PDE equation specification
+    + Numerical basis of function
   
 Contributing to qgs
 -------------------

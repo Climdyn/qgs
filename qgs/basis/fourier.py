@@ -40,7 +40,7 @@ class ChannelFourierBasis(SymbolicBasis):
     def __init__(self, spectral_blocks, aspect_ratio):
 
         SymbolicBasis.__init__(self)
-        self.substitutions.append(('n', aspect_ratio))
+        self.substitutions.append((_n, aspect_ratio))
 
         awavenum = channel_wavenumbers(spectral_blocks)
 
@@ -68,7 +68,7 @@ class BasinFourierBasis(SymbolicBasis):
     def __init__(self, spectral_blocks, aspect_ratio):
 
         SymbolicBasis.__init__(self)
-        self.substitutions.append(('n', aspect_ratio))
+        self.substitutions.append((_n, aspect_ratio))
 
         owavenum = basin_wavenumbers(spectral_blocks)
 
@@ -98,7 +98,7 @@ def contiguous_basin_basis(nxmax, nymax, aspect_ratio):
         The closed basin contiguous basis up to the specified spectral truncation.
     """
 
-    spectral_blocks = np.zeros((nxmax * nymax, 2), dtype=np.int)
+    spectral_blocks = np.zeros((nxmax * nymax, 2), dtype=int)
     i = 0
     for nx in range(1, nxmax + 1):
         for ny in range(1, nymax+1):
@@ -127,7 +127,7 @@ def contiguous_channel_basis(nxmax, nymax, aspect_ratio):
         The channel contiguous basis up to the specified spectral truncation.
     """
 
-    spectral_blocks = np.zeros((nxmax * nymax, 2), dtype=np.int)
+    spectral_blocks = np.zeros((nxmax * nymax, 2), dtype=int)
     i = 0
     for nx in range(1, nxmax + 1):
         for ny in range(1, nymax+1):

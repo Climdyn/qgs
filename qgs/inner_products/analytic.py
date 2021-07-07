@@ -46,11 +46,11 @@ from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProduc
 
 class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
     """Class which contains all the atmospheric inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: None or ~.params.QgParams or list, optional
+    params: None or QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, ablocks, natm].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
         detailing the model's atmospheric modes :math:`x`-and :math:`y`-wavenumber as an array of shape (natm, 2), and `natm` is
@@ -63,11 +63,11 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
     ----------
     n: float
         The aspect ratio of the domain.
-    ocean_inner_products: None or OceanicInnerAnalyticProducts
+    ocean_inner_products: None or OceanicAnalyticInnerProducts
             The inner products of the ocean. `None` if no ocean.
     connected_to_ocean: bool
         Indicate if the atmosphere is connected to an ocean.
-    ground_inner_products: None or GroundInnerAnalyticProducts
+    ground_inner_products: None or GroundAnalyticInnerProducts
             The inner products of the ground. `None` if no ground.
     connected_to_ground: bool
         Indicate if the atmosphere is connected to the ground.
@@ -116,7 +116,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
 
         Parameters
         ----------
-        ocean_inner_products: OceanicInnerAnalyticProducts
+        ocean_inner_products: OceanicAnalyticInnerProducts
             The inner products of the ocean.
         """
 
@@ -431,11 +431,11 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
 
 class OceanicAnalyticInnerProducts(OceanicInnerProducts):
     """Class which contains all the oceanic inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: None or ~.params.QgParams or list, optional
+    params: None or QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, oblocks, noc].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ablocks` is a spectral blocks
         detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (noc, 2), and `noc` is
@@ -683,11 +683,11 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
 
 class GroundAnalyticInnerProducts(GroundInnerProducts):
     """Class which contains all the ground inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: None or ~.params.QgParams or list, optional
+    params: None or QgParams or list, optional
         An instance of model's parameters object or a list in the form [aspect_ratio, gblocks, ngr].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `gblocks` is a spectral blocks
         detailing the model's oceanic modes :math:`x`-and :math:`y`-wavenumber as an array of shape (ngr, 2), and `ngr` is

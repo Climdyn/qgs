@@ -3,13 +3,13 @@
     =============================
 
     This module defines the main classes containing the model configuration parameters.
-    The parameters are typically specified as :class:`~params.parameter.Parameter` objects.
+    The parameters are typically specified as :class:`~.params.parameter.Parameter` objects.
 
     There are seven types of parameters arranged in classes:
 
     * :class:`ScaleParams` contains the model scale parameters. These parameters are used to scale and
-      `nondimentionalize`_ the :class:`~params.parameter.Parameter` of the other parameters classes according to
-      their :attr:`~params.parameter.Parameter.units` attribute.
+      `nondimentionalize`_ the :class:`~.params.parameter.Parameter` of the other parameters classes according to
+      their :attr:`~.params.parameter.Parameter.units` attribute.
     * :class:`AtmosphericParams` contains the atmospheric dynamical parameters.
     * :class:`AtmosphericTemperatureParams` containing the atmosphere's temperature and heat-exchange parameters.
     * :class:`OceanicParams` contains the oceanic dynamical parameters.
@@ -221,7 +221,7 @@ class ScaleParams(Params):
     Attributes
     ----------
     scale: Parameter
-        The characteristic meridional space scale, :math:`L_y = \pi \, L`, in meters [:math:`m`].
+        The characteristic meridional space scale, :math:`L_y = \\pi \\, L`, in meters [:math:`m`].
     f0: Parameter
         Coriolis parameter, in [:math:`s^{-1}`].
     n: Parameter
@@ -229,7 +229,7 @@ class ScaleParams(Params):
     rra: Parameter
         Earth radius, in meters [:math:`m`].
     phi0_npi: Parameter
-        Latitude expressed in fraction of :math:`\pi` .
+        Latitude expressed in fraction of :math:`\\pi` .
     deltap: Parameter
         Difference of pressure between the center of the two atmospheric layers, in [:math:`Pa`].
     """
@@ -266,27 +266,27 @@ class ScaleParams(Params):
 
     @property
     def L_y(self):
-        """Parameter: The meridional extent :math:`L_y = \pi \, L` of the model's domain, in meters [:math:`m`]."""
+        """Parameter: The meridional extent :math:`L_y = \\pi \\, L` of the model's domain, in meters [:math:`m`]."""
         return Parameter(self.scale, units=self.scale.units, description='The meridional extent of the model domain',
                          return_dimensional=True)
 
     @property
     def L_x(self):
-        """Parameter: The zonal extent :math:`L_x = 2 \pi \, L / n` of the model's domain, in meters [:math:`m`]."""
+        """Parameter: The zonal extent :math:`L_x = 2 \\pi \\, L / n` of the model's domain, in meters [:math:`m`]."""
         return Parameter(2 * self.scale / self.n, units=self.scale.units,
                          description='The zonal extent of the model domain',
                          return_dimensional=True)
 
     @property
     def phi0(self):
-        """Parameter: The reference latitude :math:`\phi_0` at the center of the domain, expressed in radians [:math:`rad`]."""
+        """Parameter: The reference latitude :math:`\\phi_0` at the center of the domain, expressed in radians [:math:`rad`]."""
         return Parameter(self.phi0_npi * np.pi, units='[rad]',
                          description="The reference latitude of the center of the domain",
                          return_dimensional=True)
 
     @property
     def beta(self):
-        """Parameter: The meridional gradient of the Coriolis parameter at :math:`\phi_0`, expressed in [:math:`m^{-1} s^{-1}`]. """
+        """Parameter: The meridional gradient of the Coriolis parameter at :math:`\\phi_0`, expressed in [:math:`m^{-1} s^{-1}`]. """
         return Parameter(self.L / self.rra * np.cos(self.phi0) / np.sin(self.phi0), input_dimensional=False,
                          units='[m^-1][s^-1]', scale_object=self,
                          description="Meridional gradient of the Coriolis parameter at phi_0")
@@ -324,7 +324,7 @@ class AtmosphericParams(Params):
         self.kd = Parameter(0.1, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
                             description="atmosphere bottom friction coefficient")
         self.kdp = Parameter(0.01, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
-                            description="atmosphere internal friction coefficient")
+                             description="atmosphere internal friction coefficient")
         self.sigma = Parameter(0.2e0, input_dimensional=False, scale_object=scale_params, units='[m^2][s^-2][Pa^-2]',
                                description="static stability of the atmosphere")
 
@@ -487,7 +487,7 @@ class OceanicParams(Params):
     Attributes
     ----------
     gp: Parameter
-        Reduced gravity in [:math:`m \, s^{-2}`].
+        Reduced gravity in [:math:`m \\, s^{-2}`].
     r: Parameter
         Friction coefficient at the bottom of the ocean in [:math:`s^{-1}`].
     h: Parameter
@@ -590,7 +590,7 @@ class OceanicTemperatureParams(Params):
         d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the ocean" for pos in range(dim)]
 
         self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True)
+                                          description=d, return_dimensional=True)
 
 
 class GroundParams(Params):
@@ -816,9 +816,9 @@ class QgParams(Params):
     time_unit: float
         Dimensional unit of time to be used to represent the data.
     rr: Parameter
-        `Gas constant`_ of `dry air`_ in [:math:`J \, kg^{-1} \, K^{-1}`].
+        `Gas constant`_ of `dry air`_ in [:math:`J \\, kg^{-1} \\, K^{-1}`].
     sb: float
-        `Stefan-Boltzmann constant`_ in [:math:`J \, m^{-2} \, s^{-1} \, K^{-4}`].
+        `Stefan-Boltzmann constant`_ in [:math:`J \\, m^{-2} \\, s^{-1} \\, K^{-4}`].
 
 
     .. _Gas constant: https://en.wikipedia.org/wiki/Gas_constant
@@ -891,6 +891,7 @@ class QgParams(Params):
         self._oceanic_var_string = list()
         self._ground_latex_var_string = list()
         self._ground_var_string = list()
+        self._components_units = [r'm$^2$s$^{-1}$', r'K', r'm$^2$s$^{-1}$', r'K']
         self.time_unit = 'days'
 
         # Physical constants
@@ -1038,6 +1039,22 @@ class QgParams(Params):
         else:
             return None
 
+    # The following properties might be refactored if the unit system of the model get more widespread across modules.
+    @property
+    def streamfunction_scaling(self):
+        """float: Dimensional scaling of the streamfunction fields."""
+        return self.scale_params.L**2 * self.scale_params.f0
+
+    @property
+    def temperature_scaling(self):
+        """float: Dimensional scaling of the temperature fields."""
+        return self.streamfunction_scaling * self.scale_params.f0 / self.rr
+
+    @property
+    def geopotential_scaling(self):
+        """float: Dimensional scaling of the geopotential height."""
+        return self.scale_params.f0 / 9.81
+
     def set_params(self, dic):
         """Set the specified parameters values.
 
@@ -1136,6 +1153,43 @@ class QgParams(Params):
             ls.append(r'{\ '[0:-1] + var + r'}')
 
         return ls
+
+    @property
+    def latex_components_units(self):
+        """list(str): The units of every model's components variables, as a list of latex strings."""
+        return self._components_units
+
+    def get_variable_units(self, i):
+        """Return the units of a model's variable as a string containing latex symbols.
+
+        Parameters
+        ----------
+        i: int
+            The number of the variable.
+
+        Returns
+        -------
+        str:
+            The string with the units of the variable.
+        """
+        if i >= self.ndim:
+            warnings.warn("Variable " + str(i) + " doesn't exist, cannot return its units.")
+            return None
+        else:
+            natm = self.nmod[0]
+            ngoc = self.nmod[1]
+            if i < natm:
+                return self._components_units[0]
+            if natm <= i < 2 * natm:
+                return self._components_units[1]
+            if self.oceanic_basis is not None:
+                if 2 * natm <= i < 2 * natm + ngoc:
+                    return self._components_units[2]
+                if 2 * natm + ngoc <= i < 2 * natm + 2 * ngoc:
+                    return self._components_units[3]
+            if self.ground_basis is not None:
+                if 2 * natm <= i < 2 * natm + ngoc:
+                    return self._components_units[3]
 
     @property
     def dimensional_time(self):
@@ -1686,7 +1740,7 @@ class QgParams(Params):
 
     def _set_atmospheric_analytic_fourier_modes(self, nxmax, nymax, auto=False):
 
-        res = np.zeros((nxmax * nymax, 2), dtype=np.int)
+        res = np.zeros((nxmax * nymax, 2), dtype=int)
         i = 0
         for nx in range(1, nxmax + 1):
             for ny in range(1, nymax+1):
@@ -1717,7 +1771,7 @@ class QgParams(Params):
             print('Atmosphere modes not set up. Add an atmosphere before adding an ocean!')
             print('Oceanic setup aborted.')
             return
-        res = np.zeros((nxmax * nymax, 2), dtype=np.int)
+        res = np.zeros((nxmax * nymax, 2), dtype=int)
         i = 0
         for nx in range(1, nxmax + 1):
             for ny in range(1, nymax+1):
@@ -1756,7 +1810,7 @@ class QgParams(Params):
         if nxmax is None or nymax is None:
             res = self._ams.copy()
         else:
-            res = np.zeros((nxmax * nymax, 2), dtype=np.int)
+            res = np.zeros((nxmax * nymax, 2), dtype=int)
             i = 0
             for nx in range(1, nxmax + 1):
                 for ny in range(1, nymax+1):

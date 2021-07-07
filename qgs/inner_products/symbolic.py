@@ -23,12 +23,15 @@
 """
 
 import sparse as sp
-import multiprocessing
+from pebble import ProcessPool as Pool
+from concurrent.futures import TimeoutError
+from multiprocessing import cpu_count
 
 from qgs.params.params import QgParams
 from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
-from sympy import symbols
+from sympy import lambdify
+from scipy.integrate import dblquad
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 #       - Switch to numerical integration of the inner products if the symbolic one is to long (to be done when NumericBasis is ready)
@@ -36,14 +39,15 @@ from sympy import symbols
 
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """Class which contains all the atmospheric inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
 
     Parameters
     ----------
-    params: ~.params.QgParams or list
+    params: QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, atmospheric_basis, basis, oog, oro_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `atmospheric_basis` is a SymbolicBasis with
         the modes of the atmosphere, and `ocean_basis` is either `None` or a SymbolicBasis object with the modes of
+    print(func(1.,1.))
         the ocean or the ground. Finally `oog` indicates if it is an ocean or a ground component that is connected,
         by setting it to `ocean` or to 'ground', and in this latter case, `oro_basis` indicates on which basis the orography is developed.
     stored: bool, optional
@@ -57,6 +61,14 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         Default to `None`.
     num_threads: int or None, optional
         Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+        Default to `None`.
+    quadrature: bool, optional
+        If `True', compute the inner products with a quadrature instead of the symbolic integration.
+        If `True` Disable the `timeout` parameter.
+        Default to `True`.
+    timeout: int or float or bool or None, optional
+        The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+        If `None` or `False`, no timeout occurs.
         Default to `None`.
 
     Attributes
@@ -80,9 +92,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         symbolic computation.
     """
 
-    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
+                 num_threads=None, quadrature=True, timeout=None):
 
         AtmosphericInnerProducts.__init__(self)
+
+        if quadrature:
+            timeout = True
 
         if params is not None:
             if isinstance(params, QgParams):
@@ -135,13 +151,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
         self.stored = stored
         if stored:
-            self.compute_inner_products(num_threads)
+            self.compute_inner_products(num_threads, timeout)
 
         if goc_basis is not None:
             if oog == 'ocean':
-                self.connect_to_ocean(goc_basis)
+                self.connect_to_ocean(goc_basis, num_threads, timeout)
             else:
-                self.connect_to_ground(goc_basis, oro_basis)
+                self.connect_to_ground(goc_basis, oro_basis, num_threads, timeout)
 
     def _F(self, i):
         if self.atmospheric_basis is not None:
@@ -151,7 +167,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         if self.oceanic_basis is not None:
             return self.oceanic_basis.functions[i]
 
-    def connect_to_ocean(self, ocean_basis, num_threads=None):
+    def connect_to_ocean(self, ocean_basis, num_threads=None, timeout=None):
         """Connect the atmosphere to an ocean.
 
         Parameters
@@ -161,7 +177,12 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
             Default to `None`.
-        """
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
+            Default to `None`.
+       """
         if isinstance(ocean_basis, OceanicSymbolicInnerProducts):
             ocean_basis = ocean_basis.oceanic_basis
         self.ground_basis = None
@@ -171,42 +192,35 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self.connected_to_ocean = True
 
         if self.stored:
+
             if num_threads is None:
-                pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-            else:
-                pool = multiprocessing.Pool(processes=num_threads)
+                num_threads = cpu_count()
 
-            noc = len(ocean_basis)
-            self._gh = None
-            self._d = sp.zeros((self.natm, noc), dtype=float, format='dok')
-            self._s = sp.zeros((self.natm, noc), dtype=float, format='dok')
+            with Pool(max_workers=num_threads) as pool:
 
-            # d inner products
-            args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
-                         for j in range(noc)]
+                subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
 
-            result = pool.map(_apply, args_list)
+                noc = len(ocean_basis)
+                self._gh = None
+                self._d = sp.zeros((self.natm, noc), dtype=float, format='dok')
+                self._s = sp.zeros((self.natm, noc), dtype=float, format='dok')
 
-            for res in result:
-                self._d[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
-                                        .subs(self.oceanic_basis.substitutions))
+                # d inner products
+                args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
+                             for j in range(noc)]
 
-            # s inner products
-            args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
-                         for j in range(noc)]
+                _parallel_compute(pool, args_list, subs, self._d, timeout)
 
-            result = pool.map(_apply, args_list)
+                # s inner products
+                args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
+                             for j in range(noc)]
 
-            for res in result:
-                self._s[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
-                                        .subs(self.oceanic_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._s, timeout)
 
             self._s = self._s.to_coo()
             self._d = self._d.to_coo()
 
-            pool.terminate()
-
-    def connect_to_ground(self, ground_basis, orographic_basis, num_threads=None):
+    def connect_to_ground(self, ground_basis, orographic_basis, num_threads=None, timeout=None):
         """Connect the atmosphere to the ground.
 
         Parameters
@@ -218,6 +232,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             Can be either 'atmospheric' or 'ground'.
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
             Default to `None`.
         """
 
@@ -232,51 +251,48 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
         if self.stored:
             if num_threads is None:
-                pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-            else:
-                pool = multiprocessing.Pool(processes=num_threads)
+                num_threads = cpu_count()
 
-            ngr = len(ground_basis)
-            if orographic_basis == "atmospheric":
-                self._gh = None
-            else:
-                self._gh = sp.zeros((self.natm, self.natm, ngr), dtype=float, format='dok')
-            self._d = None
-            self._s = sp.zeros((self.natm, ngr), dtype=float, format='dok')
+            with Pool(max_workers=num_threads) as pool:
 
-            # s inner products
-            args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
-                         for j in range(ngr)]
+                subs = self.subs + self.atmospheric_basis.substitutions + self.ground_basis.substitutions
 
-            result = pool.map(_apply, args_list)
+                ngr = len(ground_basis)
+                if orographic_basis == "atmospheric":
+                    self._gh = None
+                else:
+                    self._gh = sp.zeros((self.natm, self.natm, ngr), dtype=float, format='dok')
+                self._d = None
+                self._s = sp.zeros((self.natm, ngr), dtype=float, format='dok')
 
-            for res in result:
-                self._s[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
-                                        .subs(self.ground_basis.substitutions))
+                # s inner products
+                args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
+                             for j in range(ngr)]
 
-            # gh inner products
-            args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
-                         for j in range(self.natm) for k in range(ngr)]
+                _parallel_compute(pool, args_list, subs, self._s, timeout)
 
-            result = pool.map(_apply, args_list)
+                # gh inner products
+                args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
+                             for j in range(self.natm) for k in range(ngr)]
 
-            for res in result:
-                self._gh[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions)
-                                         .subs(self.ground_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._gh, timeout)
 
             self._s = self._s.to_coo()
             if self._gh is not None:
                 self._gh = self._gh.to_coo()
 
-            pool.terminate()
-
-    def compute_inner_products(self, num_threads=None):
+    def compute_inner_products(self, num_threads=None, timeout=None):
         """Function computing and storing all the inner products at once.
 
         Parameters
         ----------
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
             Default to `None`.
         """
 
@@ -286,60 +302,49 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self._b = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
         self._g = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
 
-        if num_threads is None:
-            pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-        else:
-            pool = multiprocessing.Pool(processes=num_threads)
+        if self.stored:
+            if num_threads is None:
+                num_threads = cpu_count()
 
-        # a inner products
-        args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._F(j))] for i in range(self.natm)
-                     for j in range(self.natm)]
-        result = pool.map(_apply, args_list)
+            with Pool(max_workers=num_threads) as pool:
 
-        for res in result:
-            self._a[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
+                subs = self.subs + self.atmospheric_basis.substitutions
 
-        # u inner products
-        args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j))] for i in range(self.natm)
-                     for j in range(self.natm)]
-        result = pool.map(_apply, args_list)
+                # a inner products
+                args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._F(j))] for i in range(self.natm)
+                             for j in range(self.natm)]
 
-        for res in result:
-            self._u[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._a, timeout)
 
-        # c inner products
-        args_list = [[(i, j), self.ip.ip_diff_x, (self._F(i), self._F(j))] for i in range(self.natm)
-                     for j in range(self.natm)]
-        result = pool.map(_apply, args_list)
+                # u inner products
+                args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j))] for i in range(self.natm)
+                             for j in range(self.natm)]
 
-        for res in result:
-            self._c[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._u, timeout)
 
-        # b inner products
-        args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
-                     for j in range(self.natm) for k in range(self.natm)]
+                # c inner products
+                args_list = [[(i, j), self.ip.ip_diff_x, (self._F(i), self._F(j))] for i in range(self.natm)
+                             for j in range(self.natm)]
 
-        result = pool.map(_apply, args_list)
+                _parallel_compute(pool, args_list, subs, self._c, timeout)
 
-        for res in result:
-            self._b[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
+                # b inner products
+                args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
+                             for j in range(self.natm) for k in range(self.natm)]
 
-        # g inner products
-        args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
-                     for j in range(self.natm) for k in range(self.natm)]
+                _parallel_compute(pool, args_list, subs, self._b, timeout)
 
-        result = pool.map(_apply, args_list)
+                # g inner products
+                args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
+                             for j in range(self.natm) for k in range(self.natm)]
 
-        for res in result:
-            self._g[res[0]] = float(res[1].subs(self.subs).subs(self.atmospheric_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._g, timeout)
 
-        self._a = self._a.to_coo()
-        self._u = self._u.to_coo()
-        self._c = self._c.to_coo()
-        self._g = self._g.to_coo()
-        self._b = self._b.to_coo()
-
-        pool.terminate()
+            self._a = self._a.to_coo()
+            self._u = self._u.to_coo()
+            self._c = self._c.to_coo()
+            self._g = self._g.to_coo()
+            self._b = self._b.to_coo()
 
     @property
     def natm(self):
@@ -448,11 +453,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
 class OceanicSymbolicInnerProducts(OceanicInnerProducts):
     """Class which contains all the oceanic inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation.
 
     Parameters
     ----------
-    params: ~.params.QgParams or list
+    params: QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, ocean_basis, atmospheric_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ocean_basis` is a SymbolicBasis object
         with the modes of the ocean, and `atmospheric_basis` is either a SymbolicBasis with the modes of the atmosphere
@@ -468,6 +473,14 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         Default to `None`.
     num_threads: int or None, optional
         Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+        Default to `None`.
+    quadrature: bool, optional
+        If `True', compute the inner products with a quadrature instead of the symbolic integration.
+        If `True` Disable the `timeout` parameter.
+        Default to `True`.
+    timeout: int or float or bool or None, optional
+        The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+        If `None` or `False`, no timeout occurs.
         Default to `None`.
 
     Attributes
@@ -490,9 +503,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         List of 2-tuples containing the substitutions to be made with the functions after the inner products
         symbolic computation.
     """
-    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
+                 num_threads=None, quadrature=True, timeout=None):
 
         OceanicInnerProducts.__init__(self)
+
+        if quadrature:
+            timeout = True
 
         if params is not None:
             if isinstance(params, QgParams):
@@ -526,10 +543,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
         self.stored = stored
         if stored:
-            self.compute_inner_products(num_threads)
+            self.compute_inner_products(num_threads, timeout)
 
         if atm_basis is not None:
-            self.connect_to_atmosphere(atm_basis)
+            self.connect_to_atmosphere(atm_basis, num_threads, timeout)
 
     def _F(self, i):
         if self.atmospheric_basis is not None:
@@ -539,7 +556,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         if self.oceanic_basis is not None:
             return self.oceanic_basis[i]
 
-    def connect_to_atmosphere(self, atmosphere_basis, num_threads=None):
+    def connect_to_atmosphere(self, atmosphere_basis, num_threads=None, timeout=None):
         """Connect the ocean to an atmosphere.
 
         Parameters
@@ -548,6 +565,11 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             Basis of function of the atmosphere or a symbolic atmospheric inner products object containing the basis.
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
             Default to `None`.
         """
 
@@ -558,45 +580,43 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
         if self.stored:
             if num_threads is None:
-                pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-            else:
-                pool = multiprocessing.Pool(processes=num_threads)
-            natm = len(atmosphere_basis)
-            self._K = sp.zeros((self.noc, natm), dtype=float, format='dok')
-            self._W = sp.zeros((self.noc, natm), dtype=float, format='dok')
+                num_threads = cpu_count()
 
-            # K inner products
-            l = [[(i, j), self.iip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
-                 for j in range(natm)]
+            with Pool(max_workers=num_threads) as pool:
 
-            result = pool.map(_apply, l)
+                subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
 
-            for res in result:
-                self._K[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions)
-                                        .subs(self.atmospheric_basis.substitutions))
+                natm = len(atmosphere_basis)
+                self._K = sp.zeros((self.noc, natm), dtype=float, format='dok')
+                self._W = sp.zeros((self.noc, natm), dtype=float, format='dok')
 
-            # W inner products
-            l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
-                 for j in range(natm)]
+                # K inner products
+                args_list = [[(i, j), self.iip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
+                     for j in range(natm)]
 
-            result = pool.map(_apply, l)
+                _parallel_compute(pool, args_list, subs, self._K, timeout)
 
-            for res in result:
-                self._W[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions)
-                                        .subs(self.atmospheric_basis.substitutions))
+                # W inner products
+                args_list = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
+                     for j in range(natm)]
+
+                _parallel_compute(pool, args_list, subs, self._W, timeout)
 
             self._K = self._K.to_coo()
             self._W = self._W.to_coo()
 
-            pool.terminate()
-
-    def compute_inner_products(self, num_threads=None):
+    def compute_inner_products(self, num_threads=None, timeout=None):
         """Function computing and storing all the inner products at once.
 
         Parameters
         ----------
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+            Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
             Default to `None`.
         """
 
@@ -606,57 +626,46 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         self._O = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
         self._C = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
 
-        if num_threads is None:
-            pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-        else:
-            pool = multiprocessing.Pool(processes=num_threads)
+        if self.stored:
+            if num_threads is None:
+                num_threads = cpu_count()
 
-        # N inner products
-        l = [[(i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(_apply, l)
+            with Pool(max_workers=num_threads) as pool:
 
-        for res in result:
-            self._N[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
+                subs = self.subs + self.oceanic_basis.substitutions
 
-        # M inner products
-        l = [[(i, j), self.ip.ip_lap, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(_apply, l)
+                # N inner products
+                args_list = [[(i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-        for res in result:
-            self._M[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._N, timeout)
 
-        # U inner products
-        l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
-        result = pool.map(_apply, l)
+                # M inner products
+                args_list = [[(i, j), self.ip.ip_lap, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-        for res in result:
-            self._U[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._M, timeout)
 
-        # O inner products
-        l = [[(i, j, k), self.ip.ip_jac, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
-             for j in range(self.noc) for k in range(self.noc)]
+                # U inner products
+                args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-        result = pool.map(_apply, l)
+                _parallel_compute(pool, args_list, subs, self._U, timeout)
 
-        for res in result:
-            self._O[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
+                # O inner products
+                args_list = [[(i, j, k), self.ip.ip_jac, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
+                             for j in range(self.noc) for k in range(self.noc)]
 
-        # C inner products
-        l = [[(i, j, k), self.ip.ip_jac_lap, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
-             for j in range(self.noc) for k in range(self.noc)]
+                _parallel_compute(pool, args_list, subs, self._O, timeout)
 
-        result = pool.map(_apply, l)
+                # C inner products
+                args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
+                             for j in range(self.noc) for k in range(self.noc)]
 
-        for res in result:
-            self._C[res[0]] = float(res[1].subs(self.subs).subs(self.oceanic_basis.substitutions))
+                _parallel_compute(pool, args_list, subs, self._C, timeout)
 
-        self._M = self._M.to_coo()
-        self._U = self._U.to_coo()
-        self._N = self._N.to_coo()
-        self._O = self._O.to_coo()
-        self._C = self._C.to_coo()
-
-        pool.terminate()
+            self._M = self._M.to_coo()
+            self._U = self._U.to_coo()
+            self._N = self._N.to_coo()
+            self._O = self._O.to_coo()
+            self._C = self._C.to_coo()
 
     @property
     def noc(self):
@@ -732,11 +741,11 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
 class GroundSymbolicInnerProducts(GroundInnerProducts):
     """Class which contains all the ground inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation.
 
     Parameters
     ----------
-    params: ~.params.QgParams or list
+    params: QgParams or list
         An instance of model's parameters object or a list in the form [aspect_ratio, ground_basis, atmospheric_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `ground_basis` is a SymbolicBasis object
         with the modes of the ground, and `atmospheric_basis` is either a SymbolicBasis with the modes of the atmosphere
@@ -752,6 +761,14 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         Default to `None`.
     num_threads: int or None, optional
         Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
+        Default to `None`.
+    quadrature: bool, optional
+        If `True', compute the inner products with a quadrature instead of the symbolic integration.
+        If `True` Disable the `timeout` parameter.
+        Default to `True`.
+    timeout: int or float or bool or None, optional
+        The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+        If `None` or `False`, no timeout occurs.
         Default to `None`.
 
     Attributes
@@ -774,9 +791,13 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         List of 2-tuples containing the substitutions to be made with the functions after the inner products
         symbolic computation.
     """
-    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None, num_threads=None):
+    def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
+                 num_threads=None, quadrature=True, timeout=None):
 
         GroundInnerProducts.__init__(self)
+
+        if quadrature:
+            timeout = True
 
         if params is not None:
             if isinstance(params, QgParams):
@@ -810,10 +831,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         self.stored = stored
 
         if stored:
-            self.compute_inner_products(num_threads)
+            self.compute_inner_products(num_threads, timeout)
 
         if atm_basis is not None:
-            self.connect_to_atmosphere(atm_basis)
+            self.connect_to_atmosphere(atm_basis, num_threads, timeout)
 
     def _F(self, i):
         if self.atmospheric_basis is not None:
@@ -823,7 +844,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         if self.ground_basis is not None:
             return self.ground_basis[i]
 
-    def connect_to_atmosphere(self, atmosphere_basis, num_threads=None):
+    def connect_to_atmosphere(self, atmosphere_basis, num_threads=None, timeout=None):
         """Connect the ocean to an atmosphere.
 
         Parameters
@@ -833,6 +854,11 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
             Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
+            Default to `None`.
         """
         if isinstance(atmosphere_basis, AtmosphericSymbolicInnerProducts):
             atmosphere_basis = atmosphere_basis.atmospheric_basis
@@ -841,28 +867,23 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
         if self.stored:
             if num_threads is None:
-                pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-            else:
-                pool = multiprocessing.Pool(processes=num_threads)
+                num_threads = cpu_count()
 
-            natm = len(atmosphere_basis)
-            self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
+            with Pool(max_workers=num_threads) as pool:
 
-            # W inner products
-            l = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
-                 for j in range(natm)]
+                subs = self.subs + self.ground_basis.substitutions + self.atmospheric_basis.substitutions
 
-            result = pool.map(_apply, l)
+                natm = len(atmosphere_basis)
+                self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
 
-            for res in result:
-                self._W[res[0]] = float(res[1].subs(self.subs).subs(self.ground_basis.substitutions)
-                                        .subs(self.atmospheric_basis.substitutions))
+                # W inner products
+                args_list = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
+                             for j in range(natm)]
+                _parallel_compute(pool, args_list, subs, self._W, timeout)
 
             self._W = self._W.to_coo()
 
-            pool.terminate()
-
-    def compute_inner_products(self, num_threads=None):
+    def compute_inner_products(self, num_threads=None, timeout=None):
         """Function computing and storing all the inner products at once.
 
         Parameters
@@ -870,23 +891,27 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         num_threads: int or None, optional
             Number of threads to use to compute the symbolic inner products. If `None` use all the cpus available.
             Default to `None`.
+        timeout: int or float or bool or None, optional
+            The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
+            If `True`, force the timeout and compute directly the inner product with a quadrature instead of trying to do the integration symbolically.
+            If `None` or `False`, no timeout occurs.
+            Default to `None`.
         """
 
         self._U = sp.zeros((self.ngr, self.ngr), dtype=float, format='dok')
 
-        if num_threads is None:
-            pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-        else:
-            pool = multiprocessing.Pool(processes=num_threads)
+        if self.stored:
+            if num_threads is None:
+                num_threads = cpu_count()
 
-        # U inner products
-        l = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
-        result = pool.map(_apply, l)
+            with Pool(max_workers=num_threads) as pool:
+                subs = self.subs + self.ground_basis.substitutions
 
-        for res in result:
-            self._U[res[0]] = float(res[1].subs(self.subs).subs(self.ground_basis.substitutions))
+                # U inner products
+                args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
+                _parallel_compute(pool, args_list, subs, self._U, timeout)
 
-        pool.terminate()
+            self._U = self._U.to_coo()
 
     @property
     def ngr(self):
@@ -961,10 +986,85 @@ def _apply(ls):
     return ls[0], ls[1](*ls[2])
 
 
+def _num_apply(ls):
+    integrand = ls[1](*ls[2], integrand=True)
+    num_integrand = integrand[0].subs(ls[3])
+    func = lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
+    try:
+        a = integrand[2][1].subs(ls[3])
+    except:
+        a = integrand[2][1]
+    try:
+        a = a.evalf()
+    except:
+        pass
+    try:
+        b = integrand[2][2].subs(ls[3])
+    except:
+        b = integrand[2][2]
+    try:
+        b = b.evalf()
+    except:
+        pass
+    try:
+        gfun = integrand[1][1].subs(ls[3])
+    except:
+        gfun = integrand[1][1]
+    try:
+        gfun = gfun.evalf()
+    except:
+        pass
+    try:
+        hfun = integrand[1][2].subs(ls[3])
+    except:
+        hfun = integrand[1][2]
+    try:
+        hfun = hfun.evalf()
+    except:
+        pass
+    res = dblquad(func, a, b, gfun, hfun)
+    if abs(res[0]) <= res[1]:
+        return ls[0], 0
+    else:
+        return ls[0], res[0]
+
+
+def _parallel_compute(pool, args_list, subs, destination, timeout):
+
+    if timeout is False:
+        timeout = None
+
+    if timeout is not True:
+        future = pool.map(_apply, args_list, timeout=timeout)
+        results = future.result()
+        num_args_list = list()
+        i = 0
+        while True:
+            try:
+                res = next(results)
+                destination[res[0]] = float(res[1].subs(subs))
+            except StopIteration:
+                break
+            except TimeoutError:
+                num_args_list.append(args_list[i] + [subs])
+            i += 1
+    else:
+        num_args_list = [args + [subs] for args in args_list]
+
+    future = pool.map(_num_apply, num_args_list)
+    results = future.result()
+    while True:
+        try:
+            res = next(results)
+            destination[res[0]] = res[1]
+        except StopIteration:
+            break
+
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     pars = QgParams()
     pars.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
     pars.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
-    aip = AtmosphericSymbolicInnerProducts(pars)
-    oip = OceanicSymbolicInnerProducts(pars)
+    aip = AtmosphericSymbolicInnerProducts(pars, quadrature=True)
+    oip = OceanicSymbolicInnerProducts(pars, quadrature=True)

@@ -104,8 +104,8 @@ class TestSymbolicInnerProducts(TestBase):
         # Setting MAOOAM default parameters
         pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
 
-        aip = symbolic.AtmosphericSymbolicInnerProducts(pars)
-        oip = symbolic.OceanicSymbolicInnerProducts(pars)
+        aip = symbolic.AtmosphericSymbolicInnerProducts(pars, quadrature=True)
+        oip = symbolic.OceanicSymbolicInnerProducts(pars, quadrature=True)
 
         natm = pars.nmod[0]
         noc = pars.nmod[1]

@@ -29,7 +29,7 @@ import pickle
 
 class AtmosphericInnerProducts(ABC):
     """Base class which contains all the atmospheric inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation.
     """
 
     def __init__(self):
@@ -120,7 +120,7 @@ class AtmosphericInnerProducts(ABC):
 
 class OceanicInnerProducts(ABC):
     """Base class which contains all the oceanic inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation.
     """
 
     def __init__(self):
@@ -212,7 +212,7 @@ class OceanicInnerProducts(ABC):
 
 class GroundInnerProducts(ABC):
     """Base class which contains all the ground inner products coefficients needed for the tendencies
-    tensor :class:`~tensors.qgtensor.QgsTensor` computation.
+    tensor :class:`~.tensors.qgtensor.QgsTensor` computation.
     """
 
     def __init__(self):

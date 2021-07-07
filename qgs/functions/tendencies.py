@@ -33,7 +33,7 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
 
     Parameters
     ----------
-    params: ~.params.QgParams
+    params: QgParams
         The parameters fully specifying the model configuration.
     return_inner_products: bool
         If True, return the inner products of the model. Default to False.

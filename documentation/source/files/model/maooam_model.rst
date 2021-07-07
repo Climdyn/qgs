@@ -262,8 +262,8 @@ The coefficients involved in the ocean-atmosphere interactions :math:`W_{i,j}`, 
   W_{i, j} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} \phi_i(x,y)\, F_j(x,y) \, \mathrm{d} x \, \mathrm{d} y = s_{j, i}
 
 
-These inner products are computed according to formulas detailed in :cite:`mao-DDV2016` and stored in the :class:`~inner_products.analytic.AtmosphericAnalyticInnerProducts` and
-:class:`~inner_products.analytic.OceanicAnalyticInnerProducts` objects.
+These inner products are computed according to formulas detailed in :cite:`mao-DDV2016` and stored in objects derived from the :class:`~.inner_products.base.AtmosphericInnerProducts` and
+:class:`~.inner_products.base.OceanicInnerProducts` classes.
 
 The vertical velocity :math:`\omega_i` can be eliminated, leading to the final equations
 
@@ -286,7 +286,7 @@ that are implemented by means of a tensorial contraction:
     \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j, k=0}^{2 (n_\mathrm{a}+n_\mathrm{o})} \mathcal{T}_{i,j,k} \; \eta_j \; \eta_k
 
 with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta T_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
-The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
+The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~.tensors.qgtensor.QgsTensor`.
 
 .. TODO: section about MAOSOAM
 

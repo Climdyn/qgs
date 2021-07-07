@@ -54,6 +54,9 @@ class Basis(ABC):
     def __len__(self):
         return self.functions.__len__()
 
+    def append(self, item):
+        self.functions.append(item)
+
 
 class SymbolicBasis(Basis):
     """General base class for a basis of symbolic functions.
@@ -129,3 +132,38 @@ class SymbolicBasis(Basis):
         return nf
 
 
+# Rem: Class not used currently in the model.
+class NumericBasis(Basis):
+    """General base class for a basis of numeric functions.
+
+    """
+
+    def __init__(self):
+
+        Basis.__init__(self)
+
+    def num_functions(self):
+        """Return the basis functions with as python callable.
+
+        Returns
+        -------
+        list(callable)
+            List of callable basis functions
+        """
+
+        return self.functions
+
+
+if __name__=="__main__":
+    from sympy import symbols, sin, exp
+
+    basis = SymbolicBasis()
+
+    x, y = symbols('x y')  # x and y coordinates on the model's spatial domain
+    n, al = symbols('n al')  # aspect ratio and alpha coefficients
+    for i in range(1, 3):
+        for j in range(1, 3):
+            basis.append(2 * exp(- al * x) * sin(j * n * x / 2) * sin(i * y))
+
+    basis.substitutions.append(('n', 1.))
+    basis.substitutions.append(('al', 1.))

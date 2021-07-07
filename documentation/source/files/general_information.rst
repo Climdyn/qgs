@@ -127,8 +127,6 @@ Forthcoming developments
 
     + Dimensionally robust Parameter class operation
     + Windows OS support
-    + Numerical basis of function
-    + Visualisation tools, e.g. based on the `movie-script`_ package
 
 * Long-term development track
 
@@ -136,6 +134,7 @@ Forthcoming developments
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean
     + Symbolic PDE equation specification
+    + Numerical basis of function
 
 Contributing to qgs
 -------------------

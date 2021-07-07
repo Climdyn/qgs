@@ -469,7 +469,7 @@ class TrajectoryProcess(multiprocessing.Process):
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
     c: ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-    a: or ~numpy.ndarray, optional
+    a: ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
     ics_queue: multiprocessing.JoinableQueue
         Queue to which the worker ask for initial conditions input.
@@ -1127,7 +1127,7 @@ class TglsTrajectoryProcess(multiprocessing.Process):
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
     c: ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-    a: or ~numpy.ndarray, optional
+    a: ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
     ics_queue: multiprocessing.JoinableQueue
         Queue to which the worker ask for initial conditions input.

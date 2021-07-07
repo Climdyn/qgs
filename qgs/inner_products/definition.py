@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 
 # from sympy.simplify import trigsimp
 from sympy.simplify.fu import TR8, TR10
-from sympy import diff, integrate, symbols, pi
+from sympy import diff, integrate, symbols, pi, Integral
 
 _n = symbols('n', real=True, nonnegative=True)
 _x, _y = symbols('x y')
@@ -79,7 +79,7 @@ class InnerProductDefinition(ABC):
         pass
 
     @abstractmethod
-    def ip_lap(self, S, G):
+    def ip_lap(self, S, G, symbolic_expr=False):
         """Function to compute the inner product :math:`(S, \\nabla^2 G)`.
 
         Parameters
@@ -88,11 +88,13 @@ class InnerProductDefinition(ABC):
             Left-hand side function of the product.
         G:
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
         """
         pass
 
     @abstractmethod
-    def ip_diff_x(self, S, G):
+    def ip_diff_x(self, S, G, symbolic_expr=False):
         """Function to compute the inner product :math:`(S, \partial_x G)`.
 
         Parameters
@@ -101,11 +103,13 @@ class InnerProductDefinition(ABC):
             Left-hand side function of the product.
         G:
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
         """
         pass
 
     @abstractmethod
-    def ip_jac(self, S, G, H):
+    def ip_jac(self, S, G, H, symbolic_expr=False):
         """Function to compute the inner product :math:`(S, J(G, H))`, where
         :math:`J` is the :meth:`jacobian`.
 
@@ -117,11 +121,13 @@ class InnerProductDefinition(ABC):
             1st argument of the right-hand side function of the product.
         H:
             2nd argument of the right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
         """
         pass
 
     @abstractmethod
-    def ip_jac_lap(self, S, G, H):
+    def ip_jac_lap(self, S, G, H, symbolic_expr=False):
         """Function to compute the inner product :math:`(S, J(G, \\nabla^2 H))`, where
         :math:`J` is the :meth:`jacobian`.
 
@@ -133,6 +139,8 @@ class InnerProductDefinition(ABC):
             1st argument of the right-hand side function of the product.
         H:
             2nd argument of the right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
         """
         pass
 
@@ -164,7 +172,7 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
         InnerProductDefinition.__init__(self, optimizer)
 
     @abstractmethod
-    def symbolic_inner_product(self, S, G):
+    def symbolic_inner_product(self, S, G, symbolic_expr=False, integrand=False):
         """Symbolic definition of the inner product :math:`(S, G)`.
 
         Parameters
@@ -173,6 +181,10 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
             Left-hand side function of the product.
         G: Sympy expression
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
@@ -181,7 +193,7 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
         """
         pass
 
-    def ip_lap(self, S, G):
+    def ip_lap(self, S, G, symbolic_expr=False, integrand=False):
         """Function to compute the inner product :math:`(S, \\nabla^2 G)`.
 
         Parameters
@@ -190,15 +202,19 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
             Left-hand side function of the product.
         G: Sympy expression
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
         Sympy expression
             The symbolic result of the inner product.
         """
-        return self.symbolic_inner_product(S, self.laplacian(G))
+        return self.symbolic_inner_product(S, self.laplacian(G), symbolic_expr=symbolic_expr, integrand=integrand)
 
-    def ip_diff_x(self, S, G):
+    def ip_diff_x(self, S, G, symbolic_expr=False, integrand=False):
         """Function to compute the inner product :math:`(S, \partial_x G)`.
 
         Parameters
@@ -207,15 +223,19 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
             Left-hand side function of the product.
         G: Sympy expression
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
         Sympy expression
             The symbolic result of the inner product.
         """
-        return self.symbolic_inner_product(S, diff(G, _x))
+        return self.symbolic_inner_product(S, diff(G, _x), symbolic_expr=symbolic_expr, integrand=integrand)
 
-    def ip_jac(self, S, G, H):
+    def ip_jac(self, S, G, H, symbolic_expr=False, integrand=False):
         """Function to compute the inner product :math:`(S, J(G, H))`, where
         :math:`J` is the :meth:`jacobian`.
 
@@ -227,15 +247,19 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
             1st argument of the right-hand side function of the product.
         H:  Sympy expression
             2nd argument of the right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
         Sympy expression
             The symbolic result of the inner product.
         """
-        return self.symbolic_inner_product(S, self.jacobian(G, H))
+        return self.symbolic_inner_product(S, self.jacobian(G, H), symbolic_expr=symbolic_expr, integrand=integrand)
 
-    def ip_jac_lap(self, S, G, H):
+    def ip_jac_lap(self, S, G, H, symbolic_expr=False, integrand=False):
         """Function to compute the inner product :math:`(S, J(G, \\nabla^2 H))`, where
         :math:`J` is the :meth:`jacobian`.
 
@@ -247,13 +271,17 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
             1st argument of the right-hand side function of the product.
         H:  Sympy expression
             2nd argument of the right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
         Sympy expression
             The symbolic result of the inner product.
         """
-        return self.symbolic_inner_product(S, self.jacobian(G, self.laplacian(H)))
+        return self.symbolic_inner_product(S, self.jacobian(G, self.laplacian(H)), symbolic_expr=symbolic_expr, integrand=integrand)
 
 
 class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
@@ -329,7 +357,7 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
         return diff(S, _x, 2) + diff(S, _y, 2)
 
     @staticmethod
-    def integrate_over_domain(expr):
+    def integrate_over_domain(expr, symbolic_expr=False):
         """Definition of the normalized integrals over the spatial domain used by the inner products:
         :math:`\\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} \, \\mathrm{expr}(x, y) \, \\mathrm{d} x \, \\mathrm{d} y`.
 
@@ -337,15 +365,20 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
         ----------
         expr: Sympy expression
             The expression to integrate.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
         Sympy expression
             The result of the symbolic integration.
         """
-        return integrate(expr, (_x, 0, 2 * pi / _n), (_y, 0, pi))
+        if symbolic_expr:
+            return Integral(expr, (_x, 0, 2 * pi / _n), (_y, 0, pi))
+        else:
+            return integrate(expr, (_x, 0, 2 * pi / _n), (_y, 0, pi))
 
-    def symbolic_inner_product(self, S, G):
+    def symbolic_inner_product(self, S, G, symbolic_expr=False, integrand=False):
         """Function defining the inner product to be computed symbolically:
         :math:`(S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} S(x,y)\, G(x,y)\, \\mathrm{d} x \, \\mathrm{d} y`.
 
@@ -355,6 +388,10 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
             Left-hand side function of the product.
         G: Sympy expression
             Right-hand side function of the product.
+        symbolic_expr: bool, optional
+            If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+        integrand: bool, optional
+            If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
         Returns
         -------
@@ -362,5 +399,8 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
             The result of the symbolic integration
         """
         expr = (_n / (2 * pi ** 2)) * S * G
-        return self.integrate_over_domain(self.optimizer(expr))
+        if integrand:
+            return expr, (_x, 0, 2 * pi / _n), (_y, 0, pi)
+        else:
+            return self.integrate_over_domain(self.optimizer(expr), symbolic_expr=symbolic_expr)
 

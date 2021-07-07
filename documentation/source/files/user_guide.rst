@@ -17,7 +17,7 @@ to obtain the model's trajectory. This callable can of course also be used to pe
 This guide provides:
 
 1. The different ways to configure qgs in order to obtain the function :math:`\boldsymbol{f}` are explained in the section :ref:`files/user_guide:2. Configuration of qgs`.
-2. Some specific ways to configure qgs :ref:`files/user_guide:3. Using user-defined symbolic basis`.
+2. Some specific ways to configure qgs detailed in the section :ref:`files/user_guide:3. Using user-defined symbolic basis`.
 3. Examples of usages of the model's tendencies function :math:`\boldsymbol{f}` are given in the section :ref:`files/user_guide:4. Using qgs (once configured)`.
 
 2. Configuration of qgs
@@ -90,7 +90,7 @@ These functions create `contiguous` Fourier basis for two different kind of boun
     Hence one has only to specify the maximum wavenumbers (and the model's domain aspect ratio) to these constructor functions. One can also create non-`contiguous` Fourier basis by specifying wavenumbers explicitly at
     the :class:`~.basis.fourier.ChannelFourierBasis` or :class:`~.basis.fourier.BasinFourierBasis` instantiation (see the section :ref:`files/user_guide:3.1 A simple example` for an example).
 
-Once constructed, the basis has to be provided to the :class:`~.params.QgParams` object by using dedicated methods: :meth:`~qgs.params.QgParams.set_atmospheric_modes`, :meth:`~qgs.params.QgParams.set_oceanic_modes` and :meth:`~qgs.params.QgParams.set_ground_modes`.
+Once constructed, the basis has to be provided to the :class:`~.params.QgParams` object by using dedicated methods: :meth:`~.params.QgParams.set_atmospheric_modes`, :meth:`~.params.QgParams.set_oceanic_modes` and :meth:`~.params.QgParams.set_ground_modes`.
 With the constructor functions, one can activate the mandatory atmospheric layer by typing
 
 .. code:: ipython3
@@ -105,11 +105,11 @@ where we have defined a channel Fourier basis up to wavenumber 2 in both directi
 
     Please note that the aspect ratio of the basis object provided to qgs is not very important, because it is superseded by the aspect ratio sets in the :class:`~.params.QgParams` object.
 
-To activate the ocean or the ground components, the user has simply to use the method :meth:`~qgs.params.QgParams.set_oceanic_modes` and :meth:`~qgs.params.QgParams.set_ground_modes`.
+To activate the ocean or the ground components, the user has simply to use the method :meth:`~.params.QgParams.set_oceanic_modes` and :meth:`~.params.QgParams.set_ground_modes`.
 Note that providing a oceanic basis of functions automatically deactivate the ground component, and vice-versa.
 
 Finally, since the `MAOOAM`_ Fourier basis are used frequently in qgs, convenient methods of the :class:`~.params.QgParams` object allow one to create easily these basis inside this object
-(without the need to create them externally and then pass them to the qgs parameters object). These are the methods :meth:`~qgs.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~qgs.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~qgs.params.QgParams.set_ground_channel_fourier_modes`.
+(without the need to create them externally and then pass them to the qgs parameters object). These are the methods :meth:`~.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~.params.QgParams.set_ground_channel_fourier_modes`.
 For instance, the effect obtained with the 3 previous lines of code (activating the atmosphere) can also be obtained by typing:
 
 .. code:: ipython3
@@ -128,7 +128,7 @@ These convenient methods can also initialize qgs with another method (called `an
 Computing the inner products of the symbolic functions defined with `Sympy`_ **can be very resources consuming**, therefore if the basis
 of functions that you intend to use are the ones described in :ref:`files/model/maooam_model:Coupled ocean-atmosphere model (MAOOAM)`, you might be interested to use
 the analytic method, which uses the analytic formula for the inner products given in :cite:`user-DDV2016`. This initialization mode is put in action by using the
-convenient methods of the :class:`~.params.QgParams` object: :meth:`~qgs.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~qgs.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~qgs.params.QgParams.set_ground_channel_fourier_modes`.
+convenient methods of the :class:`~.params.QgParams` object: :meth:`~.params.QgParams.set_atmospheric_channel_fourier_modes`, :meth:`~.params.QgParams.set_oceanic_basin_fourier_modes` and :meth:`~.params.QgParams.set_ground_channel_fourier_modes`.
 
 For instance, to initialize a channel atmosphere with up to wavenumber 2 in both directions, one can simply write:
 
@@ -162,11 +162,11 @@ These parameters classes are regrouped into the global structure :class:`~.param
 * :attr:`~.params.QgParams.atmospheric_params` for :class:`~.params.AtmosphericParams`.
 * :attr:`~.params.QgParams.atemperature_params` for :class:`~.params.AtmosphericTemperatureParams`.
 * :attr:`~.params.QgParams.oceanic_params` for :class:`~.params.OceanicParams`.
-* :attr:`~.params.QgParams.otemperature_params` for :class:`~.params.OceanicTemperatureParams`.
+* :attr:`~.params.QgParams.gotemperature_params` for :class:`~.params.OceanicTemperatureParams`.
 * :attr:`~.params.QgParams.ground_params` for :class:`~.params.GroundParams`.
-* :attr:`~.params.QgParams.otemperature_params` for :class:`~.params.GroundTemperatureParams`.
+* :attr:`~.params.QgParams.gotemperature_params` for :class:`~.params.GroundTemperatureParams`.
 
-The parameters inside these structures can be changed by passing a dictionary of the new values to the :meth:`~qgs.params.QgParams.set_params` method. For example, if one wants to change the
+The parameters inside these structures can be changed by passing a dictionary of the new values to the :meth:`~.params.QgParams.set_params` method. For example, if one wants to change the
 Coriolis parameter :math:`f_0` and the static stability of the atmosphere :math:`\sigma`, one has to write:
 
 .. code:: ipython3
@@ -359,7 +359,7 @@ We must then specify the function of the basis using `Sympy`_:
 
     from sympy import symbols, sin, exp
     x, y = symbols('x y')  # x and y coordinates on the model's spatial domain
-    n, al = symbols('n al')  # aspect ratio and alpha coefficients
+    n, al = symbols('n al', real=True, nonnegative=True)  # aspect ratio and alpha coefficients
     for i in range(1, 3):
         for j in range(1, 3):
             ocean_basis.functions.append(2 * exp(- al * x) * sin(j * n * x / 2) * sin(i * y))
@@ -392,9 +392,10 @@ the expression of the inner product:
 .. code:: ipython3
 
     from sympy import pi
+    from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
     class UserInnerProductDefinition(StandardSymbolicInnerProductDefinition):
 
-        def symbolic_inner_product(self, S, G):
+        def symbolic_inner_product(self, S, G, symbolic_expr=False, integrand=False):
             """Function defining the inner product to be computed symbolically:
             :math:`(S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n}  e^{2 \\alpha x} \\,  S(x,y)\\, G(x,y)\\, \\mathrm{d} x \\, \\mathrm{d} y`.
 
@@ -404,6 +405,10 @@ the expression of the inner product:
                 Left-hand side function of the product.
             G: Sympy expression
                 Right-hand side function of the product.
+            symbolic_expr: bool, optional
+                If `True`, return the integral as a symbolic expression object. Else, return the integral performed symbolically.
+            integrand: bool, optional
+                If `True`, return the integrand of the integral and its integration limits as a list of symbolic expression object. Else, return the integral performed symbolically.
 
             Returns
             -------
@@ -411,8 +416,10 @@ the expression of the inner product:
                 The result of the symbolic integration
             """
             expr = (n / (2 * pi ** 2)) * exp(2 * al * x) * S * G
-            return self.integrate_over_domain(self.optimizer(expr))
-
+            if integrand:
+                return expr, (x, 0, 2 * pi / n), (y, 0, pi)
+            else:
+                return self.integrate_over_domain(self.optimizer(expr), symbolic_expr=symbolic_expr)
 
 and passing it to a :class:`.OceanicSymbolicInnerProducts` object:
 
@@ -440,6 +447,7 @@ and then finally creating the Python-`Numba`_ callable for the model's tendencie
 .. code:: ipython3
 
     from numba import njit
+    from qgs.functions.sparse_mul import sparse_mul3
     coo = aotensor.tensor.coords.T
     val = aotensor.tensor.data
 
@@ -451,7 +459,8 @@ and then finally creating the Python-`Numba`_ callable for the model's tendencie
         return xr[1:]
 
 This concludes the initialization of qgs, the function :meth:`f` hence produced can be used to generate the model's trajectories.
-See the following section for the possible usages.
+An example of the construction exposed here, along with plots of the trajectories generated, can be found in the section :ref:`files/examples/manual:Manual setting of the basis`.
+See also the following section for the possible usages.
 
 4. Using qgs (once configured)
 ---------------------------------
@@ -473,7 +482,25 @@ the qgs built-in integrator to obtain the model's trajectories:
 
 Note that it is also possible to use other ordinary differential equations integrators available on the market, see for instance the :ref:`files/examples/diffeq_example:Example of DiffEqPy usage`.
 
-More use cases will be added to this section soon.
+4.1 Analyzing the model's output with diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. include:: diagnostic.rst
+
+**Full list of currently available diagnostics**
+
+    * :class:`.MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric temperature  anomaly fields :math:`\delta T_{\rm a}`.
+    * :class:`.OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\delta T_{\rm o}`.
+    * :class:`.GroundTemperatureDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\delta T_{\rm g}`.
+    * :class:`.LowerLayerAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the lower layer atmospheric streamfunction fields :math:`\psi^3_{\rm a}`.
+    * :class:`.UpperLayerAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the upper layer atmospheric streamfunction fields :math:`\psi^1_{\rm a}`.
+    * :class:`.MiddleAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the middle atmospheric streamfunction fields :math:`\psi_{\rm a}`.
+    * :class:`.OceanicLayerStreamfunctionDiagnostic`: Diagnostic giving the oceanic layer streamfunction fields :math:`\psi_{\rm o}`.
+    * :class:`.VariablesDiagnostic`: General class to get and show the scalar variables of the models.
+    * :class:`.GeopotentialHeightDifferenceDiagnostic`: Class to compute and show the geopotential height difference
+      between points of the model's domain.
+
+More diagnostics will be implemented soon.
 
 5. Developers information
 -------------------------

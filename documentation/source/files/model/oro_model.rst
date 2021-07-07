@@ -175,7 +175,7 @@ The coefficients :math:`a_{i,j}`, :math:`g_{i, j, m}`, :math:`b_{i, j, m}` and :
   b_{i, j, m} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, J\left(F_j(x,y), \nabla^2 F_m(x,y)\right) \, \mathrm{d} x \, \mathrm{d} y \\
   c_{i, j} & = & \frac{n}{2\pi^2}\int_0^\pi\int_0^{2\pi/n} F_i(x,y)\, \frac{\partial}{\partial x} F_j(x,y) \, \mathrm{d} x \, \mathrm{d} y
 
-These inner products are computed according to formulas found in :cite:`om-CT1987` and stored in the :class:`~inner_products.analytic.AtmosphericAnalyticInnerProducts` object.
+These inner products are computed according to formulas found in :cite:`om-CT1987` and stored in an object derived from the :class:`~.inner_products.base.AtmosphericInnerProducts` class.
 
 The vertical velocity :math:`\omega_i` can be eliminated, leading to the final equations
 
@@ -194,7 +194,7 @@ that are implemented in with a tensorial contraction:
     \frac{\text{d}\eta_{{\rm{a},i}}}{\text{d}t} = \sum_{j, k=0}^{2 n_\mathrm{a}} \mathcal{T}_{i,j,k} \; \eta_{{\rm a},j} \; \eta_{{\rm a},k}
 
 with :math:`\boldsymbol{\eta_{\mathrm{a}}} = (\psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}})`, as described in the :ref:`files/technical_description:Code Description`.
-The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~tensors.qgtensor.QgsTensor`.
+The tensor :math:`\mathcal{T}` is computed and stored in the :class:`~.tensors.qgtensor.QgsTensor`.
 
 Example
 -------

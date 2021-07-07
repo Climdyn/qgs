@@ -11,5 +11,6 @@ Documentation of the classes and functions of the models.
    technical/inner_products
    technical/tensors
    technical/functions
+   technical/diagnostics
    technical/integrators
    technical/misc

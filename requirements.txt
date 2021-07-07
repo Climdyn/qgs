@@ -1,6 +1,6 @@
 ipython
 jupyter
-matplotlib
+matplotlib>=3.4
 numba
 numpy
 python>=3.8
@@ -12,4 +12,5 @@ sparse
 julia
 diffeqpy
 sphinxcontrib-bibtex
+pebble
 pytest

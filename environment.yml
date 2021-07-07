@@ -7,7 +7,7 @@ dependencies:
   - python=3.8
   - ipython
   - jupyter
-  - matplotlib
+  - matplotlib>=3.4
   - numba
   - numpy
   - scipy
@@ -16,6 +16,8 @@ dependencies:
   - sphinx_rtd_theme
   - pytest
   - sparse
+  - ffmpeg
+  - pebble
   - pip
   - pip:
       - sphinxcontrib-bibtex<2.0.0

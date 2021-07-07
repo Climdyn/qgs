@@ -15,7 +15,7 @@ layer reads :cite:`oc-P2011` :cite:`oc-DDV2016`
     \psi_\text{o}) + \beta \frac{\partial \psi_\text{o}}{\partial x} = -r \nabla^2 \psi_\text{o}.
 
 :math:`L_\text{R} = \sqrt{g' \, h }/ f_0` (:attr:`~.params.QgParams.LR`) is the `reduced Rossby deformation radius`_
-where :math:`g'` (:attr:`~.params.OceanParams.gp`) is the reduced gravity, :math:`h` is the depth of the layer (:attr:`~.params.OceanicParams.h`),
+where :math:`g'` (:attr:`~.params.OceanicParams.gp`) is the reduced gravity, :math:`h` is the depth of the layer (:attr:`~.params.OceanicParams.h`),
 and :math:`f_0` is the Coriolis parameter (:attr:`~.params.ScaleParams.f0`).
 :math:`r` (:attr:`~.params.OceanicParams.r`) is the friction at the bottom of the active ocean layer.
 

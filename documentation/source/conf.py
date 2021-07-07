@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'qgs'
-copyright = '2021, qgs Developers and Contributors'
+copyright = '2020-2021, qgs Developers and Contributors'
 author = 'Jonathan Demaeyer and Lesley De Cruz'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.2.3'  # temporary
+release = 'v0.2.4'  # temporary
 version = release
 
 
@@ -54,6 +54,15 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['files/notebooks/*', '**.ipynb_checkpoints']
 
+# -- Debugging ---------------------------------------------------------------
+
+# nitpicky = True
+#
+# nitpick_ignore = [('py:class', 'optional'),
+#                   ('py:class', 'iterable'),
+#                   ('py:class', '2-tuple'),
+#                   ('py:class', 'Sympy expression'),
+#                   ('py:class', 'callable')]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -74,7 +83,9 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org', None),
                        'sparse': ('https://sparse.pydata.org/en/stable/', None),
-                       'sympy': ('https://docs.sympy.org/latest/', None)}
+                       'sympy': ('https://docs.sympy.org/latest/', None),
+                       'ipython': ('https://ipython.readthedocs.io/en/stable/', None),
+                       'ipywidgets': ('https://ipywidgets.readthedocs.io/en/latest/', None)}
 
 # Napoleon settings
 napoleon_google_docstring = True
