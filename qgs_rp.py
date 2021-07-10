@@ -18,6 +18,8 @@
 import numpy as np
 import sys
 import time
+from platform import system
+from multiprocessing import freeze_support
 
 # Importing the model's modules
 from qgs.params.params import QgParams
@@ -27,102 +29,107 @@ from qgs.functions.tendencies import create_tendencies
 # Initializing the random number generator (for reproducibility). -- Disable if needed.
 np.random.seed(21217)
 
-print_parameters = True
+if __name__ == "__main__":
 
-def print_progress(p):
-    sys.stdout.write('Progress {:.2%} \r'.format(p))
-    sys.stdout.flush()
+    if system() != "Linux":
+        freeze_support()
 
-
-class bcolors:
-    """to color the instructions in the console"""
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    print_parameters = True
 
 
-print("\n" + bcolors.HEADER + bcolors.BOLD + "Model qgs (Atmosphere + orography configuration)" + bcolors.ENDC)
-print(bcolors.HEADER + "================================================" + bcolors.ENDC + "\n")
-print(bcolors.OKBLUE + "Initialization ..." + bcolors.ENDC)
-# ## Systems definition
+    def print_progress(p):
+        sys.stdout.write('Progress {:.2%} \r'.format(p))
+        sys.stdout.flush()
 
-# General parameters
 
-# Time parameters
-dt = 0.1
-# Saving the model state n steps
-write_steps = 5
-# transient time to attractor
-transient_time = 1.e5
-# integration time on the attractor
-integration_time = 1.e4
-# file where to write the output
-filename = "evol_fields.dat"
-T = time.process_time()
+    class Bcolors:
+        """to color the instructions in the console"""
+        HEADER = '\033[95m'
+        OKBLUE = '\033[94m'
+        OKGREEN = '\033[92m'
+        WARNING = '\033[93m'
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
 
-# Setting some model parameters
-# Model parameters instantiation with some non-default specs
-model_parameters = QgParams({'phi0_npi': np.deg2rad(50.)/np.pi, 'hd': 0.1})
-# Mode truncation at the wavenumber 2 in both x and y spatial coordinate
-model_parameters.set_atmospheric_channel_fourier_modes(2, 2)
 
-# Changing (increasing) the orography depth and the meridional temperature gradient
-model_parameters.ground_params.set_orography(0.2, 1)
-model_parameters.atemperature_params.set_thetas(0.2, 0)
+    print("\n" + Bcolors.HEADER + Bcolors.BOLD + "Model qgs (Atmosphere + orography configuration)" + Bcolors.ENDC)
+    print(Bcolors.HEADER + "================================================" + Bcolors.ENDC + "\n")
+    print(Bcolors.OKBLUE + "Initialization ..." + Bcolors.ENDC)
+    # ## Systems definition
 
-if print_parameters:
-    print("")
-    # Printing the model's parameters
-    model_parameters.print_params()
+    # General parameters
 
-# Creating the tendencies functions
-f, Df = create_tendencies(model_parameters)
+    # Time parameters
+    dt = 0.1
+    # Saving the model state n steps
+    write_steps = 5
+    # transient time to attractor
+    transient_time = 1.e5
+    # integration time on the attractor
+    integration_time = 1.e4
+    # file where to write the output
+    filename = "evol_fields.dat"
+    T = time.process_time()
 
-# ## Time integration
-# Defining an integrator
-integrator = RungeKuttaIntegrator()
-integrator.set_func(f)
+    # Setting some model parameters
+    # Model parameters instantiation with some non-default specs
+    model_parameters = QgParams({'phi0_npi': np.deg2rad(50.)/np.pi, 'hd': 0.1})
+    # Mode truncation at the wavenumber 2 in both x and y spatial coordinate
+    model_parameters.set_atmospheric_channel_fourier_modes(2, 2)
 
-# Start on a random initial condition
-ic = np.random.rand(model_parameters.ndim)*0.1
-# Integrate over a transient time to obtain an initial condition on the attractors
-print(bcolors.OKBLUE + "Starting a transient time integration..." + bcolors.ENDC)
-ws = 1000
-y = ic
-total_time = 0.
-t_up = ws * dt / integration_time * 100
-while total_time < transient_time:
-    integrator.integrate(0., ws * dt, dt, ic=y, write_steps=0)
-    t, y = integrator.get_trajectories()
-    total_time += t
-    if total_time/transient_time * 100 % 0.1 < t_up:
-        print_progress(total_time/transient_time)
+    # Changing (increasing) the orography depth and the meridional temperature gradient
+    model_parameters.ground_params.set_orography(0.2, 1)
+    model_parameters.atemperature_params.set_thetas(0.2, 0)
 
-# Now integrate to obtain a trajectory on the attractor
-total_time = 0.
-traj = np.insert(y, 0, total_time)
-traj = traj[np.newaxis, ...]
-t_up = write_steps * dt / integration_time * 100
+    if print_parameters:
+        print("")
+        # Printing the model's parameters
+        model_parameters.print_params()
 
-print(bcolors.OKBLUE + "Starting the time evolution ..." + bcolors.ENDC)
-while total_time < integration_time:
-    integrator.integrate(0., write_steps * dt, dt, ic=y, write_steps=0)
-    t, y = integrator.get_trajectories()
-    total_time += t
-    ty = np.insert(y, 0, total_time)
-    traj = np.concatenate((traj, ty[np.newaxis, ...]))
-    if total_time/integration_time*100 % 0.1 < t_up:
-        print_progress(total_time/integration_time)
+    # Creating the tendencies functions
+    f, Df = create_tendencies(model_parameters)
 
-print(bcolors.OKGREEN + "Evolution finished, writing to file " + filename + bcolors.ENDC)
+    # ## Time integration
+    # Defining an integrator
+    integrator = RungeKuttaIntegrator()
+    integrator.set_func(f)
 
-np.savetxt(filename, traj)
+    # Start on a random initial condition
+    ic = np.random.rand(model_parameters.ndim)*0.1
+    # Integrate over a transient time to obtain an initial condition on the attractors
+    print(Bcolors.OKBLUE + "Starting a transient time integration..." + Bcolors.ENDC)
+    ws = 1000
+    y = ic
+    total_time = 0.
+    t_up = ws * dt / integration_time * 100
+    while total_time < transient_time:
+        integrator.integrate(0., ws * dt, dt, ic=y, write_steps=0)
+        t, y = integrator.get_trajectories()
+        total_time += t
+        if total_time/transient_time * 100 % 0.1 < t_up:
+            print_progress(total_time/transient_time)
 
-print(bcolors.OKGREEN + "Time clock :" + bcolors.ENDC)
-print(str(time.process_time()-T)+' seconds')
+    # Now integrate to obtain a trajectory on the attractor
+    total_time = 0.
+    traj = np.insert(y, 0, total_time)
+    traj = traj[np.newaxis, ...]
+    t_up = write_steps * dt / integration_time * 100
 
+    print(Bcolors.OKBLUE + "Starting the time evolution ..." + Bcolors.ENDC)
+    while total_time < integration_time:
+        integrator.integrate(0., write_steps * dt, dt, ic=y, write_steps=0)
+        t, y = integrator.get_trajectories()
+        total_time += t
+        ty = np.insert(y, 0, total_time)
+        traj = np.concatenate((traj, ty[np.newaxis, ...]))
+        if total_time/integration_time*100 % 0.1 < t_up:
+            print_progress(total_time/integration_time)
+
+    print(Bcolors.OKGREEN + "Evolution finished, writing to file " + filename + Bcolors.ENDC)
+
+    np.savetxt(filename, traj)
+
+    print(Bcolors.OKGREEN + "Time clock :" + Bcolors.ENDC)
+    print(str(time.process_time()-T)+' seconds')
