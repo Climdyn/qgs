@@ -18,8 +18,7 @@
 import numpy as np
 import sys
 import time
-from platform import system
-from multiprocessing import freeze_support
+from multiprocessing import freeze_support, get_start_method
 
 # Importing the model's modules
 from qgs.params.params import QgParams
@@ -31,7 +30,7 @@ np.random.seed(21217)
 
 if __name__ == "__main__":
 
-    if system() != "Linux":
+    if get_start_method() == "spawn":
         freeze_support()
 
     print_parameters = True
