@@ -22,12 +22,6 @@ language.
 Installation
 ------------
 
-.. note::
-
-    qgs is presently compatible with Linux and Mac OS.
-
-    **It is not compatible with Windows for the moment**, but a Windows compatible version will be released soon.
-
 The easiest way to run qgs is to use an appropriate environment created through `Anaconda`_.
 
 First install Anaconda and clone the repository: ::
@@ -44,6 +38,27 @@ You can then perform a test by running the script ::
     python qgs_rp.py
 
 to see if everything runs smoothly (this should take less than a minute).
+
+Note for Windows and MacOS users
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Presently, qgs is compatible with Windows and MacOS but users wanting to use qgs inside their Python scripts must guard the main script with a ::
+
+    if __name__ == "__main__":
+
+clause and add the following lines below ::
+
+        from multiprocessing import freeze_support
+        freeze_support()
+
+About this usage, see for example the main scripts ``qgs_rp.py`` and ``qgs_maooam.py`` in the root folder.
+Note that the Jupyter notebooks are not concerned by this recommendation and work perfectly well on both operating systems.
+
+.. note::
+
+    **Why?** These lines are required to make the multiprocessing library works with these operating systems. See `this page <https://docs.python.org/3.8/library/multiprocessing.html>`_ for more details,
+    and in particular `this section <https://docs.python.org/3.8/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_.
+
 
 Activating DifferentialEquations.jl optional support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -126,7 +141,6 @@ Forthcoming developments
 * Technical mid-term developments
 
     + Dimensionally robust Parameter class operation
-    + Windows OS support
 
 * Long-term development track
 
