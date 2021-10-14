@@ -53,8 +53,8 @@ if __name__ == "__main__":
         UNDERLINE = '\033[4m'
 
 
-    print("\n" + Bcolors.HEADER + Bcolors.BOLD + "Model qgs (Atmosphere + orography configuration)" + Bcolors.ENDC)
-    print(Bcolors.HEADER + "================================================" + Bcolors.ENDC + "\n")
+    print("\n" + Bcolors.HEADER + Bcolors.BOLD + "Model qgs v0.2.5 (Atmosphere + orography configuration)" + Bcolors.ENDC)
+    print(Bcolors.HEADER + "=======================================================" + Bcolors.ENDC + "\n")
     print(Bcolors.OKBLUE + "Initialization ..." + Bcolors.ENDC)
     # ## Systems definition
 

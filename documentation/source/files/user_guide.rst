@@ -502,6 +502,37 @@ Note that it is also possible to use other ordinary differential equations integ
 
 More diagnostics will be implemented soon.
 
+4.2 Toolbox
+^^^^^^^^^^^
+
+The toolbox regroups submodules to make specific analysis with the model and are available in the :mod:`qgs.toolbox` module.
+For the references of these submodules, see :ref:`files/technical/toolbox:Toolbox module`.
+
+Presently, the list of submodules available is the following:
+
+* ``lyapunov``: A module to compute Lyapunov exponents and vectors.
+
+More submodules will be implemented soon.
+
+4.2.1 Lyapunov toolbox
+""""""""""""""""""""""
+
+This module allows you to integrate the model and simultaneously obtain the *local* `Lyapunov vectors`_ and `exponents`_.
+The methods included are:
+
+1. The Benettin algorithm to compute the *Forward* and *Backward* Lyapunov vectors :cite:`user-BGGS1980`.
+   This method is implemented in the :class:`~.lyapunov.LyapunovsEstimator` class.
+2. The method of the intersection between the subspaces spanned by the Forward and Backward vectors to find the
+   *Covariant* Lyapunov vectors :cite:`user-ER1985` (see also :cite:`user-DPV2021`). Suitable for long trajectories.
+   This method is implemented in the :class:`~.lyapunov.CovariantLyapunovsEstimator` class.
+3. The Ginelli method :cite:`user-GPTCLP2007` to compute also the *Covariant* Lyapunov vectors.
+   Suitable for a trajectory not too long (depends on the memory available).
+   This method is also implemented in the :class:`~.lyapunov.CovariantLyapunovsEstimator` class.
+
+See also :cite:`user-KP2012` for a description of these methods.
+
+Some example notebooks on how to use this module are available in the `notebooks/lyapunov <../../../../notebooks/lyapunov>`_ folder.
+
 5. Developers information
 -------------------------
 
@@ -544,3 +575,5 @@ References
 .. _basis functions: https://en.wikipedia.org/wiki/Basis_function
 .. _basis: https://en.wikipedia.org/wiki/Basis_(linear_algebra)
 .. _Fourier modes: https://en.wikipedia.org/wiki/Fourier_series
+.. _Lyapunov vectors: https://en.wikipedia.org/wiki/Lyapunov_vector
+.. _exponents: https://en.wikipedia.org/wiki/Lyapunov_exponent

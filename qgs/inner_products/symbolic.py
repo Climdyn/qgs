@@ -47,7 +47,6 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         An instance of model's parameters object or a list in the form [aspect_ratio, atmospheric_basis, basis, oog, oro_basis].
         If a list is provided, `aspect_ratio` is the aspect ratio of the domain, `atmospheric_basis` is a SymbolicBasis with
         the modes of the atmosphere, and `ocean_basis` is either `None` or a SymbolicBasis object with the modes of
-    print(func(1.,1.))
         the ocean or the ground. Finally `oog` indicates if it is an ocean or a ground component that is connected,
         by setting it to `ocean` or to 'ground', and in this latter case, `oro_basis` indicates on which basis the orography is developed.
     stored: bool, optional

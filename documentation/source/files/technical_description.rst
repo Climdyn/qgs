@@ -74,7 +74,7 @@ Additional technical information
 --------------------------------
 
 * qgs is optimized to run ensembles of initial conditions on multiple cores, using `Numba`_ jit-compilation and
-  `multiprocessing`_ workers. As such, qgs does not work on Windows presently.
+  `multiprocessing`_ workers.
 
 * qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.

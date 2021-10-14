@@ -22,7 +22,7 @@ copyright = '2020-2021, qgs Developers and Contributors'
 author = 'Jonathan Demaeyer and Lesley De Cruz'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.2.4'  # temporary
+release = 'v0.2.5'  # temporary
 version = release
 
 

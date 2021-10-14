@@ -32,3 +32,47 @@ def reverse(a):
         ii +=1
     return out
 
+
+@njit
+def normalize_matrix_columns(a):
+    """Numba-jitted function to normalize the columns of a 2D array to one.
+
+    Parameters
+    ----------
+    a: ~numpy.ndarray
+        The 2D array to column-normalize.
+
+    Returns
+    -------
+    ~numpy.ndarray
+        The normalized array.
+    """
+    an = np.zeros_like(a)
+    norm = np.zeros(a.shape[0])
+    for i in range(a.shape[1]):
+        norm[i] = np.linalg.norm(a[:, i], 2)
+        an[:, i] = a[:, i] / norm[i]
+    return an, norm
+
+
+@njit
+def solve_triangular_matrix(a, b):
+    """Solve a triangular linear matrix equation :math:`ax = b`.
+    
+    Parameters
+    ----------
+    a: ~numpy.ndarray
+        The 2D array :math:`a`.
+    b: ~numpy.ndarray
+        The 2D array :math:`b`.
+
+    Returns
+    -------
+    ~numpy.ndarray
+        The 2D array of solution :math:`x`.
+    """
+    x = np.zeros_like(a)
+    for i in range(2, a.shape[0]+1):
+        x[:i, i - 1] = np.linalg.solve(a[:i, :i], b[:i, i - 1])
+    x[0, 0] = b[0, 0] / a[0, 0]
+    return x

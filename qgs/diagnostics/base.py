@@ -246,7 +246,7 @@ class FieldDiagnostic(Diagnostic):
             The style of the plot. Can be:
 
             * `image`: show the fields as images with a given colormap specified in the `plot_kwargs` argument.
-            * `contour`: show the fields as contour superimposed on the image of the orographic height (see the `oro_kwargs` below).
+            * `contour`: show the fields as contour superimposed on the image of the orographic height (if it exists, see the `oro_kwargs` below).
         ax: ~matplotlib.axes.Axes, optional
             An axes on which to plot the fields.
         figsize: tuple(float), optional
@@ -354,7 +354,6 @@ class FieldDiagnostic(Diagnostic):
 
         Attributes
         ----------
-
         i: int
             Index corresponding to the x-coordinate of the grid point.
         j: int

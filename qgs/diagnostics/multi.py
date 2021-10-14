@@ -503,6 +503,464 @@ class MultiDiagnostic(object):
         return anim
 
 
+class FieldsDiagnosticsList(object):
+    """General base class for plotting multiple diagnostics on a single axe. The diagnostics must be provided as a list.
+    Assumes that the first diagnostic in the list set the parameters that are not specified.
+
+    Parameters
+    ----------
+    diagnostics_list: list
+        List of initialized auxialiary diagnostics to plot with the main diagnostic.
+    """
+
+    def __init__(self, diagnostics_list=None):
+
+        if diagnostics_list is not None:
+            self._diagnostics_list = diagnostics_list
+        else:
+            self._diagnostics_list = list()
+
+    def append_diagnostic(self, diagnostic):
+        """Method to add an auxiliary diagnostic to the list.
+
+        Parameters
+        ----------
+        diagnostic: Diagnostic
+            The diagnostic to add to the list.
+        """
+        self._diagnostics_list.append(diagnostic)
+
+    def __call__(self, time, data, index=None):
+        self.set_data(time, data, index)
+
+    def __len__(self):
+        diag_len = list()
+        for diag in self._diagnostics_list:
+            diag_len.append(diag.__len__())
+        try:
+            min_len = min(diag_len)
+            return min_len
+        except:
+            return 0
+
+    def set_data(self, time, data, index=None):
+        """Provide the model data to the index-th diagnostic.
+
+        Parameters
+        ----------
+        time: ~numpy.ndarray
+            The time (in nondimensional timeunits) corresponding to the data.
+            Its length should match the length of the last axis of the provided `data`.
+        data: ~numpy.ndarray
+            The model output data that the user want to convert using the diagnostic.
+            Should be a 2D array of shape (:attr:`~.params.QgParams.ndim`, number_of_timesteps).
+        index: int or None
+            The index of the diagnostic in the list to provide the data to.
+        """
+        if self._diagnostics_list is None:
+            warnings.warn('No diagnostics available. Doing nothing.')
+            return None
+
+        if index is None:
+            return None
+        else:
+            self._diagnostics_list[index].set_data(time, data)
+
+    def plot(self, time_index, style="image", ax=None, figsize=(16, 9),
+             contour_labels=True, color_bar=True, show_time=True, plot_kwargs=None, oro_kwargs=None):
+        """Plot the field of the provided diagnostics at the given time index.
+        Almost all the parameters (except `ax` and `figsize`) and fig should be lists corresponding to diagnostics in the list.
+        If a single parameter is provided, it applies to all the diagnostics.
+
+        Parameters
+        ----------
+        time_index: list(int)
+            The time index of the data.
+        style: list(str), optional
+            The style of the plot. Can be:
+
+            * `image`: show the fields as images with a given colormap specified in the `plot_kwargs` argument.
+            * `contour`: show the fields as contour superimposed on the image of the orographic height (if it exists, see the `oro_kwargs` below).
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot the fields.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        contour_labels: list(bool), optional
+            If `style` is set to `contour`, specify if the contours must be labelled with their value or not.
+            Default to `True`.
+        color_bar: list(bool), optional
+            Specify if a color bar must be drawn beside the plot or not.
+            Default to `True`.
+        show_time: list(bool), optional
+            Show the timestamp of the field on the plot or not.
+            Default to `True`.
+        plot_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
+        oro_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method plotting the image of the orography if `style` is set to `contour`.
+
+        Returns
+        -------
+        ~matplotlib.axes.Axes
+            An axes where the data were plotted.
+        """
+
+        if self._diagnostics_list is None:
+            warnings.warn('No diagnostics available. Showing nothing.')
+            return None
+
+        if not isinstance(time_index, (list, tuple)):
+            time_index = (len(self._diagnostics_list)) * [time_index]
+
+        if not isinstance(style, (list, tuple)):
+            style = (len(self._diagnostics_list)) * [style]
+
+        if not isinstance(contour_labels, (list, tuple)):
+            contour_labels = (len(self._diagnostics_list)) * [contour_labels]
+
+        if not isinstance(color_bar, (list, tuple)):
+            color_bar = (len(self._diagnostics_list)) * [color_bar]
+
+        if not isinstance(show_time, (list, tuple)):
+            show_time = (len(self._diagnostics_list)) * [show_time]
+
+        if not isinstance(plot_kwargs, (list, tuple)):
+            plot_kwargs = (len(self._diagnostics_list)) * [plot_kwargs]
+
+        if not isinstance(oro_kwargs, (list, tuple)):
+            oro_kwargs = (len(self._diagnostics_list)) * [oro_kwargs]
+
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.gca()
+
+        for j, diagnostic in enumerate(self._diagnostics_list):
+            diagnostic.plot(time_index[j], style[j], ax, figsize, contour_labels[j], color_bar[j], show_time[j], plot_kwargs[j], oro_kwargs[j])
+
+        return ax
+
+    def movie(self, output='html', filename='', style="image", ax=None, figsize=(16, 9),
+              contour_labels=True, color_bar=True, show_time=True, plot_kwargs=None, oro_kwargs=None, anim_kwargs=None):
+        """ Create and return a movie of the output of the `plot` method animated over time.
+        Almost all the parameters (except `output`, `filename`, `ax`, `figsize`, and `anim_kwargs`) and fig should be lists corresponding to diagnostics in the list.
+        If a single parameter is provided, it applies to all the diagnostics.
+
+        Parameters
+        ----------
+        output: str, optional
+            Define the kind of movie being created. Can be:
+
+            * `jshtml`: Generate an interactive HTML representation of the animation.
+            * `html5`: Generate the movie as HTML5 code.
+            * `html`: Output the movie as a HTML video tag.
+            * `ihtml`: Output the interactive movie as a HTML video tag.
+            * `save`: Save the movie in MP4 format (H264 codec).
+
+            Default to `html`.
+        filename: str, optional
+            Filename (and path) where to save the movie. Needed if `output` is set to `save`.
+        style: lits(str), optional
+            The style of the plot. Can be:
+
+            * `image`: show the fields as images with a given colormap specified in the `plot_kwargs` argument.
+            * `contour`: show the fields as contour superimposed on the image of the orographic height (see the `oro_kwargs` below).
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot the fields.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        contour_labels: list(bool), optional
+            If `style` is set to `contour`, specify if the contours must be labelled with their value or not.
+            Default to `True`.
+        color_bar: list(bool), optional
+            Specify if a color bar must be drawn beside the plot or not.
+            Default to `True`.
+        show_time: list(bool), optional
+            Show the timestamp of the field on the plot or not.
+            Default to `True`.
+        plot_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
+        oro_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method plotting the image of the orography if `style` is set to `contour`.
+        anim_kwargs: dict, optional
+            Arguments to pass to the :class:`matplotlib.animation.FuncAnimation` instantiation method. Specify the parameters of the animation.
+
+        Returns
+        -------
+        ~matplotlib.animation.FuncAnimation or HTML code or HTML tag
+            The animation object or the HTML code or tag.
+        """
+
+        anim = self._make_anim(style, ax, figsize, contour_labels, color_bar, show_time, plot_kwargs, oro_kwargs, anim_kwargs, False)
+
+        if 'html' in output:
+
+            if output == "jshtml" or output == 'ihtml':
+                jshtml = anim.to_jshtml()
+                if output == "jshtml":
+                    return jshtml
+                else:
+                    return HTML(jshtml)
+            else:
+                html5 = anim.to_html5_video()
+                if output == 'html5':
+                    return html5
+                else:
+                    return HTML(html5)
+
+        elif output == 'save':
+
+            if not filename:
+                warnings.warn('No filename provided to the method animate. Video not saved !\n Please provide a filename.')
+
+            html5 = anim.to_html5_video()
+            start_index = html5.index('base64,')
+            start_index += len('base64,')
+            end_index = html5.index('">', start_index)
+            video = html5[start_index: end_index]
+            with open(filename, 'wb') as f:
+                f.write(base64.b64decode(video))
+            return html5
+
+        else:
+            warnings.warn('Provided output parameter ' + output + ' not supported ! Nothing to plot. Returning None.')
+            anim = None
+
+        return anim
+
+    def animate(self, output='animate',  style="image", ax=None, figsize=(16, 9),
+                contour_labels=True, color_bar=True, show_time=True, stride=1, plot_kwargs=None, oro_kwargs=None, anim_kwargs=None, show=True):
+        """Return the output of the `plot` method animated over time.
+        Almost all the parameters (except `animate`, `ax`, `figsize`, `stride`, `anim_kwargs` and `show`) and fig should be lists corresponding to diagnostics in the list.
+        If a single parameter is provided, it applies to all the diagnostics.
+
+        Parameters
+        ----------
+        output: str, optional
+            Define the kind of animation being created. Can be:
+
+            * `animate`: Create and show a :class:`ipywidgets.widgets.interactive` widget. Works only in Jupyter notebooks.
+            * `show`: Create and show an animation with the :mod:`matplotlib.animation` module. Works only in IPython or Python.
+
+        style: list(str), optional
+            The style of the plot. Can be:
+
+            * `image`: show the fields as images with a given colormap specified in the `plot_kwargs` argument.
+            * `contour`: show the fields as contour superimposed on the image of the orographic height (see the `oro_kwargs` below).
+
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot the fields.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        contour_labels: list(bool), optional
+            If `style` is set to `contour`, specify if the contours must be labelled with their value or not.
+            Default to `True`.
+        color_bar: list(bool), optional
+            Specify if a color bar must be drawn beside the plot or not.
+            Default to `True`.
+        show_time: list(bool), optional
+            Show the timestamp of the field on the plot or not.
+            Default to `True`.
+        stride: int, optional
+            Specify the time step of the animation. Works only with `output` set to `animate`.
+        plot_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
+        oro_kwargs: list(dict), optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method plotting the image of the orography if `style` is set to `contour`.
+        anim_kwargs: dict, optional
+            Arguments to pass to the :class:`matplotlib.animation.FuncAnimation` instantiation method. Specify the parameters of the animation.
+            Works only with `output` set to `show`.
+        show: bool, optional
+            Whether to plot or not the animation.
+
+        Returns
+        -------
+        ~matplotlib.animation.FuncAnimation or ~IPython.core.display.DisplayHandle or callable
+            The animation object or the callable to update the widget, depending on the value of the `output` and `show` parameters.
+        """
+
+        if self._diagnostics_list is None:
+            warnings.warn('No diagnostic available. Showing nothing. Returning None.')
+            return None
+
+        if not isinstance(style, (list, tuple)):
+            style = (len(self._diagnostics_list)) * [style]
+
+        if not isinstance(contour_labels, (list, tuple)):
+            contour_labels = (len(self._diagnostics_list)) * [contour_labels]
+
+        if not isinstance(color_bar, (list, tuple)):
+            color_bar = (len(self._diagnostics_list)) * [color_bar]
+
+        if not isinstance(show_time, (list, tuple)):
+            show_time = (len(self._diagnostics_list)) * [show_time]
+
+        if not isinstance(plot_kwargs, (list, tuple)):
+            plot_kwargs = (len(self._diagnostics_list)) * [plot_kwargs]
+
+        if not isinstance(oro_kwargs, (list, tuple)):
+            oro_kwargs = (len(self._diagnostics_list)) * [oro_kwargs]
+
+        if output == 'animate':
+
+            if style == 'image':
+
+                for i, diagnostic in enumerate(self._diagnostics_list):
+
+                    vmin = diagnostic.min() * 1.03
+                    vmax = diagnostic.max() * 1.03
+                    if plot_kwargs[i] is not None:
+                        if 'vmin' not in plot_kwargs[i]:
+                            plot_kwargs[i]['vmin'] = vmin
+                        if 'vmax' not in plot_kwargs[i]:
+                            plot_kwargs[i]['vmax'] = vmax
+                    else:
+                        plot_kwargs[i] = dict()
+                        plot_kwargs[i]['vmin'] = vmin
+                        plot_kwargs[i]['vmax'] = vmax
+
+            def update(time_index):
+                axe = None
+                for i, diagnostic in enumerate(self._diagnostics_list):
+                    if i == 0:
+                        pack = diagnostic.plot(time_index, style[i], ax, figsize, contour_labels[i], color_bar[i], show_time[i], plot_kwargs[i], oro_kwargs[i])
+                        if hasattr(pack, '__getitem__'):
+                            axe = pack[0]
+                        else:
+                            axe = pack
+                    else:
+                        diagnostic.plot(time_index, style[i], axe, figsize, contour_labels[i], color_bar[i], show_time[i], plot_kwargs[i], oro_kwargs[i])
+                if show:
+                    plt.show()
+
+            if show:
+                plot = interactive(update, time_index=(0, len(self._diagnostics_list[0])-1, stride))
+                anim = display(plot)
+            else:
+                return update
+
+        elif output == 'show':
+
+            anim = self._make_anim(style, ax, figsize, contour_labels, color_bar, show_time, plot_kwargs, oro_kwargs, anim_kwargs, True)
+            if show:
+                plt.show()
+
+        else:
+            warnings.warn('Provided output parameter ' + output + ' not supported ! Nothing to plot. Returning None.')
+            anim = None
+
+        return anim
+
+    def _init_anim(self, style="image", ax=None, figsize=(16, 9), contour_labels=True, color_bar=True,
+                   show_time_in_title=False, show_time=True, plot_kwargs=None, oro_kwargs=None, anim_kwargs=None):
+
+        if self._diagnostics_list is None:
+            warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        if not isinstance(style, (list, tuple)):
+            style = (len(self._diagnostics_list)) * [style]
+
+        if not isinstance(contour_labels, (list, tuple)):
+            contour_labels = (len(self._diagnostics_list)) * [contour_labels]
+
+        if not isinstance(color_bar, (list, tuple)):
+            color_bar = (len(self._diagnostics_list)) * [color_bar]
+
+        if not isinstance(show_time, (list, tuple)):
+            show_time = (len(self._diagnostics_list)) * [show_time]
+
+        if not isinstance(plot_kwargs, (list, tuple)):
+            plot_kwargs = (len(self._diagnostics_list)) * [plot_kwargs]
+
+        if not isinstance(oro_kwargs, (list, tuple)):
+            oro_kwargs = (len(self._diagnostics_list)) * [oro_kwargs]
+
+        if style == 'image':
+
+            for i, diagnostic in enumerate(self._diagnostics_list):
+
+                vmin = diagnostic.min() * 1.03
+                vmax = diagnostic.max() * 1.03
+                if plot_kwargs[i] is not None:
+                    if 'vmin' not in plot_kwargs[i]:
+                        plot_kwargs[i]['vmin'] = vmin
+                    if 'vmax' not in plot_kwargs[i]:
+                        plot_kwargs[i]['vmax'] = vmax
+                else:
+                    plot_kwargs[i] = dict()
+                    plot_kwargs[i]['vmin'] = vmin
+                    plot_kwargs[i]['vmax'] = vmax
+
+        for i, diagnostic in enumerate(self._diagnostics_list):
+            pack = diagnostic.plot(0, style[i], ax, figsize, contour_labels[i], color_bar[i], show_time_in_title, plot_kwargs[i], oro_kwargs[i])
+            if hasattr(pack, '__getitem__'):
+                ax = pack[0]
+            else:
+                ax = pack
+            fig = ax.figure
+
+            if show_time[i]:
+                if self._diagnostics_list[i].dimensional:
+                    tt = " at " + "{:.2f}".format(self._diagnostics_list[i]._model_params.dimensional_time * self._diagnostics_list[i]._time[0]) \
+                         + " " + self._diagnostics_list[i]._model_params.time_unit
+                else:
+                    tt = " at " + str(self._diagnostics_list[i]._time[0]) + " timeunits"
+                ax.text(0.1, 0.9, tt, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+
+        fargs = (ax, show_time_in_title, show_time)
+
+        kwargs = {'style': style, 'ax': ax, 'figsize': figsize, 'contour_labels': contour_labels, 'color_bar': color_bar,
+                  'show_time_in_title': show_time_in_title, 'show_time': show_time, 'plot_kwargs': plot_kwargs, 'oro_kwargs': oro_kwargs,
+                  'anim_kwargs': anim_kwargs}
+
+        return fig, ax, fargs, kwargs
+
+    def _make_update(self, style="image", ax=None, figsize=(16, 9), contour_labels=True, color_bar=True,
+                     show_time_in_title=False, show_time=True, plot_kwargs=None, oro_kwargs=None, anim_kwargs=None):
+        def update(i, axe, show_t_in_title, show_t):
+            axe.clear()
+            for j, diagnostic in enumerate(self._diagnostics_list):
+                axe = diagnostic.plot(i, style[j], axe, figsize, contour_labels[j], False, show_t_in_title, plot_kwargs[j], oro_kwargs[j])
+                if show_t[j]:
+                    if self._diagnostics_list[j].dimensional:
+                        tt = " at " + "{:.2f}".format(self._diagnostics_list[j]._model_params.dimensional_time * self._diagnostics_list[j]._time[i]) \
+                             + " " + self._diagnostics_list[j]._model_params.time_unit
+                    else:
+                        tt = " at " + str(self._diagnostics_list[j]._time[i]) + " timeunits"
+                    axe.text(0.1, 0.9, tt, horizontalalignment='center', verticalalignment='center', transform=axe.transAxes)
+            return [axe]
+
+        return update
+
+    def _make_anim(self, style="image", ax=None, figsize=(16, 9), contour_labels=True, color_bar=True,
+                   show_time=True, plot_kwargs=None, oro_kwargs=None, anim_kwargs=None, blit=True):
+
+        if show_time:
+            if blit:
+                show_time_in_title = False
+            else:
+                show_time_in_title = True
+                show_time = False
+        else:
+            show_time_in_title = False
+
+        fig, ax, fargs, kwargs = self._init_anim(style, ax, figsize, contour_labels, color_bar, show_time_in_title, show_time, plot_kwargs, oro_kwargs, anim_kwargs)
+
+        update = self._make_update(**kwargs)
+
+        if anim_kwargs is not None:
+
+            if 'blit' in anim_kwargs:
+                del anim_kwargs['blit']
+
+            anim = animation.FuncAnimation(fig, update, fargs=fargs, blit=blit, **anim_kwargs)
+
+        else:
+            anim = animation.FuncAnimation(fig, update, fargs=fargs, blit=blit)
+
+        return anim
+
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     from qgs.params.params import QgParams

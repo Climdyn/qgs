@@ -14,3 +14,4 @@ Documentation of the classes and functions of the models.
    technical/diagnostics
    technical/integrators
    technical/misc
+   technical/toolbox

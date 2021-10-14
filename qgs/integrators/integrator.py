@@ -70,10 +70,6 @@ class RungeKuttaIntegrator(object):
         The number of saved states of the last integration performed by the integrator.
     ic: ~numpy.ndarray
         Store the integrator initial conditions.
-    time: ~numpy.ndarray
-        The time at which the state of the system was saved. Array of shape (`n_records`,).
-    recorded_traj: ~numpy.ndarray
-        Saved states of the ODEs. 3D array of shape (`n_traj`, `n_dim`, `n_records`).
     func: callable
         Last function :math:`\\boldsymbol{f}` used by the integrator to integrate.
     """
@@ -99,8 +95,8 @@ class RungeKuttaIntegrator(object):
             self.c = c
 
         self.ic = None
-        self.time = None
-        self.recorded_traj = None
+        self._time = None
+        self._recorded_traj = None
         self.n_traj = 0
         self.n_dim = number_of_dimensions
         self.n_records = 0
@@ -223,7 +219,7 @@ class RungeKuttaIntegrator(object):
         number_of_trajectories: int
             Number of initial conditions to find. Default to 1.  Inactive if `ic` is provided.
         ic: None or ~numpy.ndarray(float), optional
-            Initial condition of the system. Can be a 1D or a 2D array:
+            Initial (or final) conditions of the system. Can be a 1D or a 2D array:
 
             * 1D: Provide a single initial condition.
               Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
@@ -232,6 +228,7 @@ class RungeKuttaIntegrator(object):
               and where `n_traj` is the number of initial conditions.
 
             If `None`, use `number_trajectories` random initial conditions. Default to `None`.
+            If the `forward` argument is `False`, it specifies final conditions.
         reconverge: bool
             Use or not the smaller transient time reconvergence with a perturbation
             after the first initial conditions have been computed. If activated, only use the :attr:`num_threads`
@@ -300,7 +297,7 @@ class RungeKuttaIntegrator(object):
     def integrate(self, t0, t, dt, ic=None, forward=True, write_steps=1):
         """Integrate the ordinary differential equations (ODEs)
 
-        .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
+        .. math:: \\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
         with a specified `Runge-Kutta method`_ and workers. The function :math:`\\boldsymbol{f}` is the `Numba`_ jitted
         function stored in :attr:`func`. The result of the integration can be obtained afterward by calling
@@ -320,24 +317,24 @@ class RungeKuttaIntegrator(object):
         dt: float
             Timestep of the integration.
         ic: None or ~numpy.ndarray(float), optional
-            Initial condition of the system. Can be a 1D or a 2D array:
+            Initial (or final) conditions of the system. Can be a 1D or a 2D array:
 
             * 1D: Provide a single initial condition.
-              Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
+              Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
             * 2D: Provide an ensemble of initial condition.
-              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`,
+              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
               and where `n_traj` is the number of initial conditions.
 
             If `None`, use the initial conditions stored in :attr:`ic`.
             If then :attr:`ic` is `None`, use a zero initial condition.
             Default to `None`.
-
+            If the `forward` argument is `False`, it specifies final conditions.
         forward: bool, optional
             Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
             initial condition `ic` becomes a final condition. Default to forward integration.
         write_steps: int, optional
             Save the state of the integration in memory every `write_steps` steps. The other intermediary
-            steps are lost. It determine the size of the returned objects. Default is 1.
+            steps are lost. It determines the size of the returned objects. Default is 1.
             Set to 0 to return only the final state.
         """
         if self.func is None:
@@ -370,7 +367,7 @@ class RungeKuttaIntegrator(object):
 
         self.n_traj = self.ic.shape[0]
         self.n_dim = self.ic.shape[1]
-        self.time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
+        self._time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
         self._write_steps = write_steps
 
         if forward:
@@ -381,21 +378,21 @@ class RungeKuttaIntegrator(object):
         if write_steps == 0:
             self.n_records = 1
         else:
-            tot = self.time[::self._write_steps]
+            tot = self._time[::self._write_steps]
             self.n_records = len(tot)
-            if tot[-1] != self.time[-1]:
+            if tot[-1] != self._time[-1]:
                 self.n_records += 1
 
-        self.recorded_traj = np.zeros((self.n_traj, self.n_dim, self.n_records))
+        self._recorded_traj = np.zeros((self.n_traj, self.n_dim, self.n_records))
 
         for i in range(self.n_traj):
-            self._ics_queue.put((i, self.time, self.ic[i], self._time_direction, self._write_steps))
+            self._ics_queue.put((i, self._time, self.ic[i], self._time_direction, self._write_steps))
 
         self._ics_queue.join()
 
         for i in range(self.n_traj):
             args = self._traj_queue.get()
-            self.recorded_traj[args[0]] = args[1]
+            self._recorded_traj[args[0]] = args[1]
 
     def get_trajectories(self):
         """Returns the result of the previous integrator integration.
@@ -405,26 +402,26 @@ class RungeKuttaIntegrator(object):
         time, traj: ~numpy.ndarray
             The result of the integration:
 
-            * `time` is the time at which the state of the system was saved. Array of shape (:attr:`n_records`,).
-            * `traj` are the saved states. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
-              If :attr:`n_traj` = 1, a 2D array of shape (:attr:`n_dim`, :attr:`n_steps`) is returned instead.
+            * **time:** Time at which the state of the system was saved. Array of shape (:attr:`n_records`,).
+            * **traj:** Saved dynamical system states. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
+              If :attr:`n_traj` = 1, a 2D array of shape (:attr:`n_dim`, :attr:`n_records`) is returned instead.
         """
         if self._write_steps > 0:
             if self._time_direction == 1:
-                if self.time[::self._write_steps][-1] == self.time[-1]:
-                    return self.time[::self._write_steps], np.squeeze(self.recorded_traj)
+                if self._time[::self._write_steps][-1] == self._time[-1]:
+                    return self._time[::self._write_steps], np.squeeze(self._recorded_traj)
                 else:
-                    return np.concatenate((self.time[::self._write_steps], np.full((1,), self.time[-1]))), \
-                           np.squeeze(self.recorded_traj)
+                    return np.concatenate((self._time[::self._write_steps], np.full((1,), self._time[-1]))), \
+                           np.squeeze(self._recorded_traj)
             else:
-                rtime = reverse(self.time[::-self._write_steps])
-                if rtime[0] == self.time[0]:
-                    return rtime, np.squeeze(self.recorded_traj)
+                rtime = reverse(self._time[::-self._write_steps])
+                if rtime[0] == self._time[0]:
+                    return rtime, np.squeeze(self._recorded_traj)
                 else:
-                    return np.concatenate((np.full((1,), self.time[0]), rtime)), np.squeeze(self.recorded_traj)
+                    return np.concatenate((np.full((1,), self._time[0]), rtime)), np.squeeze(self._recorded_traj)
 
         else:
-            return self.time[-1], np.squeeze(self.recorded_traj)
+            return self._time[-1], np.squeeze(self._recorded_traj)
 
     def get_ic(self):
         """Returns the initial conditions stored in the integrator.
@@ -445,9 +442,9 @@ class RungeKuttaIntegrator(object):
             Initial condition of the system. Can be a 1D or a 2D array:
 
             * 1D: Provide a single initial condition.
-              Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
+              Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
             * 2D: Provide an ensemble of initial condition.
-              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`,
+              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
               and where `n_traj` is the number of initial conditions.
         """
         self.ic = ic
@@ -472,7 +469,7 @@ class TrajectoryProcess(multiprocessing.Process):
     a: ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
     ics_queue: multiprocessing.JoinableQueue
-        Queue to which the worker ask for initial conditions input.
+        Queue to which the worker ask for initial conditions and parameters input.
     traj_queue: multiprocessing.Queue
         Queue to which the worker returns the integration results.
 
@@ -488,35 +485,31 @@ class TrajectoryProcess(multiprocessing.Process):
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
-    ics_queue: multiprocessing.JoinableQueue
-        Queue to which the worker ask for initial conditions input.
-    traj_queue: multiprocessing.Queue
-        Queue to which the worker returns the integration results.
     """
     def __init__(self, processID, func, b, c, a, ics_queue, traj_queue):
 
         super().__init__()
         self.processID = processID
-        self.ics_queue = ics_queue
-        self.traj_queue = traj_queue
+        self._ics_queue = ics_queue
+        self._traj_queue = traj_queue
         self.func = func
         self.a = a
         self.b = b
         self.c = c
 
     def run(self):
-        """Main worker computing routine. Perform the time integration with the fetched initial conditons."""
+        """Main worker computing routine. Perform the time integration with the fetched initial conditions and parameters."""
 
         while True:
 
-            args = self.ics_queue.get()
+            args = self._ics_queue.get()
 
             recorded_traj = _integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
                                                        self.b, self.c, self.a)
 
-            self.traj_queue.put((args[0], recorded_traj))
+            self._traj_queue.put((args[0], recorded_traj))
 
-            self.ics_queue.task_done()
+            self._ics_queue.task_done()
 
 
 class RungeKuttaTglsIntegrator(object):
@@ -583,12 +576,6 @@ class RungeKuttaTglsIntegrator(object):
         Store the integrator non-linear ODEs initial conditions.
     tg_ic: ~numpy.ndarray
         Store the integrator linear ODEs initial conditions.
-    time: ~numpy.ndarray
-        The time at which the state of the system was saved. Array of shape (`n_records`,).
-    recorded_traj: ~numpy.ndarray
-        Saved states of the ODEs. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
-    recorded_fmatrix: ~numpy.ndarray
-        Saved states of the linear ODEs. 4D array of shape (:attr:`n_traj`, :attr:`n_tg_traj`, :attr:`n_dim`, :attr:`n_records`).
     func: callable
         Last function :math:`\\boldsymbol{f}` used by the integrator to integrate.
     func_jac: callable
@@ -616,9 +603,9 @@ class RungeKuttaTglsIntegrator(object):
 
         self.ic = None
         self.tg_ic = None
-        self.time = None
-        self.recorded_traj = None
-        self.recorded_fmatrix = None
+        self._time = None
+        self._recorded_traj = None
+        self._recorded_fmatrix = None
         self.n_traj = 0
         self.n_tgtraj = 0
         self.n_dim = number_of_dimensions
@@ -671,7 +658,7 @@ class RungeKuttaTglsIntegrator(object):
 
     def set_func(self, f, fjac, ic_init=True):
         """Set the `Numba`_-jitted function :math:`\\boldsymbol{f}` and Jacobian matrix function
-        :math:`\\boldsymbol{\mathrm{J}}` to integrate.
+        :math:`\\boldsymbol{\\mathrm{J}}` to integrate.
 
         .. _Numba: https://numba.pydata.org/
 
@@ -830,11 +817,11 @@ class RungeKuttaTglsIntegrator(object):
                   write_steps=1):
         """Integrate simultaneously the non-linear and linearized ordinary differential equations (ODEs)
 
-        .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
+        .. math:: \\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
         and
 
-        .. math :: \dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}
+        .. math :: \\dot{\\boldsymbol{\\delta x}} = \\boldsymbol{\\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\\delta x}
 
         with a specified `Runge-Kutta method`_ and workers.
         The function :math:`\\boldsymbol{f}` is the `Numba`_ jitted function stored in :attr:`func`.
@@ -848,28 +835,27 @@ class RungeKuttaTglsIntegrator(object):
         Parameters
         ----------
         t0: float
-            Initial time of the time integration. Corresponds to the initial condition's `ic` time.
-            Important if the ODEs are non-autonomous.
+            Initial time of the time integration. Corresponds to the initial condition.
         t: float
             Final time of the time integration. Corresponds to the final condition.
-            Important if the ODEs are non-autonomous.
         dt: float
             Timestep of the integration.
         ic: None or ~numpy.ndarray(float), optional
-            Initial condition of the system. Can be a 1D or a 2D array:
+            Initial (or final) conditions of the system. Can be a 1D or a 2D array:
 
             * 1D: Provide a single initial condition.
-              Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
+              Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
             * 2D: Provide an ensemble of initial condition.
-              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`,
+              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
               and where `n_traj` is the number of initial conditions.
 
             If `None`, use the initial conditions stored in :attr:`ic`.
             If then :attr:`ic` is `None`, use a zero initial condition.
             Default to `None`.
+            If the `forward` argument is `False`, it specifies final conditions.
         tg_ic: None or ~numpy.ndarray(float), optional
-            Initial condition of the linear ODEs
-            :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}`. \n
+            Initial (or final) conditions of the linear ODEs
+            :math:`\\dot{\\boldsymbol{\\delta x}} = \\boldsymbol{\\mathrm{J}}(t, \\boldsymbol{x}) \\cdot \\boldsymbol{\\delta x}`. \n
             Can be a 1D, a 2D or a 3D array:
 
             * 1D: Provide a single initial condition. This initial condition of the linear ODEs will be the same used for each
@@ -887,6 +873,7 @@ class RungeKuttaTglsIntegrator(object):
             If `None`, use the identity matrix as initial condition, returning the `fundamental matrix of solutions`_ of the
             linear ODEs.
             Default to `None`.
+            If the `forward` argument is `False`, it specifies final conditions.
 
         forward: bool, optional
             If true, integrate the ODEs forward in time, else, integrate backward in time. In case of backward integration, the
@@ -906,7 +893,7 @@ class RungeKuttaTglsIntegrator(object):
             If `None`, don't add anything (homogeneous case). `None` by default.
         write_steps: int, optional
             Save the state of the integration in memory every `write_steps` steps. The other intermediary
-            steps are lost. It determine the size of the returned objects. Default is 1.
+            steps are lost. It determines the size of the returned objects. Default is 1.
             Set to 0 to return only the final state.
         """
 
@@ -940,7 +927,7 @@ class RungeKuttaTglsIntegrator(object):
 
         self.n_traj = self.ic.shape[0]
         self.n_dim = self.ic.shape[1]
-        self.time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
+        self._time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
         self._write_steps = write_steps
 
         if tg_ic is None:
@@ -987,33 +974,33 @@ class RungeKuttaTglsIntegrator(object):
         if write_steps == 0:
             self.n_records = 1
         else:
-            tot = self.time[::self._write_steps]
+            tot = self._time[::self._write_steps]
             self.n_records = len(tot)
-            if tot[-1] != self.time[-1]:
+            if tot[-1] != self._time[-1]:
                 self.n_records += 1
 
-        self.recorded_traj = np.zeros((self.n_traj, self.n_dim, self.n_records))
-        self.recorded_fmatrix = np.zeros((self.n_traj, self.tg_ic.shape[1], self.tg_ic.shape[2], self.n_records))
+        self._recorded_traj = np.zeros((self.n_traj, self.n_dim, self.n_records))
+        self._recorded_fmatrix = np.zeros((self.n_traj, self.tg_ic.shape[1], self.tg_ic.shape[2], self.n_records))
 
         for i in range(self.n_traj):
-            self._ics_queue.put((i, self.time, self.ic[i], self.tg_ic[i], self._time_direction, self._write_steps,
+            self._ics_queue.put((i, self._time, self.ic[i], self.tg_ic[i], self._time_direction, self._write_steps,
                                  self._adjoint, self._inverse, self._boundary))
 
         self._ics_queue.join()
 
         for i in range(self.n_traj):
             args = self._traj_queue.get()
-            self.recorded_traj[args[0]] = args[1]
-            self.recorded_fmatrix[args[0]] = args[2]
+            self._recorded_traj[args[0]] = args[1]
+            self._recorded_fmatrix[args[0]] = args[2]
 
         if len(tg_ic_sav.shape) == 2:
-            if self.recorded_fmatrix.shape[1:3] != tg_ic_sav.shape:
-                self.recorded_fmatrix = np.swapaxes(self.recorded_fmatrix, 1, 2)
+            if self._recorded_fmatrix.shape[1:3] != tg_ic_sav.shape:
+                self._recorded_fmatrix = np.swapaxes(self._recorded_fmatrix, 1, 2)
 
         elif len(tg_ic_sav.shape) == 3:
             if tg_ic_sav.shape[1] != self.n_dim:
-                if self.recorded_fmatrix.shape[:3] != tg_ic_sav.shape:
-                    self.recorded_fmatrix = np.swapaxes(self.recorded_fmatrix, 1, 2)
+                if self._recorded_fmatrix.shape[:3] != tg_ic_sav.shape:
+                    self._recorded_fmatrix = np.swapaxes(self._recorded_fmatrix, 1, 2)
 
     def get_trajectories(self):
         """Returns the result of the previous integrator integration.
@@ -1023,10 +1010,10 @@ class RungeKuttaTglsIntegrator(object):
         time, traj, tg_traj: ~numpy.ndarray
             The result of the integration:
 
-            * `time` is the time at which the state of the system was saved. Array of shape (:attr:`n_records`,).
-            * `traj` are the saved states. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
-              If :attr:`n_traj` = 1, a 2D array of shape (:attr:`n_dim`, :attr:`n_steps`) is returned instead.
-            * `tg_traj` are the saved states of the linear ODEs.
+            * **time:** time at which the state of the system was saved. Array of shape (:attr:`n_records`,).
+            * **traj:** Saved dynamical system states. 3D array of shape (:attr:`n_traj`, :attr:`n_dim`, :attr:`n_records`).
+              If :attr:`n_traj` = 1, a 2D array of shape (:attr:`n_dim`, :attr:`n_records`) is returned instead.
+            * **tg_traj:** Saved states of the linear ODEs.
               Depending on the input initial conditions of both ODEs,
               it is at maximum a 4D array of shape
               (:attr:`n_traj`, :attr:`n_tg_traj`, :attr:`n_dim`, :attr:`n_records`).
@@ -1034,21 +1021,21 @@ class RungeKuttaTglsIntegrator(object):
         """
         if self._write_steps > 0:
             if self._time_direction == 1:
-                if self.time[::self._write_steps][-1] == self.time[-1]:
-                    return self.time[::self._write_steps], np.squeeze(self.recorded_traj), \
-                           np.squeeze(self.recorded_fmatrix)
+                if self._time[::self._write_steps][-1] == self._time[-1]:
+                    return self._time[::self._write_steps], np.squeeze(self._recorded_traj), \
+                           np.squeeze(self._recorded_fmatrix)
                 else:
-                    return np.concatenate((self.time[::self._write_steps], np.full((1,), self.time[-1]))), \
-                           np.squeeze(self.recorded_traj), np.squeeze(self.recorded_fmatrix)
+                    return np.concatenate((self._time[::self._write_steps], np.full((1,), self._time[-1]))), \
+                           np.squeeze(self._recorded_traj), np.squeeze(self._recorded_fmatrix)
             else:
-                rtime = reverse(self.time[::-self._write_steps])
-                if rtime[0] == self.time[0]:
-                    return rtime, np.squeeze(self.recorded_traj), np.squeeze(self.recorded_fmatrix)
+                rtime = reverse(self._time[::-self._write_steps])
+                if rtime[0] == self._time[0]:
+                    return rtime, np.squeeze(self._recorded_traj), np.squeeze(self._recorded_fmatrix)
                 else:
-                    return np.concatenate((np.full((1,), self.time[0]), rtime)), np.squeeze(self.recorded_traj),\
-                           np.squeeze(self.recorded_fmatrix)
+                    return np.concatenate((np.full((1,), self._time[0]), rtime)), np.squeeze(self._recorded_traj), \
+                           np.squeeze(self._recorded_fmatrix)
         else:
-            return self.time[-1], np.squeeze(self.recorded_traj), np.squeeze(self.recorded_fmatrix)
+            return self._time[-1], np.squeeze(self._recorded_traj), np.squeeze(self._recorded_fmatrix)
 
     def get_ic(self):
         """Returns the initial conditions of the non-linear ODEs stored in the integrator.
@@ -1069,9 +1056,9 @@ class RungeKuttaTglsIntegrator(object):
             Initial condition of the system. Can be a 1D or a 2D array:
 
             * 1D: Provide a single initial condition.
-              Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
+              Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
             * 2D: Provide an ensemble of initial condition.
-              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`,
+              Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
               and where `n_traj` is the number of initial conditions.
         """
         self.ic = ic
@@ -1123,6 +1110,8 @@ class TglsTrajectoryProcess(multiprocessing.Process):
         Number identifying the worker.
     func: callable
         `Numba`_-jitted function to integrate assigned to the worker.
+    func_jac: callable
+        `Numba`_-jitted Jacobian matrix function to integrate assigned to the worker.
     b: ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
     c: ~numpy.ndarray, optional
@@ -1148,17 +1137,13 @@ class TglsTrajectoryProcess(multiprocessing.Process):
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
-    ics_queue: multiprocessing.JoinableQueue
-        Queue to which the worker ask for initial conditions input.
-    traj_queue: multiprocessing.Queue
-        Queue to which the worker returns the integration results.
     """
     def __init__(self, processID, func, func_jac, b, c, a, ics_queue, traj_queue):
 
         super().__init__()
         self.processID = processID
-        self.ics_queue = ics_queue
-        self.traj_queue = traj_queue
+        self._ics_queue = ics_queue
+        self._traj_queue = traj_queue
         self.func = func
         self.func_jac = func_jac
         self.a = a
@@ -1166,20 +1151,20 @@ class TglsTrajectoryProcess(multiprocessing.Process):
         self.c = c
 
     def run(self):
-        """Main worker computing routine. Perform the time integration with the fetched initial conditons."""
+        """Main worker computing routine. Perform the time integration with the fetched initial conditions and parameters."""
 
         while True:
 
-            args = self.ics_queue.get()
+            args = self._ics_queue.get()
 
             recorded_traj, recorded_fmatrix = _integrate_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
                                                                               args[3][np.newaxis, ...], args[4], args[5],
                                                                               self.b, self.c, self.a,
                                                                               args[6], args[7], args[8])
 
-            self.traj_queue.put((args[0], recorded_traj, recorded_fmatrix))
+            self._traj_queue.put((args[0], recorded_traj, recorded_fmatrix))
 
-            self.ics_queue.task_done()
+            self._ics_queue.task_done()
 
 
 if __name__ == "__main__":

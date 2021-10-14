@@ -4,7 +4,7 @@
 
     Module with the function to integrate the ordinary differential equations
 
-    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
+    .. math:: \\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
     of the model and its linearized version.
 
@@ -30,7 +30,7 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
     """
     Integrate the ordinary differential equations (ODEs)
 
-    .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
+    .. math:: \\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
 
     with a specified `Runge-Kutta method`_. The function :math:`\\boldsymbol{f}` should
     be a `Numba`_ jitted function. This function must have a signature ``f(t, x)`` where ``x`` is
@@ -45,7 +45,7 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
         The `Numba`_-jitted function :math:`\\boldsymbol{f}`.
         Should have the signature``f(t, x)`` where ``x`` is the state value and ``t`` is the time.
     t0: float
-        Initial time of the time integration. Corresponds to the initial condition's `ic` time.
+        Initial time of the time integration. Corresponds to the initial condition.
         Important if the ODEs are non-autonomous.
     t: float
         Final time of the time integration. Corresponds to the final condition.
@@ -53,22 +53,22 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
     dt: float
         Timestep of the integration.
     ic: None or ~numpy.ndarray(float), optional
-        Initial condition of the system. Can be a 1D or a 2D array:
+        Initial (or final) conditions of the system. Can be a 1D or a 2D array:
 
         * 1D: Provide a single initial condition.
-          Should be of shape (`n_dim`,) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`.
+          Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
         * 2D: Provide an ensemble of initial condition.
-          Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\mathrm{dim}(\\boldsymbol{x})`,
+          Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
           and where `n_traj` is the number of initial conditions.
 
         If `None`, use a zero initial condition. Default to `None`.
-
+        If the `forward` argument is `False`, it specifies final conditions.
     forward: bool, optional
         Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
         initial condition `ic` becomes a final condition. Default to forward integration.
     write_steps: int, optional
         Save the state of the integration in memory every `write_steps` steps. The other intermediary
-        steps are lost. It determine the size of the returned objects. Default is 1.
+        steps are lost. It determines the size of the returned objects. Default is 1.
         Set to 0 to return only the final state.
     b: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
@@ -85,9 +85,9 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
     time, traj: ~numpy.ndarray
         The result of the integration:
 
-        * `time` is the time at which the state of the system was saved. Array of shape (`n_step`,) where
+        * **time:** Time at which the state of the system was saved. Array of shape (`n_step`,) where
           `n_step` is the number of saved states of the integration.
-        * `traj` are the saved states. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
+        * **traj:** Saved dynamical system states. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
           a 2D array of shape (`n_dim`, `n_steps`) is returned instead.
 
     Examples
@@ -230,6 +230,7 @@ def _tangent_linear_system(fjac, t, xs, x, adjoint):
     else:
         return fjac(t, xs) @ x
 
+
 # a function that return always zero
 @njit
 def _zeros_func(t, x):
@@ -268,15 +269,13 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         The `Numba`_-jitted Jacobian :math:`\\boldsymbol{J}`.
         Should have the signature``J(t, x)`` where ``x`` is the state value and ``t`` is the time.
     t0: float
-        Initial time of the time integration. Corresponds to the initial condition's `ic` time.
-        Important if the ODEs are non-autonomous.
+        Initial time of the time integration. Corresponds to the initial conditions.
     t: float
-        Final time of the time integration. Corresponds to the final condition.
-        Important if the ODEs are non-autonomous.
+        Final time of the time integration. Corresponds to the final conditions.
     dt: float
         Timestep of the integration.
     ic: None or ~numpy.ndarray(float), optional
-        Initial condition of the ODEs :math:`\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})`.
+        Initial (or final) conditions of the ODEs :math:`\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})`.
         Can be a 1D or a 2D array:
 
         * 1D: Provide a single initial condition.
@@ -286,9 +285,9 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
           and where `n_traj` is the number of initial conditions.
 
         If `None`, use a zero initial condition. Default to `None`.
-
+        If the `forward` argument is `False`, it specifies final conditions.
     tg_ic: None or ~numpy.ndarray(float), optional
-        Initial condition of the linear ODEs
+        Initial (or final) conditions of the linear ODEs
         :math:`\dot{\\boldsymbol{\delta x}} = \\boldsymbol{\mathrm{J}}(t, \\boldsymbol{x}) \cdot \\boldsymbol{\delta x}`. \n
         Can be a 1D, a 2D or a 3D array:
 
@@ -307,7 +306,7 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         If `None`, use the identity matrix as initial condition, returning the `fundamental matrix of solutions`_ of the
         linear ODEs.
         Default to `None`.
-
+        If the `forward` argument is `False`, it specifies final conditions.
     forward: bool, optional
         Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
         initial condition `ic` becomes a final condition. Default to forward integration.
@@ -326,7 +325,7 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         If `None`, don't add anything (homogeneous case). `None` by default.
     write_steps: int, optional
         Save the state of the integration in memory every `write_steps` steps. The other intermediary
-        steps are lost. It determine the size of the returned objects. Default is 1.
+        steps are lost. It determines the size of the returned objects. Default is 1.
         Set to 0 to return only the final state.
     b: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
@@ -343,11 +342,11 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
     time, traj, tg_traj: ~numpy.ndarray
         The result of the integration:
 
-        * `time` is the time at which the state of the system was saved. Array of shape (`n_step`,) where
+        * **time:** Time at which the state of the system was saved. Array of shape (`n_step`,) where
           `n_step` is the number of saved states of the integration.
-        * `traj` are the saved states of the ODEs. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
+        * **traj:** Saved states of the ODEs. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
           a 2D array of shape (`n_dim`, `n_steps`) is returned instead.
-        * `tg_traj` are the saved states of the linear ODEs.
+        * **tg_traj:** Saved states of the linear ODEs.
           Depending on the input initial conditions of both ODEs,
           it is at maximum a 4D array of shape (`n_traj`, `n_tg_traj `n_dim`, `n_steps`).
           If one of the dimension is 1, it is squeezed.
