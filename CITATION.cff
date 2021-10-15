@@ -39,7 +39,6 @@ preferred-citation:
   date-published: 2020-12-24
   publisher: "The Open Journal"
   year: 2020
-  month: 12
   volume: 5
   number: 56
   title: "qgs: A flexible Python framework of reduced-order multiscale climate models"
