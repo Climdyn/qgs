@@ -37,8 +37,11 @@ preferred-citation:
     affiliation: "Royal Meteorological Institute of Belgium"
     orcid: "https://orcid.org/0000-0002-1734-1042"
   date-published: 2020-12-24
+  publisher: "The Open Journal"
   year: 2020
   month: 12
+  volume: 5
+  number: 56
   title: "qgs: A flexible Python framework of reduced-order multiscale climate models"
 doi: 10.5281/zenodo.5569583
 version: "0.2.5"
