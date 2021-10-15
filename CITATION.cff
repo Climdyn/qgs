@@ -1,0 +1,45 @@
+cff-version: "1.2.0"
+message: "Please cite the code description article if you use (a part of) this software for a publication:"
+authors:
+  - family-names: Demaeyer
+    given-names: Jonathan
+    affiliation: "Royal Meteorological Institute of Belgium"
+    orcid: "https://orcid.org/0000-0002-5098-404X"
+  - family-names: "De Cruz"
+    affiliation: "Royal Meteorological Institute of Belgium"
+    given-names: Lesley
+    orcid: "https://orcid.org/0000-0003-4458-8953"
+license: MIT
+repository-code: https://github.com/Climdyn/qgs
+title: qgs
+abstract: |
+  A 2-layer quasi-geostrophic atmospheric model in Python. Can be coupled to a simple land or shallow-water ocean component.
+keywords:
+  - Numba
+  - "Idealized atmospheric model"
+  - "Coupled model"
+  - "Mid-latitude climate variability"
+preferred-citation:
+  type: article
+  doi: 10.21105/joss.02597
+  journal: Journal of Open Source Software
+  authors:
+  - family-names: Demaeyer
+    given-names: Jonathan
+    affiliation: "Royal Meteorological Institute of Belgium"
+    orcid: "https://orcid.org/0000-0002-5098-404X"
+  - family-names: "De Cruz"
+    given-names: Lesley
+    affiliation: "Royal Meteorological Institute of Belgium"
+    orcid: "https://orcid.org/0000-0003-4458-8953"
+  - family-names: Vannitsem
+    given-names: "Stéphane"
+    affiliation: "Royal Meteorological Institute of Belgium"
+    orcid: "https://orcid.org/0000-0002-1734-1042"
+  date-published: 2020-12-24
+  year: 2020
+  month: 12
+  title: "qgs: A flexible Python framework of reduced-order multiscale climate models"
+doi: 10.5281/zenodo.5569583
+version: "0.2.5"
+date-released: 2021-10-14
