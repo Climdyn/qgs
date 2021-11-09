@@ -49,8 +49,8 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
         FieldDiagnostic.__init__(self, model_params, dimensional)
         self._configure(delta_x=delta_x, delta_y=delta_y)
 
-        self._plot_units = r" (in " + r'm$^2$s$^{-1}$' + r")"
-        self._default_plot_kwargs['cmap'] = plt.get_cmap('jet')
+        self._plot_units = r" (in " + r'm s$^{-1}$' + r")"
+        self._default_plot_kwargs['cmap'] = plt.get_cmap('hsv_r')
         self._color_bar_format = False
 
     def _compute_grid(self, delta_x=None, delta_y=None):
@@ -223,6 +223,214 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
+class MiddleLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}
+    where :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
+    and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "V"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric V wind in the middle layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        natm = self._model_params.nmod[0]
+        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = psi * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = psi
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class MiddleLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle layer atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}` where
+    :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
+    and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "U"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric U wind in the middle layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        natm = self._model_params.nmod[0]
+        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = - psi * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = - psi
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class UpperLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the upper layer atmospheric V wind fields :math:`\\partial_x \\psi^1_{\\rm a}`.
+    Computed as :math:`\\partial_x \\psi^1_{\\rm a} = \\partial_x \\psi_{\\rm a} + \\partial_x \\theta_{\\rm a}` where :math:`\\psi_{\\rm a}` and :math:`\\theta_{\\rm a}` are respectively the barotropic and baroclinic streamfunctions.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "V"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric V wind in the upper layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        natm = self._model_params.nmod[0]
+        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        psi1 = psi + theta
+
+        if dimensional:
+            self._diagnostic_data = psi1 * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = psi1
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class UpperLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the upper layer atmospheric U wind fields :math:`- \\partial_y \\psi^1_{\\rm a}`.
+    Computed as :math:`- \\partial_y \\psi^1_{\\rm a} = - \\partial_y \\psi_{\\rm a} - \\partial_y \\theta_{\\rm a}` where :math:`\\psi_{\\rm a}` and :math:`\\theta_{\\rm a}` are respectively the barotropic and baroclinic streamfunctions.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "U"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric U wind in the upper layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        natm = self._model_params.nmod[0]
+        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        psi1 = psi + theta
+
+        if dimensional:
+            self._diagnostic_data = - psi1 * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = - psi1
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     from qgs.integrators.integrator import RungeKuttaIntegrator
@@ -243,3 +451,16 @@ if __name__ == '__main__':
 
     dy_psi3 = LowerLayerAtmosphericUWindDiagnostic(pars)
     dy_psi3(time, traj)
+
+    dx_psi = MiddleLayerAtmosphericVWindDiagnostic(pars)
+    dx_psi(time, traj)
+
+    dy_psi = MiddleLayerAtmosphericUWindDiagnostic(pars)
+    dy_psi(time, traj)
+
+    dx_psi1 = UpperLayerAtmosphericVWindDiagnostic(pars)
+    dx_psi1(time, traj)
+
+    dy_psi1 = UpperLayerAtmosphericUWindDiagnostic(pars)
+    dy_psi1(time, traj)
+
