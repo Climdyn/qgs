@@ -43,6 +43,9 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
 
     def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
 
+        if not hasattr(self, 'type'):
+            self.type = None
+
         FieldDiagnostic.__init__(self, model_params, dimensional)
         self._configure(delta_x=delta_x, delta_y=delta_y)
 
@@ -80,8 +83,41 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
         y = np.linspace(0., np.pi, n_point_y)
         self._X, self._Y = np.meshgrid(x, y)
 
+    def _configure(self, delta_x=None, delta_y=None):
 
-class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
+        self._compute_grid(delta_x, delta_y)
+
+        if self.type == "V":
+            dx_basis = self._model_params.atmospheric_basis.x_derivative
+            grid_dx_basis = list()
+
+            for func in dx_basis.num_functions():
+                grid_dx_basis.append(func(self._X, self._Y))
+
+            for i in range(len(grid_dx_basis)):
+                if not hasattr(grid_dx_basis[i], 'data'):
+                    grid_dx_basis[i] = np.full_like(self._X, grid_dx_basis[i])
+
+            self._grid_basis = np.array(grid_dx_basis)
+        elif self.type == "U":
+            dy_basis = self._model_params.atmospheric_basis.y_derivative
+            grid_dy_basis = list()
+
+            for func in dy_basis.num_functions():
+                grid_dy_basis.append(func(self._X, self._Y))
+
+            for i in range(len(grid_dy_basis)):
+                if not hasattr(grid_dy_basis[i], 'data'):
+                    grid_dy_basis[i] = np.full_like(self._X, grid_dy_basis[i])
+
+            self._grid_basis = np.array(grid_dy_basis)
+        else:
+            warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
+                          " Unable to configure the diagnostic properly.")
+            return 1
+
+
+class LowerLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
     """Diagnostic giving the lower layer atmospheric V wind fields :math:`\\partial_x \\psi^3_{\\rm a}`.
     Computed as :math:`\\partial_x \\psi^3_{\\rm a} = \\partial_x \\psi_{\\rm a} - \\partial_x \\theta_{\\rm a}` where :math:`\\psi_{\\rm a}` and :math:`\\theta_{\\rm a}` are respectively the barotropic and baroclinic streamfunctions.
     See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
@@ -111,25 +147,11 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
     def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
 
+        self.type = "V"
+
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
         self._plot_title = r'Atmospheric V wind in the lower layer'
-
-    def _configure(self, delta_x=None, delta_y=None):
-
-        self._compute_grid(delta_x, delta_y)
-        dx_basis = self._model_params.atmospheric_basis.x_derivative
-
-        grid_dx_basis = list()
-
-        for func in dx_basis.num_functions():
-            grid_dx_basis.append(func(self._X, self._Y))
-
-        for i in range(len(grid_dx_basis)):
-            if not hasattr(grid_dx_basis[i], 'data'):
-                grid_dx_basis[i] = np.full_like(self._X, grid_dx_basis[i])
-
-        self._grid_basis = np.array(grid_dx_basis)
 
     def _get_diagnostic(self, dimensional):
 
@@ -144,6 +166,59 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
             self._diagnostic_data_dimensional = True
         else:
             self._diagnostic_data = psi3
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the lower layer atmospheric U wind fields :math:`- \\partial_y \\psi^3_{\\rm a}`.
+    Computed as :math:`- \\partial_y \\psi^3_{\\rm a} = - \\partial_y \\psi_{\\rm a} + \\partial_y \\theta_{\\rm a}` where :math:`\\psi_{\\rm a}` and :math:`\\theta_{\\rm a}` are respectively the barotropic and baroclinic streamfunctions.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "U"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric U wind in the lower layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        natm = self._model_params.nmod[0]
+        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        psi3 = psi - theta
+
+        if dimensional:
+            self._diagnostic_data = - psi3 * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = - psi3
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
 
@@ -163,6 +238,8 @@ if __name__ == '__main__':
     time, traj = integrator.get_trajectories()
     integrator.terminate()
 
-    dx_psi3 = LowerLayerAtmosphericUWindDiagnostic(pars)
+    dx_psi3 = LowerLayerAtmosphericVWindDiagnostic(pars)
     dx_psi3(time, traj)
 
+    dy_psi3 = LowerLayerAtmosphericUWindDiagnostic(pars)
+    dy_psi3(time, traj)
