@@ -666,3 +666,99 @@ class FieldDiagnostic(Diagnostic):
         return anim
 
 
+class ProfileDiagnostic(Diagnostic):
+    """General base class for profile diagnostic on the model's domain.
+    Should provide a 1D representation of the fields averages or section.
+
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+    """
+
+    def __init__(self, model_params, dimensional):
+
+        Diagnostic.__init__(self, model_params, dimensional)
+
+        self._points_coordinates = None
+        self._profiles_list = None
+        self._profiles_labels = None
+        self._profiles_units = None
+
+    # self._default_plot_kwargs = {'cmap': plt.get_cmap('jet'), 'interpolation': 'spline36'}
+
+    def __len__(self):
+        if self.diagnostic is not None:
+            return self.diagnostic.shape[0]
+        else:
+            return None
+
+    def plot(self, time_index=0, profiles='all', ax=None, figsize=(16, 9), plot_kwargs=None, **kwargs):
+        """Plot the multiple profile diagnostic provided.
+
+        Parameters
+        ----------
+        time_index: int
+            The time index of the data. Not used in this subclass.
+        profiles: int or list(int) or str
+            The indices of the profiles of the list to plot.
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot the fields.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        plot_kwargs: dict, optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
+
+        Returns
+        -------
+        ~matplotlib.axes.Axes
+            An axes where the data were plotted.
+        """
+
+        if profiles == 'all':
+            profiles = list(range(len(self._profiles_list)))
+
+        if self.diagnostic is None:
+            warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        if plot_kwargs is None:
+            plot_kwargs = dict()
+
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(1, 1, 1)
+        else:
+            fig = ax.figure
+
+        for profile in profiles:
+            lab = '$' + self._profiles_labels[profile] + '$'
+            if self.dimensional:
+                lab += r" [" + self._profiles_units[profile] + r"]"
+            ax.plot(self._points_coordinates, self.diagnostic[profile][time_index], label=lab, **plot_kwargs)
+        ax.legend()
+
+        if self.dimensional:
+            ax.set_xlabel(time_axis_label + ' [' + self._model_params.time_unit + ']')
+        else:
+            ax.set_xlabel(time_axis_label + ' [timeunits]')
+
+        title = self._plot_title
+        if self.dimensional:
+            pass
+        else:
+            title += r" (in nondim units)"
+
+        ax.set_title(title, pad=20.)
+
+        return ax
