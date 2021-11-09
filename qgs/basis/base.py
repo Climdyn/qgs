@@ -26,7 +26,7 @@
 import sys
 
 from abc import ABC
-from sympy import symbols, lambdify
+from sympy import symbols, lambdify, diff
 
 
 class Basis(ABC):
@@ -130,6 +130,41 @@ class SymbolicBasis(Basis):
                 raise Exception.with_traceback(tb)
 
         return nf
+
+    def derivative(self, symbol, order=1):
+        """Return the basis functions differentiated with respect to `symbol` as a new basis.
+
+        Parameters
+        ----------
+        symbol: Sympy symbol
+            The symbol with respect to which the basis is to be differentiated.
+        order: int, optional
+            The order of the derivative. Default to first order.
+
+        Returns
+        -------
+        SymbolicBasis:
+            A new basis object with the differentiated basis function.
+        """
+
+        dfunc = list(map(lambda func: diff(func, symbol, order), self.functions))
+        dbasis = SymbolicBasis()
+        dbasis.functions = dfunc
+        dbasis.substitutions = self.substitutions
+
+        return dbasis
+
+    @property
+    def x_derivative(self):
+        """SymbolicBasis: Basis functions differentiated with respect to :math:`x` coordinate."""
+        x = symbols('x')
+        return self.derivative(x)
+
+    @property
+    def y_derivative(self):
+        """SymbolicBasis: Basis functions differentiated with respect to :math:`y` coordinate."""
+        y = symbols('y')
+        return self.derivative(y)
 
 
 # Rem: Class not used currently in the model.
