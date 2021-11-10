@@ -94,6 +94,7 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
             for func in dx_basis.num_functions():
                 grid_dx_basis.append(func(self._X, self._Y))
 
+            # Check for cases where the symbolic derivative is the 0 function
             for i in range(len(grid_dx_basis)):
                 if not hasattr(grid_dx_basis[i], 'data'):
                     grid_dx_basis[i] = np.full_like(self._X, grid_dx_basis[i])
@@ -106,6 +107,7 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
             for func in dy_basis.num_functions():
                 grid_dy_basis.append(func(self._X, self._Y))
 
+            # Check for cases where the symbolic derivative is the 0 function
             for i in range(len(grid_dy_basis)):
                 if not hasattr(grid_dy_basis[i], 'data'):
                     grid_dy_basis[i] = np.full_like(self._X, grid_dy_basis[i])
