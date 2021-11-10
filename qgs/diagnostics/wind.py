@@ -111,10 +111,12 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
                     grid_dy_basis[i] = np.full_like(self._X, grid_dy_basis[i])
 
             self._grid_basis = np.array(grid_dy_basis)
-        else:
+        elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
                           " Unable to configure the diagnostic properly.")
             return 1
+        else:
+            self._grid_basis = None
 
 
 class LowerLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
@@ -431,6 +433,147 @@ class UpperLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
+class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = ""
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric wind intensity in the lower layer'
+        self._udiag = LowerLayerAtmosphericUWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._vdiag = LowerLayerAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+
+    def _get_diagnostic(self, dimensional):
+
+        self._udiag.set_data(self._time, self._data)
+        self._vdiag.set_data(self._time, self._data)
+
+        U = self._udiag._get_diagnostic(dimensional)
+        V = self._vdiag._get_diagnostic(dimensional)
+
+        return np.sqrt(U**2 + V**2)
+
+
+class MiddleLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle layer atmospheric wind intensity fields.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = ""
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric wind intensity in the middle layer'
+        self._udiag = MiddleLayerAtmosphericUWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._vdiag = MiddleLayerAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+
+    def _get_diagnostic(self, dimensional):
+
+        self._udiag.set_data(self._time, self._data)
+        self._vdiag.set_data(self._time, self._data)
+
+        U = self._udiag._get_diagnostic(dimensional)
+        V = self._vdiag._get_diagnostic(dimensional)
+
+        return np.sqrt(U**2 + V**2)
+
+
+class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = ""
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric wind intensity in the upper layer'
+        self._udiag = UpperLayerAtmosphericUWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._vdiag = UpperLayerAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+
+    def _get_diagnostic(self, dimensional):
+
+        self._udiag.set_data(self._time, self._data)
+        self._vdiag.set_data(self._time, self._data)
+
+        U = self._udiag._get_diagnostic(dimensional)
+        V = self._vdiag._get_diagnostic(dimensional)
+
+        return np.sqrt(U**2 + V**2)
+
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     from qgs.integrators.integrator import RungeKuttaIntegrator
@@ -464,3 +607,11 @@ if __name__ == '__main__':
     dy_psi1 = UpperLayerAtmosphericUWindDiagnostic(pars)
     dy_psi1(time, traj)
 
+    psi3_wind = LowerLayerAtmosphericWindIntensityDiagnostic(pars)
+    psi3_wind(time, traj)
+
+    psi_wind = MiddleLayerAtmosphericWindIntensityDiagnostic(pars)
+    psi_wind(time, traj)
+
+    psi1_wind = UpperLayerAtmosphericWindIntensityDiagnostic(pars)
+    psi1_wind(time, traj)
