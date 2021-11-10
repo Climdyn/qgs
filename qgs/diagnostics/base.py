@@ -691,9 +691,8 @@ class ProfileDiagnostic(Diagnostic):
         Diagnostic.__init__(self, model_params, dimensional)
 
         self._points_coordinates = None
-        self._profiles_list = None
-        self._profiles_labels = None
-        self._profiles_units = None
+        self._plot_label = None
+        self._axis_label = None
 
     # self._default_plot_kwargs = {'cmap': plt.get_cmap('jet'), 'interpolation': 'spline36'}
 
@@ -703,15 +702,13 @@ class ProfileDiagnostic(Diagnostic):
         else:
             return None
 
-    def plot(self, time_index=0, profiles='all', ax=None, figsize=(16, 9), plot_kwargs=None, **kwargs):
+    def plot(self, time_index=0, ax=None, figsize=(16, 9), plot_kwargs=None, **kwargs):
         """Plot the multiple profile diagnostic provided.
 
         Parameters
         ----------
         time_index: int
             The time index of the data. Not used in this subclass.
-        profiles: int or list(int) or str
-            The indices of the profiles of the list to plot.
         ax: ~matplotlib.axes.Axes, optional
             An axes on which to plot the fields.
         figsize: tuple(float), optional
@@ -724,9 +721,6 @@ class ProfileDiagnostic(Diagnostic):
         ~matplotlib.axes.Axes
             An axes where the data were plotted.
         """
-
-        if profiles == 'all':
-            profiles = list(range(len(self._profiles_list)))
 
         if self.diagnostic is None:
             warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
@@ -741,17 +735,16 @@ class ProfileDiagnostic(Diagnostic):
         else:
             fig = ax.figure
 
-        for profile in profiles:
-            lab = '$' + self._profiles_labels[profile] + '$'
+        if 'label' not in plot_kwargs:
+            lab = self._plot_label
             if self.dimensional:
-                lab += r" [" + self._profiles_units[profile] + r"]"
-            ax.plot(self._points_coordinates, self.diagnostic[profile][time_index], label=lab, **plot_kwargs)
+                lab += r" [" + self._plot_units + r"]"
+            plot_kwargs = {'label': lab}
+
+        ax.plot(self._points_coordinates, self.diagnostic[time_index], **plot_kwargs)
         ax.legend()
 
-        if self.dimensional:
-            ax.set_xlabel(time_axis_label + ' [' + self._model_params.time_unit + ']')
-        else:
-            ax.set_xlabel(time_axis_label + ' [timeunits]')
+        ax.set_xlabel(self._axis_label)
 
         title = self._plot_title
         if self.dimensional:

@@ -479,7 +479,13 @@ class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         U = self._udiag._get_diagnostic(dimensional)
         V = self._vdiag._get_diagnostic(dimensional)
 
-        return np.sqrt(U**2 + V**2)
+        self._diagnostic_data = np.sqrt(U**2 + V**2)
+
+        if dimensional:
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
 
 
 class MiddleLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
@@ -526,7 +532,13 @@ class MiddleLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         U = self._udiag._get_diagnostic(dimensional)
         V = self._vdiag._get_diagnostic(dimensional)
 
-        return np.sqrt(U**2 + V**2)
+        self._diagnostic_data = np.sqrt(U**2 + V**2)
+
+        if dimensional:
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
 
 
 class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
@@ -573,7 +585,16 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         U = self._udiag._get_diagnostic(dimensional)
         V = self._vdiag._get_diagnostic(dimensional)
 
-        return np.sqrt(U**2 + V**2)
+        U = self._udiag._get_diagnostic(dimensional)
+        V = self._vdiag._get_diagnostic(dimensional)
+
+        self._diagnostic_data = np.sqrt(U**2 + V**2)
+
+        if dimensional:
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
 
 
 if __name__ == '__main__':
