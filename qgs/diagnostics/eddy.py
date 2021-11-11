@@ -14,7 +14,7 @@
 import warnings
 
 import numpy as np
-from  scipy.integrate import simpson
+from scipy.integrate import simpson
 import matplotlib.pyplot as plt
 
 from qgs.diagnostics.base import FieldDiagnostic, ProfileDiagnostic
@@ -25,12 +25,12 @@ from qgs.diagnostics.wind import MiddleLayerAtmosphericVWindDiagnostic
 class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
     """"""
 
-    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None):
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=1.e7):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
 
         self._plot_title = r'Atmospheric eddy heat flux in the middle layer'
-        self._plot_units = r" (in " + r'K m s$^{-1}$' + r")"
+        self._plot_units = r" (in " + r'W m$^{-1}$' + r")"
         self._default_plot_kwargs['cmap'] = plt.get_cmap('hsv_r')
         self._color_bar_format = False
 
@@ -42,6 +42,8 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 
         self._temp_mean_state = temp_mean_state
         self._vwind_mean_state = vwind_mean_state
+
+        self._heat_capacity = heat_capacity
 
     def _compute_grid(self, delta_x=None, delta_y=None):
         pass
@@ -68,6 +70,10 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 
         self._diagnostic_data = (T - Tmean) * (V - Vmean)
         if dimensional:
+            if self._model_params.atemperature_params.gamma is not None:
+                self._diagnostic_data = self._diagnostic_data * self._model_params.atemperature_params.gamma
+            else:
+                self._diagnostic_data = self._diagnostic_data * self._heat_capacity
             self._diagnostic_data_dimensional = True
         else:
             self._diagnostic_data_dimensional = False
@@ -77,14 +83,14 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 class MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
     """"""
 
-    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None):
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=1.e7):
 
         ProfileDiagnostic.__init__(self, model_params, dimensional)
 
-        self._flux = MiddleLayerAtmosphericEddyHeatFluxDiagnostic(model_params, delta_x, delta_y, dimensional, temp_mean_state, vwind_mean_state)
-        self._plot_title = r'Atmospheric eddy heat flux in the middle layer - Zonally averaged profile'
-        self._plot_units = r" (in " + r'K m s$^{-1}$' + r")"
-        self._plot_label = r'Mid-layer eddy heat flux - Zonally averaged profile'
+        self._flux = MiddleLayerAtmosphericEddyHeatFluxDiagnostic(model_params, delta_x, delta_y, dimensional, temp_mean_state, vwind_mean_state, heat_capacity)
+        self._plot_title = r'Zonally averaged profile'
+        self._plot_units = r'W m$^{-1}$'
+        self._plot_label = r'Atmospheric mid-layer eddy heat flux'
         self._axis_label = r'$y$'
         self._configure()
 

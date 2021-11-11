@@ -702,7 +702,7 @@ class ProfileDiagnostic(Diagnostic):
         else:
             return None
 
-    def plot(self, time_index=0, ax=None, figsize=(16, 9), plot_kwargs=None, **kwargs):
+    def plot(self, time_index=0, ax=None, figsize=(16, 9), show_time=True, plot_kwargs=None, **kwargs):
         """Plot the multiple profile diagnostic provided.
 
         Parameters
@@ -713,6 +713,9 @@ class ProfileDiagnostic(Diagnostic):
             An axes on which to plot the fields.
         figsize: tuple(float), optional
             The size of the figure in inches as a 2-tuple.
+        show_time: bool, optional
+            Show the timestamp of the field on the plot or not.
+            Default to `True`.
         plot_kwargs: dict, optional
             Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
 
@@ -724,6 +727,10 @@ class ProfileDiagnostic(Diagnostic):
 
         if self.diagnostic is None:
             warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        if time_index > self.__len__() - 1:
+            warnings.warn('Time index ' + str(time_index) + ' provided is greater than the largest one possible: ' + str(self.__len__()) + ' . Showing nothing.')
             return None
 
         if plot_kwargs is None:
@@ -748,10 +755,230 @@ class ProfileDiagnostic(Diagnostic):
 
         title = self._plot_title
         if self.dimensional:
-            pass
+            if show_time:
+                title += " at " + "{:.2f}".format(self._model_params.dimensional_time * self._time[time_index]) + " " + self._model_params.time_unit
         else:
             title += r" (in nondim units)"
+            if show_time:
+                title += " at " + str(self._time[time_index]) + " timeunits"
 
         ax.set_title(title, pad=20.)
 
         return ax
+
+    def movie(self, output='html', filename='', ax=None, figsize=(16, 9), plot_kwargs=None, anim_kwargs=None):
+        """ Create and return a movie of the output of the `plot` method animated over time.
+        Show a red dot moving and depicting the current value of the model's selected variables.
+
+        Parameters
+        ----------
+        output: str, optional
+            Define the kind of movie being created. Can be:
+
+            * `jshtml`: Generate an interactive HTML representation of the animation.
+            * `html5`: Generate the movie as HTML5 code.
+            * `html`: Output the movie as a HTML video tag.
+            * `ihtml`: Output the interactive movie as a HTML video tag.
+            * `save`: Save the movie in MP4 format (H264 codec).
+
+            Default to `html`.
+        filename: str, optional
+            Filename (and path) where to save the movie. Needed if `output` is set to `save`.
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot.
+            If not provided, create a new one.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        plot_kwargs: dict, optional
+            Arguments to pass to the background plot.
+        anim_kwargs: dict, optional
+            Arguments to pass to the :class:`matplotlib.animation.FuncAnimation` instantiation method. Specify the parameters of the animation.
+
+        Returns
+        -------
+        ~matplotlib.animation.FuncAnimation or HTML code or HTML tag
+            The animation object or the HTML code or tag.
+        """
+
+        if self.diagnostic is None:
+            warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        anim = self._make_anim(ax, figsize, True, plot_kwargs, anim_kwargs, False)
+
+        if 'html' in output:
+
+            if output == "jshtml" or output == 'ihtml':
+                jshtml = anim.to_jshtml()
+                if output == "jshtml":
+                    return jshtml
+                else:
+                    return HTML(jshtml)
+            else:
+                html5 = anim.to_html5_video()
+                if output == 'html5':
+                    return html5
+                else:
+                    return HTML(html5)
+
+        elif output == 'save':
+
+            if not filename:
+                warnings.warn('No filename provided to the method animate. Video not saved !\n Please provide a filename.')
+
+            html = anim.to_html5_video()
+            start_index = html.index('base64,')
+            start_index += len('base64,')
+            end_index = html.index('">', start_index)
+            video = html[start_index: end_index]
+            with open(filename, 'wb') as f:
+                f.write(base64.b64decode(video))
+
+        else:
+            warnings.warn('Provided output parameter ' + output + ' not supported ! Nothing to plot. Returning None.')
+            anim = None
+
+        return anim
+
+    def animate(self, output='animate', ax=None, figsize=(16, 9), show_time=True, stride=1, plot_kwargs=None, anim_kwargs=None, show=True):
+        """Return the output of the `plot` method animated over time.
+
+        Parameters
+        ----------
+        output: str, optional
+            Define the kind of animation being created. Can be:
+
+            * `animate`: Create and show a :class:`ipywidgets.widgets.interactive` widget. Works only in Jupyter notebooks.
+            * `show`: Create and show an animation with the :mod:`matplotlib.animation` module. Works only in IPython or Python.
+
+        ax: ~matplotlib.axes.Axes, optional
+            An axes on which to plot the fields.
+        figsize: tuple(float), optional
+            The size of the figure in inches as a 2-tuple.
+        show_time: bool, optional
+            Show the timestamp of the field on the plot or not.
+            Default to `True`.
+        stride: int, optional
+            Specify the time step of the animation. Works only with `output` set to `animate`.
+        plot_kwargs: dict, optional
+            Arguments to pass to the :meth:`matplotlib.axes.Axes.imshow` method if `style` is set to `image`, or to the :meth:`matplotlib.axes.Axes.contour` method if `style` is set to `contour`.
+        anim_kwargs: dict, optional
+            Arguments to pass to the :class:`matplotlib.animation.FuncAnimation` instantiation method. Specify the parameters of the animation.
+            Works only with `output` set to `show`.
+        show: bool, optional
+            Whether to plot or not the animation.
+
+        Returns
+        -------
+        ~matplotlib.animation.FuncAnimation or ~IPython.core.display.DisplayHandle or callable
+            The animation object or the callable to update the widget, depending on the value of the `output` and `show` parameters.
+        """
+
+        if self.diagnostic is None:
+            warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        if output == 'animate':
+
+            heat_max = np.max(self.diagnostic)
+            heat_min = np.min(self.diagnostic)
+
+            def update(time_index):
+                self.plot(time_index, ax, figsize, show_time, plot_kwargs)
+                ax.set_ylim([heat_min, heat_max])
+                ax.legend(loc=1)
+                if show:
+                    plt.show()
+
+            if show:
+                plot = interactive(update, time_index=(0, len(self)-1, stride))
+                anim = display(plot)
+            else:
+                return update
+
+        elif output == 'show':
+
+            anim = self._make_anim(ax, figsize, show_time, plot_kwargs, anim_kwargs, True)
+            if show:
+                plt.show()
+
+        else:
+            warnings.warn('Provided output parameter ' + output + ' not supported ! Nothing to plot. Returning None.')
+            anim = None
+
+        return anim
+
+    def _init_anim(self, ax=None, figsize=(16, 9), show_time_in_title=False, show_time=True, plot_kwargs=None, anim_kwargs=None):
+
+        if self.diagnostic is None:
+            warnings.warn('No diagnostic data available. Showing nothing. Returning None.')
+            return None
+
+        heat_max = np.max(self.diagnostic)
+        heat_min = np.min(self.diagnostic)
+
+        ax = self.plot(0, ax, figsize, show_time_in_title, plot_kwargs)
+        fig = ax.figure
+        ax.set_ylim([heat_min, heat_max])
+        ax.legend(loc=1)
+
+        if show_time:
+            if self.dimensional:
+                tt = " at " + "{:.2f}".format(self._model_params.dimensional_time * self._time[0]) + " " + self._model_params.time_unit
+            else:
+                tt = " at " + str(self._time[0]) + " timeunits"
+            ax.text(0.1, 0.9, tt, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+
+        fargs = (ax, show_time_in_title, show_time)
+
+        kwargs = {'ax': ax, 'figsize': figsize, 'show_time_in_title': show_time_in_title, 'show_time': show_time, 'plot_kwargs': plot_kwargs,
+                  'anim_kwargs': anim_kwargs}
+
+        return fig, ax, fargs, kwargs
+
+    def _make_update(self, ax=None, figsize=(16, 9), show_time_in_title=False, show_time=True, plot_kwargs=None, anim_kwargs=None):
+
+        heat_max = np.max(self.diagnostic)
+        heat_min = np.min(self.diagnostic)
+
+        def update(i, axe, show_t_in_title, show_t):
+            axe.clear()
+            axe = self.plot(i, axe, figsize, show_t_in_title, plot_kwargs)
+            axe.set_ylim([heat_min, heat_max])
+            axe.legend(loc=1)
+            if show_t:
+                if self.dimensional:
+                    tt = " at " + "{:.2f}".format(self._model_params.dimensional_time * self._time[i]) + " " + self._model_params.time_unit
+                else:
+                    tt = " at " + str(self._time[i]) + " timeunits"
+                axe.text(0.1, 0.9, tt, horizontalalignment='center', verticalalignment='center', transform=axe.transAxes)
+            return [axe]
+
+        return update
+
+    def _make_anim(self, ax=None, figsize=(16, 9), show_time=True, plot_kwargs=None, anim_kwargs=None, blit=True):
+
+        if show_time:
+            if blit:
+                show_time_in_title = False
+            else:
+                show_time_in_title = True
+                show_time = False
+        else:
+            show_time_in_title = False
+
+        fig, ax, fargs, kwargs = self._init_anim(ax, figsize, show_time_in_title, show_time, plot_kwargs, anim_kwargs)
+
+        update = self._make_update(**kwargs)
+
+        if anim_kwargs is not None:
+
+            if 'blit' in anim_kwargs:
+                del anim_kwargs['blit']
+
+            anim = animation.FuncAnimation(fig, update, fargs=fargs, blit=blit, **anim_kwargs)
+
+        else:
+            anim = animation.FuncAnimation(fig, update, fargs=fargs, blit=blit)
+
+        return anim
