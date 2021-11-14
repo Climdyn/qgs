@@ -10,12 +10,12 @@
     * :class:`AtmosphericWindDiagnostic`: General base class for atmospheric wind diagnostic.
     * :class:`LowerLayerAtmosphericVWindDiagnostic`: Diagnostic giving the lower layer atmospheric V wind fields :math:`\\partial_x \\psi^3_{\\rm a}`.
     * :class:`LowerLayerAtmosphericUWindDiagnostic`: Diagnostic giving the lower layer atmospheric U wind fields :math:`- \\partial_y \\psi^3_{\\rm a}`.
-    * :class:`MiddleLayerAtmosphericVWindDiagnostic`: Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`.
-    * :class:`MiddleLayerAtmosphericUWindDiagnostic`: Diagnostic giving the middle layer atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}`.
+    * :class:`MiddleAtmosphericVWindDiagnostic`: Diagnostic giving the middle atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`.
+    * :class:`MiddleAtmosphericUWindDiagnostic`: Diagnostic giving the middle atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}`.
     * :class:`UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\\partial_x \\psi^1_{\\rm a}`.
     * :class:`UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \\partial_y \\psi^1_{\\rm a}`.
     * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
-    * :class:`MiddleLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle layer atmospheric wind intensity fields.
+    * :class:`MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric wind intensity fields.
     * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
 
 """
@@ -236,8 +236,8 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
-class MiddleLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`
+class MiddleAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`
     where :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
     See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
     and the thermal wind relation` sections.
@@ -271,7 +271,7 @@ class MiddleLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
 
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        self._plot_title = r'Atmospheric V wind in the middle layer'
+        self._plot_title = r'V wind in the middle of the atmosphere'
 
     def _get_diagnostic(self, dimensional):
 
@@ -287,8 +287,8 @@ class MiddleLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
-class MiddleLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle layer atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}` where
+class MiddleAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}` where
     :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
     See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
     and the thermal wind relation` sections.
@@ -322,7 +322,7 @@ class MiddleLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        self._plot_title = r'Atmospheric U wind in the middle layer'
+        self._plot_title = r'U wind in the middle of the atmosphere'
 
     def _get_diagnostic(self, dimensional):
 
@@ -497,8 +497,8 @@ class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
-class MiddleLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle layer atmospheric wind intensity fields.
+class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle atmospheric wind intensity fields.
 
     Parameters
     ----------
@@ -529,9 +529,9 @@ class MiddleLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        self._plot_title = r'Atmospheric wind intensity in the middle layer'
-        self._udiag = MiddleLayerAtmosphericUWindDiagnostic(model_params, delta_x, delta_y, dimensional)
-        self._vdiag = MiddleLayerAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._plot_title = r'Wind intensity in the middle of the atmosphere'
+        self._udiag = MiddleAtmosphericUWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._vdiag = MiddleAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
 
     def _get_diagnostic(self, dimensional):
 
@@ -627,10 +627,10 @@ if __name__ == '__main__':
     dy_psi3 = LowerLayerAtmosphericUWindDiagnostic(pars)
     dy_psi3(time, traj)
 
-    dx_psi = MiddleLayerAtmosphericVWindDiagnostic(pars)
+    dx_psi = MiddleAtmosphericVWindDiagnostic(pars)
     dx_psi(time, traj)
 
-    dy_psi = MiddleLayerAtmosphericUWindDiagnostic(pars)
+    dy_psi = MiddleAtmosphericUWindDiagnostic(pars)
     dy_psi(time, traj)
 
     dx_psi1 = UpperLayerAtmosphericVWindDiagnostic(pars)
@@ -642,7 +642,7 @@ if __name__ == '__main__':
     psi3_wind = LowerLayerAtmosphericWindIntensityDiagnostic(pars)
     psi3_wind(time, traj)
 
-    psi_wind = MiddleLayerAtmosphericWindIntensityDiagnostic(pars)
+    psi_wind = MiddleAtmosphericWindIntensityDiagnostic(pars)
     psi_wind(time, traj)
 
     psi1_wind = UpperLayerAtmosphericWindIntensityDiagnostic(pars)

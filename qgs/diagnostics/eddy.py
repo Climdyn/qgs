@@ -7,8 +7,8 @@
     Description of the classes
     --------------------------
 
-    * :class:`MiddleLayerAtmosphericEddyHeatFluxDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux field.
-    * :class:`MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux zonally averaged profile.
+    * :class:`MiddleAtmosphericEddyHeatFluxDiagnostic`: Diagnostic giving the middle atmospheric eddy heat flux field.
+    * :class:`MiddleAtmosphericEddyHeatFluxProfileDiagnostic`: Diagnostic giving the middle atmospheric eddy heat flux zonally averaged profile.
 
 """
 
@@ -20,12 +20,12 @@ import matplotlib.pyplot as plt
 
 from qgs.diagnostics.base import FieldDiagnostic, ProfileDiagnostic
 from qgs.diagnostics.temperatures import MiddleAtmosphericTemperatureDiagnostic
-from qgs.diagnostics.wind import MiddleLayerAtmosphericVWindDiagnostic
+from qgs.diagnostics.wind import MiddleAtmosphericVWindDiagnostic
 
 
-class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
-    """Diagnostic giving the middle layer atmospheric eddy heat flux field.
-    Computed as :math:`\\Phi_{\\rm e} = \\bar v'_{\\rm a} \\, \\bar T'_{\\rm a}` and scaled with the
+class MiddleAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
+    """Diagnostic giving the middle atmospheric eddy heat flux field.
+    Computed as :math:`v'_{\\rm a} \\, T'_{\\rm a}` and scaled with the
     atmospheric specific heat capicity if available (through the `heat_capacity` argument or the
     :attr:`~.AtmosphericTemperatureParams.gamma` parameter).
 
@@ -43,10 +43,10 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
     dimensional: bool, optional
         Indicate if the output diagnostic must be dimensionalized or not.
         Default to `True`.
-    temp_mean_state: MiddleLayerAtmosphericEddyHeatFluxDiagnostic, optional
+    temp_mean_state: MiddleAtmosphericTemperatureDiagnostic, optional
         A temperature diagnostic with a long trajectory as data to compute the mean temperature field.
         If not provided, compute the mean with the data stored in the object.
-    vwind_mean_state: MiddleLayerAtmosphericVWindDiagnostic, optional
+    vwind_mean_state: MiddleAtmosphericVWindDiagnostic, optional
         A :math:`v` wind diagnostic with a long trajectory as data to compute the mean wind field.
         If not provided, compute the mean with the data stored in the object.
     heat_capacity: float, optional
@@ -65,7 +65,7 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
 
-        self._plot_title = r'Atmospheric eddy heat flux in the middle layer'
+        self._plot_title = r'Eddy heat flux in the middle of the atmosphere'
         if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
             self._plot_title += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
             self._plot_units = r" (in " + r'W m$^{-1}$' + r")"
@@ -76,7 +76,7 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
         self._color_bar_format = False
 
         self._tdiag = MiddleAtmosphericTemperatureDiagnostic(model_params, delta_x, delta_y, dimensional)
-        self._vdiag = MiddleLayerAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._vdiag = MiddleAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
 
         self._X = self._tdiag._X
         self._Y = self._tdiag._Y
@@ -121,10 +121,10 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
         return self._diagnostic_data
 
 
-class MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
-    """Diagnostic giving the middle layer atmospheric eddy heat flux zonally averaged profile.
-    Computed as :math:`\\frac{n}{2\\pi} \\, \\int_0^{2\\pi/n} \\Phi_{\\rm e} \\, \\mathrm{d} x` where
-    :math:`\\Phi_{\\rm e} = \\bar v'_{\\rm a} \\, \\bar T'_{\\rm a}` is the eddy heat flux scaled with the
+class MiddleAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
+    """Diagnostic giving the middle atmospheric eddy heat flux zonally averaged profile.
+    Computed as :math:`\\Phi_{\\rm e} = \\overline{v'_{\\rm a} \\, T'_{\\rm a}} = \\frac{n}{2\\pi} \\, \\int_0^{2\\pi/n} \\Phi_{\\rm e} \\, \\mathrm{d} x` where
+    :math:`v'_{\\rm a} \\, T'_{\\rm a}` is the eddy heat flux scaled with the
     atmospheric specific heat capicity if available (through the `heat_capacity` argument or the
     :attr:`~.AtmosphericTemperatureParams.gamma` parameter).
 
@@ -142,10 +142,10 @@ class MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
     dimensional: bool, optional
         Indicate if the output diagnostic must be dimensionalized or not.
         Default to `True`.
-    temp_mean_state: MiddleLayerAtmosphericEddyHeatFluxDiagnostic, optional
+    temp_mean_state: MiddleAtmosphericTemperatureDiagnostic, optional
         A temperature diagnostic with a long trajectory as data to compute the mean temperature field.
         If not provided, compute the mean with the data stored in the object.
-    vwind_mean_state: MiddleLayerAtmosphericVWindDiagnostic, optional
+    vwind_mean_state: MiddleAtmosphericVWindDiagnostic, optional
         A :math:`v` wind diagnostic with a long trajectory as data to compute the mean wind field.
         If not provided, compute the mean with the data stored in the object.
     heat_capacity: float, optional
@@ -164,9 +164,9 @@ class MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
 
         ProfileDiagnostic.__init__(self, model_params, dimensional)
 
-        self._flux = MiddleLayerAtmosphericEddyHeatFluxDiagnostic(model_params, delta_x, delta_y, dimensional, temp_mean_state, vwind_mean_state, heat_capacity)
+        self._flux = MiddleAtmosphericEddyHeatFluxDiagnostic(model_params, delta_x, delta_y, dimensional, temp_mean_state, vwind_mean_state, heat_capacity)
         self._plot_title = r'Zonally averaged profile'
-        self._plot_label = r'Atmospheric mid-layer eddy heat flux'
+        self._plot_label = r'Middle atmospheric eddy heat flux'
         if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
             self._plot_label += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
             self._plot_units = r'W m$^{-1}$'
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     time, traj = integrator.get_trajectories()
     integrator.terminate()
 
-    flux = MiddleLayerAtmosphericEddyHeatFluxDiagnostic(pars)
+    flux = MiddleAtmosphericEddyHeatFluxDiagnostic(pars)
     flux.set_data(time, traj)
 
-    iflux = MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(pars, delta_x=0.25, delta_y=0.15)
+    iflux = MiddleAtmosphericEddyHeatFluxProfileDiagnostic(pars, delta_x=0.25, delta_y=0.15)
     iflux.set_data(time, traj)
