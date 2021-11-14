@@ -7,7 +7,8 @@
     Description of the classes
     --------------------------
 
-    * :class:``: .
+    * :class:`MiddleLayerAtmosphericEddyHeatFluxDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux field.
+    * :class:`MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux zonally averaged profile.
 
 """
 
@@ -23,14 +24,54 @@ from qgs.diagnostics.wind import MiddleLayerAtmosphericVWindDiagnostic
 
 
 class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
-    """"""
+    """Diagnostic giving the middle layer atmospheric eddy heat flux field.
+    Computed as :math:`\\Phi_{\\rm e} = \\bar v'_{\\rm a} \\, \\bar T'_{\\rm a}` and scaled with the
+    atmospheric specific heat capicity if available (through the `heat_capacity` argument or the
+    :attr:`~.AtmosphericTemperatureParams.gamma` parameter).
 
-    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=1.e7):
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+    temp_mean_state: MiddleLayerAtmosphericEddyHeatFluxDiagnostic, optional
+        A temperature diagnostic with a long trajectory as data to compute the mean temperature field.
+        If not provided, compute the mean with the data stored in the object.
+    vwind_mean_state: MiddleLayerAtmosphericVWindDiagnostic, optional
+        A :math:`v` wind diagnostic with a long trajectory as data to compute the mean wind field.
+        If not provided, compute the mean with the data stored in the object.
+    heat_capacity: float, optional
+        The air specific heat capacity. If not provided, uses the one of :attr:`~.AtmosphericTemperatureParams.gamma` if
+        available or or let the heat flux in K m s^{-1}.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=None):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
 
         self._plot_title = r'Atmospheric eddy heat flux in the middle layer'
-        self._plot_units = r" (in " + r'W m$^{-1}$' + r")"
+        if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
+            self._plot_title += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_units = r" (in " + r'W m$^{-1}$' + r")"
+        else:
+            self._plot_title += r" $\bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_units = r" (in " + r'K m s$^{-1}$' + r")"
         self._default_plot_kwargs['cmap'] = plt.get_cmap('hsv_r')
         self._color_bar_format = False
 
@@ -72,7 +113,7 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
         if dimensional:
             if self._model_params.atemperature_params.gamma is not None:
                 self._diagnostic_data = self._diagnostic_data * self._model_params.atemperature_params.gamma
-            else:
+            elif self._heat_capacity is not None:
                 self._diagnostic_data = self._diagnostic_data * self._heat_capacity
             self._diagnostic_data_dimensional = True
         else:
@@ -81,16 +122,57 @@ class MiddleLayerAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 
 
 class MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
-    """"""
+    """Diagnostic giving the middle layer atmospheric eddy heat flux zonally averaged profile.
+    Computed as :math:`\\frac{n}{2\\pi} \\, \\int_0^{2\\pi/n} \\Phi_{\\rm e} \\, \\mathrm{d} x` where
+    :math:`\\Phi_{\\rm e} = \\bar v'_{\\rm a} \\, \\bar T'_{\\rm a}` is the eddy heat flux scaled with the
+    atmospheric specific heat capicity if available (through the `heat_capacity` argument or the
+    :attr:`~.AtmosphericTemperatureParams.gamma` parameter).
 
-    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=1.e7):
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+    temp_mean_state: MiddleLayerAtmosphericEddyHeatFluxDiagnostic, optional
+        A temperature diagnostic with a long trajectory as data to compute the mean temperature field.
+        If not provided, compute the mean with the data stored in the object.
+    vwind_mean_state: MiddleLayerAtmosphericVWindDiagnostic, optional
+        A :math:`v` wind diagnostic with a long trajectory as data to compute the mean wind field.
+        If not provided, compute the mean with the data stored in the object.
+    heat_capacity: float, optional
+        The air specific heat capacity. If not provided, uses the one of :attr:`~.AtmosphericTemperatureParams.gamma` if
+        available or or let the heat flux in K m s^{-1}.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True, temp_mean_state=None, vwind_mean_state=None, heat_capacity=None):
 
         ProfileDiagnostic.__init__(self, model_params, dimensional)
 
         self._flux = MiddleLayerAtmosphericEddyHeatFluxDiagnostic(model_params, delta_x, delta_y, dimensional, temp_mean_state, vwind_mean_state, heat_capacity)
         self._plot_title = r'Zonally averaged profile'
-        self._plot_units = r'W m$^{-1}$'
         self._plot_label = r'Atmospheric mid-layer eddy heat flux'
+        if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
+            self._plot_label += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_units = r'W m$^{-1}$'
+        else:
+            self._plot_label += r" $\bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_units = r'K m s$^{-1}$'
         self._axis_label = r'$y$'
         self._configure()
 

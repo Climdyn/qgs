@@ -499,6 +499,18 @@ Note that it is also possible to use other ordinary differential equations integ
     * :class:`.VariablesDiagnostic`: General class to get and show the scalar variables of the models.
     * :class:`.GeopotentialHeightDifferenceDiagnostic`: Class to compute and show the geopotential height difference
       between points of the model's domain.
+    * :class:`.AtmosphericWindDiagnostic`: General base class for atmospheric wind diagnostic.
+    * :class:`.LowerLayerAtmosphericVWindDiagnostic`: Diagnostic giving the lower layer atmospheric V wind fields :math:`\partial_x \psi^3_{\rm a}`.
+    * :class:`.LowerLayerAtmosphericUWindDiagnostic`: Diagnostic giving the lower layer atmospheric U wind fields :math:`- \partial_y \psi^3_{\rm a}`.
+    * :class:`.MiddleLayerAtmosphericVWindDiagnostic`: Diagnostic giving the middle layer atmospheric V wind fields :math:`\partial_x \psi_{\rm a}`.
+    * :class:`.MiddleLayerAtmosphericUWindDiagnostic`: Diagnostic giving the middle layer atmospheric U wind fields :math:`- \partial_y \psi_{\rm a}`.
+    * :class:`.UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\partial_x \psi^1_{\rm a}`.
+    * :class:`.UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \partial_y \psi^1_{\rm a}`.
+    * :class:`.LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
+    * :class:`.MiddleLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle layer atmospheric wind intensity fields.
+    * :class:`.UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
+    * :class:`.MiddleLayerAtmosphericEddyHeatFluxDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux field.
+    * :class:`.MiddleLayerAtmosphericEddyHeatFluxProfileDiagnostic`: Diagnostic giving the middle layer atmospheric eddy heat flux zonally averaged profile.
 
 More diagnostics will be implemented soon.
 

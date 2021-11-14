@@ -7,7 +7,16 @@
     Description of the classes
     --------------------------
 
-    * :class:``: .
+    * :class:`AtmosphericWindDiagnostic`: General base class for atmospheric wind diagnostic.
+    * :class:`LowerLayerAtmosphericVWindDiagnostic`: Diagnostic giving the lower layer atmospheric V wind fields :math:`\\partial_x \\psi^3_{\\rm a}`.
+    * :class:`LowerLayerAtmosphericUWindDiagnostic`: Diagnostic giving the lower layer atmospheric U wind fields :math:`- \\partial_y \\psi^3_{\\rm a}`.
+    * :class:`MiddleLayerAtmosphericVWindDiagnostic`: Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`.
+    * :class:`MiddleLayerAtmosphericUWindDiagnostic`: Diagnostic giving the middle layer atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}`.
+    * :class:`UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\\partial_x \\psi^1_{\\rm a}`.
+    * :class:`UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \\partial_y \\psi^1_{\\rm a}`.
+    * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
+    * :class:`MiddleLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle layer atmospheric wind intensity fields.
+    * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
 
 """
 
@@ -228,7 +237,7 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
 
 class MiddleLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}
+    """Diagnostic giving the middle layer atmospheric V wind fields :math:`\\partial_x \\psi_{\\rm a}`
     where :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
     See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
     and the thermal wind relation` sections.
