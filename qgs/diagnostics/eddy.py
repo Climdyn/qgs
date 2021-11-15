@@ -67,12 +67,12 @@ class MiddleAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
 
         self._plot_title = r'Eddy heat flux in the middle of the atmosphere'
         if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
-            self._plot_title += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_title += r" $\gamma_{\rm a} v'_{\rm a} \, T'_{\rm a}$"
             self._plot_units = r" (in " + r'W m$^{-1}$' + r")"
         else:
-            self._plot_title += r" $\bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_title += r" $v'_{\rm a} \, T'_{\rm a}$"
             self._plot_units = r" (in " + r'K m s$^{-1}$' + r")"
-        self._default_plot_kwargs['cmap'] = plt.get_cmap('hsv_r')
+        self._default_plot_kwargs['cmap'] = plt.get_cmap('magma')
         self._color_bar_format = False
 
         self._tdiag = MiddleAtmosphericTemperatureDiagnostic(model_params, delta_x, delta_y, dimensional)
@@ -168,10 +168,10 @@ class MiddleAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
         self._plot_title = r'Zonally averaged profile'
         self._plot_label = r'Middle atmospheric eddy heat flux'
         if heat_capacity is not None or model_params.atemperature_params.gamma is not None:
-            self._plot_label += r" $\gamma_{\rm a} \bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_label += r" $\gamma_{\rm a} \overline{v'_{\rm a} \, T'_{\rm a}}$"
             self._plot_units = r'W m$^{-1}$'
         else:
-            self._plot_label += r" $\bar v'_{\rm a} \, \bar T'_{\rm a}"
+            self._plot_label += r" $\overline{v'_{\rm a} \, T'_{\rm a}}$"
             self._plot_units = r'K m s$^{-1}$'
         self._axis_label = r'$y$'
         self._configure()
