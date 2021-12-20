@@ -259,7 +259,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
         return self._a_comp(k, k) * self._g_comp(i, j, k)
 
     def c(self, i, j):
-        """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \partial_x F_j)`."""
+        """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \\partial_x F_j)`."""
         if self.stored and self._c is not None:
             return self._c[i, j]
         else:
@@ -376,7 +376,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
         return val * n * par
 
     def s(self, i, j):
-        """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`."""
+        """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \\phi_j)`."""
         if self.stored and self._s is not None:
             return self._s[i, j]
         else:
@@ -416,7 +416,7 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
         return val
 
     def d(self, i, j):
-        """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`."""
+        """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \\phi_j)`."""
         if self.stored and self._d is not None:
             return self._d[i, j]
         else:
@@ -427,6 +427,12 @@ class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):
             return self._s_comp(i, j) * self.ocean_inner_products._M_comp(j, j)
         else:
             return 0
+
+    def z(self, i, j, k, l, m):
+        pass
+
+    def v(self, i, j, k, l, m):
+        pass
 
 
 class OceanicAnalyticInnerProducts(OceanicInnerProducts):
@@ -564,7 +570,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
     # !-----------------------------------------------------!
 
     def K(self, i, j):
-        """Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`."""
+        """Forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`."""
         if self.stored and self._K is not None:
             return self._K[i, j]
         else:
@@ -577,7 +583,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
             return 0
 
     def M(self, i, j):
-        """Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`."""
+        """Forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`."""
         if self.stored and self._M is not None:
             return self._M[i, j]
         else:
@@ -592,7 +598,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
             return 0
 
     def U(self, i, j):
-        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         if self.stored and self._U is not None:
             return self._U[i, j]
         else:
@@ -602,7 +608,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
         return _delta(i - j)
 
     def N(self, i, j):
-        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`."""
+        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`."""
         if self.stored and self._N is not None:
             return self._N[i, j]
         else:
@@ -622,7 +628,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
         return val
 
     def O(self, i, j, k):
-        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`"""
+        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\\phi_i, J(\\phi_j, \\phi_k))`"""
         if self.stored and self._O is not None:
             return self._O[i, j, k]
         else:
@@ -658,7 +664,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
         return par * val * n / 2
 
     def C(self, i, j, k):
-        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`."""
+        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\\phi_i, J(\\phi_j,\\nabla^2 \\phi_k))`."""
         if self.stored and self._C is not None:
             return self._C[i, j, k]
         else:
@@ -668,7 +674,7 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
         return self._M_comp(k, k) * self._O_comp(i, j, k)
 
     def W(self, i, j):
-        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\\phi_i, F_j)`."""
         if self.stored and self._W is not None:
             return self._W[i, j]
         else:
@@ -679,6 +685,12 @@ class OceanicAnalyticInnerProducts(OceanicInnerProducts):
             return self.atmosphere_inner_products._s_comp(j, i)
         else:
             return 0
+
+    def Z(self, i, j, k, l, m):
+        pass
+
+    def V(self, i, j, k, l, m):
+        pass
 
 
 class GroundAnalyticInnerProducts(GroundInnerProducts):
@@ -791,7 +803,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
     # !-----------------------------------------------------!
 
     def K(self, i, j):
-        """:math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`
+        """:math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`
 
         Warnings
         --------
@@ -799,7 +811,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return 0
 
     def M(self, i, j):
-        """:math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`
+        """:math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`
 
         Warnings
         --------
@@ -808,7 +820,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return 0
 
     def U(self, i, j):
-        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         if self.stored and self._U is not None:
             return self._U[i, j]
         else:
@@ -818,7 +830,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return _delta(i - j)
 
     def N(self, i, j):
-        """:math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`
+        """:math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`
 
         Warnings
         --------
@@ -827,7 +839,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return 0
 
     def O(self, i, j, k):
-        """:math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`
+        """:math:`O_{i,j,k} = (\\phi_i, J(\\phi_j, \\phi_k))`
 
         Warnings
         --------
@@ -836,7 +848,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return 0
 
     def C(self, i, j, k):
-        """:math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`
+        """:math:`C_{i,j,k} = (\\phi_i, J(\\phi_j,\\nabla^2 \\phi_k))`
 
         Warnings
         --------
@@ -845,7 +857,7 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
         return 0
 
     def W(self, i, j):
-        """Function to compute the short-wave radiative forcing of the ground: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        """Function to compute the short-wave radiative forcing of the ground: :math:`W_{i,j} = (\\phi_i, F_j)`."""
         if self.stored and self._W is not None:
             return self._W[i, j]
         else:
@@ -856,6 +868,12 @@ class GroundAnalyticInnerProducts(GroundInnerProducts):
             return self.atmosphere_inner_products._s_comp(j, i)
         else:
             return 0
+
+    def V(self, i, j, k, l, m):
+        pass
+
+    def Z(self, i, j, k, l, m):
+        pass
 
 
 def _piksort(arr):

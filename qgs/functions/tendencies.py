@@ -12,8 +12,8 @@ from numba import njit
 
 from qgs.inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts, GroundAnalyticInnerProducts
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-from qgs.tensors.qgtensor import QgsTensor
-from qgs.functions.sparse_mul import sparse_mul3, sparse_mul2
+from qgs.tensors.qgtensor import QgsTensor, QgsTensorT4
+from qgs.functions.sparse_mul import sparse_mul5, sparse_mul4, sparse_mul3, sparse_mul2
 
 
 def create_tendencies(params, return_inner_products=False, return_qgtensor=False):
@@ -81,26 +81,41 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
         if not aip.connected_to_ground:
             aip.connect_to_ground(gip)
 
-    agotensor = QgsTensor(params, aip, oip, gip)
+    if params.T4:
+        agotensor = QgsTensorT4(params, aip, oip, gip)
+    else:
+        agotensor = QgsTensor(params, aip, oip, gip)
 
     coo = agotensor.tensor.coords.T
     val = agotensor.tensor.data
 
-    @njit
-    def f(t, x):
-        xx = np.concatenate((np.full((1,), 1.), x))
-        xr = sparse_mul3(coo, val, xx, xx)
-
-        return xr[1:]
-
     jcoo = agotensor.jacobian_tensor.coords.T
     jval = agotensor.jacobian_tensor.data
 
-    @njit
-    def Df(t, x):
-        xx = np.concatenate((np.full((1,), 1.), x))
-        mul_jac = sparse_mul2(jcoo, jval, xx)
-        return mul_jac[1:, 1:]
+    if params.T4:
+        @njit
+        def f(t, x):
+            xx = np.concatenate((np.full((1,), 1.), x))
+            xr = sparse_mul5(coo, val, xx, xx, xx, xx)
+            return xr[1:]
+
+        @njit
+        def Df(t, x):
+            xx = np.concatenate((np.full((1,), 1.), x))
+            mul_jac = sparse_mul4(jcoo, jval, xx, xx, xx)
+            return mul_jac[1:, 1:]
+    else:
+        @njit
+        def f(t, x):
+            xx = np.concatenate((np.full((1,), 1.), x))
+            xr = sparse_mul3(coo, val, xx, xx)
+            return xr[1:]
+
+        @njit
+        def Df(t, x):
+            xx = np.concatenate((np.full((1,), 1.), x))
+            mul_jac = sparse_mul2(jcoo, jval, xx)
+            return mul_jac[1:, 1:]
 
     ret = list()
     ret.append(f)
@@ -116,6 +131,6 @@ if __name__ == '__main__':
     from qgs.params.params import QgParams
 
     params = QgParams()
-    params.set_atmospheric_channel_fourier_modes(2, 2)
-    params.set_oceanic_basin_fourier_modes(2, 4)
+    params.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
+    params.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
     f, Df = create_tendencies(params)

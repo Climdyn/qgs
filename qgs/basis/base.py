@@ -74,7 +74,6 @@ class SymbolicBasis(Basis):
     def __init__(self):
 
         Basis.__init__(self)
-
         self.substitutions = list()
 
     def subs_functions(self, extra_subs=None):
@@ -202,3 +201,4 @@ if __name__=="__main__":
 
     basis.substitutions.append(('n', 1.))
     basis.substitutions.append(('al', 1.))
+  

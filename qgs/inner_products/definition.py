@@ -403,4 +403,3 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
             return expr, (_x, 0, 2 * pi / _n), (_y, 0, pi)
         else:
             return self.integrate_over_domain(self.optimizer(expr), symbolic_expr=symbolic_expr)
-

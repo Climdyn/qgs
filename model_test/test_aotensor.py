@@ -49,8 +49,8 @@ class TestAnalyticAoTensor(TestBase):
         # Setting MAOOAM default parameters
         pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
 
-        aip = analytic.AtmosphericAnalyticInnerProducts(pars)
-        oip = analytic.OceanicAnalyticInnerProducts(pars)
+        aip = analytic.AtmosphericAnalyticInnerProducts(pars)  # , stored=False)
+        oip = analytic.OceanicAnalyticInnerProducts(pars)  # , stored=False)
         aip.connect_to_ocean(oip)
 
         aotensor = QgsTensor(pars, aip, oip)

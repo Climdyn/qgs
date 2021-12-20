@@ -2,7 +2,7 @@
     Inner products module (base class)
     ==================================
 
-    Abstract base classes of the structure containing the inner products :math:`(\cdot, \, \cdot)`  between the truncated set of basis functions :math:`\phi_i` for the ocean and
+    Abstract base classes of the structure containing the inner products :math:`(\\cdot, \\, \\cdot)`  between the truncated set of basis functions :math:`\phi_i` for the ocean and
     land fields, and :math:`F_i` for the atmosphere fields (see :ref:`files/model/oro_model:Projecting the equations on a set of basis functions`).
 
     Description of the classes
@@ -40,6 +40,8 @@ class AtmosphericInnerProducts(ABC):
         self._g = None
         self._d = None
         self._s = None
+        self._z = None
+        self._v = None
         self.stored = False
 
     # !-----------------------------------------------------!
@@ -68,7 +70,7 @@ class AtmosphericInnerProducts(ABC):
 
     @abstractmethod
     def c(self, i, j):
-        """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \partial_x F_j)`."""
+        """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \\partial_x F_j)`."""
         pass
 
     @abstractmethod
@@ -78,12 +80,22 @@ class AtmosphericInnerProducts(ABC):
 
     @abstractmethod
     def s(self, i, j):
-        """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \phi_j)`."""
+        """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \\phi_j)`."""
         pass
 
     @abstractmethod
     def d(self, i, j):
-        """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \phi_j)`."""
+        """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \\phi_j)`."""
+        pass
+
+    @abstractmethod
+    def z(self, i, j, k, l, m):
+        """Function to compute the :math:`T^4` temperature forcing for the radiation lost by atmosphere to space & ground/ocean: :math:`z_{i,j,k,l,m} = (F_i, F_j F_k F_l F_m)`."""
+        pass
+
+    @abstractmethod
+    def v(self, i, j, k, l, m):
+        """Function to compute the :math:`T^4` temperature forcing of the ocean on the atmosphere: :math:`v_{i,j,k,l,m} = (F_i, \\phi_j \\phi_k \\phi_l \\phi_m)`."""
         pass
 
     def save_to_file(self, filename, **kwargs):
@@ -131,6 +143,9 @@ class OceanicInnerProducts(ABC):
         self._C = None
         self._K = None
         self._W = None
+        self._V = None
+        self._Z = None
+
         self.stored = False
 
     # !-----------------------------------------------------!
@@ -145,37 +160,47 @@ class OceanicInnerProducts(ABC):
 
     @abstractmethod
     def M(self, i, j):
-        """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`."""
+        """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`."""
         pass
 
     @abstractmethod
     def U(self, i, j):
-        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         pass
 
     @abstractmethod
     def N(self, i, j):
-        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`."""
+        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`."""
         pass
 
     @abstractmethod
     def O(self, i, j, k):
-        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`"""
+        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\\phi_i, J(\\phi_j, \\phi_k))`"""
         pass
 
     @abstractmethod
     def C(self, i, j, k):
-        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`."""
+        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\\phi_i, J(\\phi_j,\\nabla^2 \\phi_k))`."""
         pass
 
     @abstractmethod
     def K(self, i, j):
-        """Function to compute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`."""
+        """Function to compute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`."""
         pass
 
     @abstractmethod
     def W(self, i, j):
-        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\\phi_i, F_j)`."""
+        pass
+
+    @abstractmethod
+    def Z(self, i, j, k, l, m):
+        """Function to compute the :math:`T^4` temperature forcing from the atmosphere to the ocean: :math:`Z_{i,j,k,l,m} = (\\phi_i, F_j, F_k, F_l, F_m)`."""
+        pass
+
+    @abstractmethod
+    def V(self, i, j, k, l, m):
+        """Function to compute the :math:`T^4` temperature forcing from the ocean to the atmosphere: :math:`V_{i,j,k,l,m} = (\\phi_i, \\phi_j, \\phi_k, \\phi_l, \\phi_m)`."""
         pass
 
     def save_to_file(self, filename, **kwargs):
@@ -223,6 +248,9 @@ class GroundInnerProducts(ABC):
         self._C = None
         self._K = None
         self._W = None
+        self._Z = None
+        self._V = None
+
         self.stored = False
 
     # !-----------------------------------------------------!
@@ -237,37 +265,45 @@ class GroundInnerProducts(ABC):
 
     @abstractmethod
     def K(self, i, j):
-        """Function to compute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\phi_i, \\nabla^2 F_j)`."""
+        """Function to compute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`."""
         pass
 
     @abstractmethod
     def M(self, i, j):
-        """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\phi_i, \\nabla^2 \phi_j)`."""
+        """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`."""
         pass
 
     @abstractmethod
     def U(self, i, j):
-        """Function to compute the inner products: :math:`U_{i,j} = (\phi_i, \phi_j)`."""
+        """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         pass
 
     @abstractmethod
     def N(self, i, j):
-        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\phi_i, \partial_x \phi_j)`."""
+        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`."""
         pass
 
     @abstractmethod
     def O(self, i, j, k):
-        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\phi_i, J(\phi_j, \phi_k))`"""
+        """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\\phi_i, J(\\phi_j, \\phi_k))`"""
         pass
 
     @abstractmethod
     def C(self, i, j, k):
-        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\phi_i, J(\phi_j,\\nabla^2 \phi_k))`."""
+        """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\\phi_i, J(\\phi_j,\\nabla^2 \\phi_k))`."""
         pass
 
     @abstractmethod
     def W(self, i, j):
-        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\phi_i, F_j)`."""
+        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\\phi_i, F_j)`."""
+        pass
+
+    @abstractmethod
+    def V(self, i, j, k, l, m):
+        pass
+
+    @abstractmethod
+    def Z(self, i, j, k, l, m):
         pass
 
     def save_to_file(self, filename, **kwargs):
