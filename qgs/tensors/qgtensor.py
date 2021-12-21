@@ -6,6 +6,7 @@
 
 """
 import warnings
+from contextlib import redirect_stdout
 
 import numpy as np
 import sparse as sp
@@ -13,9 +14,6 @@ import pickle
 import time
 
 real_eps = np.finfo(np.float64).eps
-
-# TODO: - Right now this code is not memory efficient and should be rewritten with uniquely sparse array.
-#       - This modification would also allow to increase the code optimization.
 
 
 class QgsTensor(object):
@@ -317,7 +315,8 @@ class QgsTensor(object):
 
                 if ocean:
                     for j in range(nvar[2]):
-                        val = - a_theta[i, :] @ aips._d[:, j]
+                        jo = j + offset  # skipping the theta 0 variable if it exists
+                        val = - a_theta[i, :] @ aips._d[:, jo]
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
                     if par.LSBpgo is not None and par.Lpa is not None:
@@ -515,9 +514,10 @@ class QgsTensor(object):
 
                 if ocean:
                     for j in range(nvar[2]):
+                        jo = j + offset  # skipping the theta 0 variable if it exists
                         val = 0
                         for jj in range(nvar[1]):
-                            val -= a_theta[i, jj] * aips.d(jj, j)
+                            val -= a_theta[i, jj] * aips.d(jj, jo)
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
                     if par.LSBpgo is not None and par.Lpa is not None:
@@ -652,7 +652,7 @@ class QgsTensor(object):
                 data = np.concatenate((data, values))
                 coords = np.concatenate((coords, new_coords), axis=1)
 
-        return sp.COO(coords, data, shape=shape, prune=True)
+        return sp.COO(coords, data, shape=shape)
 
     @staticmethod
     def _shift_tensor_coordinates(tensor, shift):
@@ -745,7 +745,7 @@ class QgsTensor(object):
 
         Parameters
         ----------
-        tensor_name: str
+        tensor_name: str, optional
             Specify the name to print beside the values of the tensor. Default to `QgsTensor`.
         """
         if not tensor_name:
@@ -753,12 +753,26 @@ class QgsTensor(object):
         for coo, val in zip(self.tensor.coords.T, self.tensor.data):
             self._string_format(print, tensor_name, coo, val)
 
+    def print_tensor_to_file(self, filename, tensor_name=""):
+        """Routine to print the tensor to a file.
+
+        Parameters
+        ----------
+        filename: str
+            The filename where to print the tensor.
+        tensor_name: str, optional
+            Specify the name to print beside the values of the tensor. Default to `QgsTensor`.
+        """
+        with open(filename, 'w') as f:
+            with redirect_stdout(f):
+                self.print_tensor(tensor_name)
+
     @staticmethod
     def _string_format(func, symbol, indices, value):
         if abs(value) >= real_eps:
             s = symbol
             for i in indices:
-                s += "["+str(i-1)+"]"
+                s += "["+str(i)+"]"
             s += " = % .5E" % value
             func(s)
 
@@ -983,7 +997,8 @@ class QgsTensorT4(QgsTensor):
 
                 if ocean:
                     for j in range(nvar[2]):
-                        val = - a_theta[i, :] @ aips._d[:, j]
+                        jo = j + offset  # skipping the theta 0 variable if it exists
+                        val = - a_theta[i, :] @ aips._d[:, jo]
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
                     if par.Lpa is not None:
@@ -1201,14 +1216,15 @@ class QgsTensorT4(QgsTensor):
                                 for m in range(nvar[1]):
                                     val = 0
                                     for jj in range(nvar[1]):
-                                        val += par.T4LSBpa * a_theta[i, jj] * aips._z[jj, j, k, ell, m]
-                                    t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = val
+                                        val += a_theta[i, jj] * aips.z(jj, j, k, ell, m)
+                                    t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = par.T4LSBpa * val
 
                 if ocean:
                     for j in range(nvar[2]):
+                        jo = j + offset  # skipping the theta 0 variable if it exists
                         val = 0
                         for jj in range(nvar[1]):
-                            val -= a_theta[i, jj] * aips.d(jj, j)
+                            val -= a_theta[i, jj] * aips.d(jj, jo)
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
                         if par.Lpa is not None:
@@ -1219,14 +1235,13 @@ class QgsTensorT4(QgsTensor):
                                 t[self._deltaT_o(j), 0] += val * par.Lpa / 2
 
                         if par.T4LSBpgo is not None:
-                            val = 0
                             for k in range(nvar[3]):
                                 for ell in range(nvar[3]):
                                     for m in range(nvar[3]):
                                         val = 0
                                         for jj in range(nvar[3]):
-                                            val -= par.T4LSBpgo * a_theta[i, jj] * aips._v[jj, j, k, ell, m]
-                                        t_full[self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)] = val
+                                            val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
+                                        t_full[self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)] = par.T4LSBpgo * val
 
                 if ground_temp:
                     if par.Lpa is not None:
@@ -1237,14 +1252,13 @@ class QgsTensorT4(QgsTensor):
                             t[self._deltaT_g(j), 0] += val * par.Lpa / 2
 
                     if par.T4LSBpgo is not None:
-                        val = 0
                         for k in range(nvar[2]):
                             for ell in range(nvar[2]):
                                 for m in range(nvar[2]):
                                     val = 0
                                     for jj in range(nvar[2]):
-                                        val -= par.T4LSBpgo * a_theta[i, jj] * aips._v[jj, j, k, ell, m]
-                                    t_full[self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)] = val
+                                        val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
+                                    t_full[self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)] = par.T4LSBpgo * val
 
                 sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
                 sparse_arrays_full_dict[self._theta_a(i)] = t_full.to_coo()
@@ -1304,7 +1318,7 @@ class QgsTensorT4(QgsTensor):
                                 for m in range(nvar[1]):
                                     val = 0
                                     for jj in range(nvar[3]):
-                                        val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
+                                        val += U_inv[i, jj] * bips.Z(jj, j, k, ell, m)
                                     t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = par.T4sbpa * val
 
                     for j in range(nvar[3]):
@@ -1315,7 +1329,7 @@ class QgsTensorT4(QgsTensor):
                                 for m in range(nvar[3]):
                                     val = 0
                                     for jj in range(nvar[3]):
-                                        val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
+                                        val -= U_inv[i, jj] * bips.V(jj, j, k, ell, m)
                                     t_full[self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)] = par.T4sbpgo * val
 
                     for j in range(nvar[2]):
@@ -1388,14 +1402,14 @@ if __name__ == '__main__':
 
     # Analytic test
 
-    # params = QgParams({'rr': 287.e0, 'sb': 5.6e-8})
-    # params.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
-    # params.set_atmospheric_channel_fourier_modes(2, 2)
-    # params.set_oceanic_basin_fourier_modes(2, 4)
-    # aip = AtmosphericAnalyticInnerProducts(params)
-    # oip = OceanicAnalyticInnerProducts(params)
-    # aip.connect_to_ocean(oip)
-    # agotensor = QgsTensor(params, aip, oip)
+    params = QgParams({'rr': 287.e0, 'sb': 5.6e-8})
+    params.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
+    params.set_atmospheric_channel_fourier_modes(2, 2)
+    params.set_oceanic_basin_fourier_modes(2, 4)
+    aip = AtmosphericAnalyticInnerProducts(params)
+    oip = OceanicAnalyticInnerProducts(params)
+    aip.connect_to_ocean(oip)
+    agotensor = QgsTensor(params, aip, oip)
 
     # Symbolic dynamic T test
 
@@ -1410,7 +1424,8 @@ if __name__ == '__main__':
 
     # Symbolic dynamic T4 test
 
-    pars = QgParams(T4=True)
+    pars = QgParams({'rr': 287.e0, 'sb': 5.6e-8}, T4=True)
+    pars.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
     pars.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
     pars.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
 
@@ -1425,4 +1440,4 @@ if __name__ == '__main__':
     # aip.load_from_file("aip.ip")
     # oip.load_from_file("oip.ip")
 
-    agotensor = QgsTensorT4(pars, aip, oip)
+    agotensor_t4 = QgsTensorT4(pars, aip, oip)
