@@ -140,8 +140,7 @@ class QgsTensor(object):
         """
         return i + self.params.variables_range[1] + 1
 
-    def compute_tensor(self):
-        """Routine to compute the tensor."""
+    def _compute_tensor_dicts(self):
 
         if self.params is None:
             return
@@ -175,8 +174,6 @@ class QgsTensor(object):
 
         if self.params.dynamic_T:
             offset = 1
-            warnings.warn('QgsTensor: Dynamical temperature is activated with linear temperature scheme.\n ' +
-                          'Results obtained with this model version might not be physically relevant!')
         else:
             offset = 0
 
@@ -308,8 +305,11 @@ class QgsTensor(object):
 
                 for j in range(nvar[1]):
                     val = a_theta[i, :] @ aips._u[:, j]
-                    if par.LSBpa is not None and par.Lpa is not None:
-                        t[self._theta_a(j), 0] += val * (par.LSBpa + atp.sc * par.Lpa)
+                    if par.Lpa is not None:
+                        t[self._theta_a(j), 0] += val * atp.sc * par.Lpa
+                    if par.LSBpa is not None:
+                        t[self._theta_a(j), 0] += val * par.LSBpa
+
                     if atp.hd is not None:
                         t[self._theta_a(j), 0] += val * atp.hd
 
@@ -319,16 +319,20 @@ class QgsTensor(object):
                         val = - a_theta[i, :] @ aips._d[:, jo]
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
-                    if par.LSBpgo is not None and par.Lpa is not None:
+                    if par.Lpa is not None:
                         for j in range(nvar[3]):
                             val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_o(j), 0] += val * (par.LSBpgo + par.Lpa / 2)
+                            t[self._deltaT_o(j), 0] += val * par.Lpa / 2
+                            if par.LSBpgo is not None:
+                                t[self._deltaT_o(j), 0] += val * par.LSBpgo
 
                 if ground_temp:
-                    if par.LSBpgo is not None and par.Lpa is not None:
+                    if par.Lpa is not None:
                         for j in range(nvar[2]):
                             val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_g(j), 0] += val * (par.LSBpgo + par.Lpa / 2)
+                            t[self._deltaT_g(j), 0] += val * par.Lpa / 2
+                            if par.LSBpgo is not None:
+                                t[self._deltaT_g(j), 0] += val * par.LSBpgo
 
                 sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
 
@@ -366,10 +370,14 @@ class QgsTensor(object):
 
                     for j in range(nvar[1]):
                         val = U_inv[i, :] @ bips._W[:, j]
-                        t[self._theta_a(j), 0] += val * (2 * atp.sc * par.Lpgo + par.sbpa)
+                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
+                        if par.sbpa is not None:
+                            t[self._theta_a(j), 0] += val * par.sbpa
 
                     for j in range(nvar[3]):
-                        t[self._deltaT_o(j), 0] = - (par.Lpgo + par.sbpgo) * _kronecker_delta(i, j)
+                        t[self._deltaT_o(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
+                        if par.sbpgo is not None:
+                            t[self._deltaT_o(j), 0] += - par.sbpgo * _kronecker_delta(i, j)
 
                     for j in range(nvar[2]):
                         for k in range(nvar[2]):
@@ -388,10 +396,14 @@ class QgsTensor(object):
 
                     for j in range(nvar[1]):
                         val = U_inv[i, :] @ bips._W[:, j]
-                        t[self._theta_a(j), 0] += val * (2 * atp.sc * par.Lpgo + par.sbpa)
+                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
+                        if par.sbpa is not None:
+                            t[self._theta_a(j), 0] += val * par.sbpa
 
                     for j in range(nvar[2]):
-                        t[self._deltaT_g(j), 0] = - (par.Lpgo + par.sbpgo) * _kronecker_delta(i, j)
+                        t[self._deltaT_g(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
+                        if par.sbpgo is not None:
+                            t[self._deltaT_g(j), 0] += - par.sbpgo * _kronecker_delta(i, j)
 
                     sparse_arrays_dict[self._deltaT_g(i)] = t.to_coo()
 
@@ -507,8 +519,11 @@ class QgsTensor(object):
                     for jj in range(nvar[1]):
                         val += a_theta[i, jj] * aips.u(jj, j)
 
-                    if par.LSBpa is not None and par.Lpa is not None:
-                        t[self._theta_a(j), 0] += val * (par.LSBpa + atp.sc * par.Lpa)
+                    if par.Lpa is not None:
+                        t[self._theta_a(j), 0] += val * atp.sc * par.Lpa
+                    if par.LSBpa is not None:
+                        t[self._theta_a(j), 0] += val * par.LSBpa
+
                     if atp.hd is not None:
                         t[self._theta_a(j), 0] += val * atp.hd
 
@@ -520,20 +535,24 @@ class QgsTensor(object):
                             val -= a_theta[i, jj] * aips.d(jj, jo)
                         t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
 
-                    if par.LSBpgo is not None and par.Lpa is not None:
+                    if par.Lpa is not None:
                         for j in range(nvar[3]):
                             val = 0
                             for jj in range(nvar[1]):
                                 val -= a_theta[i, jj] * aips.s(jj, j)
-                            t[self._deltaT_o(j), 0] += val * (par.LSBpgo + par.Lpa / 2)
+                            t[self._deltaT_o(j), 0] += val * par.Lpa / 2
+                            if par.LSBpgo is not None:
+                                t[self._deltaT_o(j), 0] += val * par.LSBpgo
 
                 if ground_temp:
-                    if par.LSBpgo is not None and par.Lpa is not None:
+                    if par.Lpa is not None:
                         for j in range(nvar[2]):
                             val = 0
                             for jj in range(nvar[1]):
                                 val -= a_theta[i, jj] * aips.s(jj, j)
-                            t[self._deltaT_g(j), 0] += val * (par.LSBpgo + par.Lpa / 2)
+                            t[self._deltaT_g(j), 0] += val * par.Lpa / 2
+                            if par.LSBpgo is not None:
+                                t[self._deltaT_g(j), 0] += val * par.LSBpgo
 
                 sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
 
@@ -583,10 +602,14 @@ class QgsTensor(object):
                         val = 0
                         for jj in range(nvar[3]):
                             val += U_inv[i, jj] * bips.W(jj, j)
-                        t[self._theta_a(j), 0] += val * (2 * atp.sc * par.Lpgo + par.sbpa)
+                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
+                        if par.sbpa is not None:
+                            t[self._theta_a(j), 0] += val * par.sbpa
 
                     for j in range(nvar[3]):
-                        t[self._deltaT_o(j), 0] = - (par.Lpgo + par.sbpgo) * _kronecker_delta(i, j)
+                        t[self._deltaT_o(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
+                        if par.sbpgo is not None:
+                            t[self._deltaT_o(j), 0] += - par.sbpgo * _kronecker_delta(i, j)
 
                     for j in range(nvar[2]):
                         for k in range(offset, nvar[3]):
@@ -609,14 +632,27 @@ class QgsTensor(object):
                         val = 0
                         for jj in range(nvar[2]):
                             val += U_inv[i, jj] * bips.W(jj, j)
-                        t[self._theta_a(j), 0] += val * (2 * atp.sc * par.Lpgo + par.sbpa)
+                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
+                        if par.sbpa is not None:
+                            t[self._theta_a(j), 0] += val * par.sbpa
 
                     for j in range(nvar[2]):
-                        t[self._deltaT_g(j), 0] = - (par.Lpgo + par.sbpgo) * _kronecker_delta(i, j)
+                        t[self._deltaT_g(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
+                        if par.sbpgo is not None:
+                            t[self._deltaT_g(j), 0] += - par.sbpgo * _kronecker_delta(i, j)
 
                     sparse_arrays_dict[self._deltaT_g(i)] = t.to_coo()
 
+        return sparse_arrays_dict
+
+    def compute_tensor(self):
+        """Routine to compute the tensor."""
         # gathering
+        par = self.params
+        ndim = par.ndim
+
+        sparse_arrays_dict = self._compute_tensor_dicts()
+
         tensor = sp.zeros((ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='coo')
         tensor = self._add_dict_to_tensor(sparse_arrays_dict, tensor)
         self._set_tensor(tensor)
@@ -817,8 +853,7 @@ class QgsTensorT4(QgsTensor):
 
         QgsTensor.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
 
-    def compute_tensor(self):
-        """Routine to compute the tensor."""
+    def _compute_tensor_dicts(self):
 
         if self.params is None:
             return
@@ -829,11 +864,7 @@ class QgsTensorT4(QgsTensor):
 
         aips = self.atmospheric_inner_products
         par = self.params
-        atp = par.atemperature_params
         ap = par.atmospheric_params
-        op = par.oceanic_params
-        scp = par.scale_params
-        gp = par.ground_params
         nvar = par.number_of_variables
         ndim = par.ndim
 
@@ -850,22 +881,8 @@ class QgsTensorT4(QgsTensor):
         else:
             ground_temp = False
 
-        if self.params.dynamic_T:
-            offset = 1
-        else:
-            offset = 0
-            warnings.warn('QgsTensor: Dynamical temperature is not activated with quartic temperature scheme.\n ' +
-                          'Results obtained with this model version might not be physically relevant!')
-
         # constructing some derived matrices
         if aips is not None:
-            a_inv = np.zeros((nvar[0], nvar[0]))
-            for i in range(offset, nvar[1]):
-                for j in range(offset, nvar[1]):
-                    a_inv[i - offset, j - offset] = aips.a(i, j)
-
-            a_inv = np.linalg.inv(a_inv)
-            a_inv = sp.COO(a_inv)
 
             a_theta = np.zeros((nvar[1], nvar[1]))
             for i in range(nvar[1]):
@@ -882,13 +899,6 @@ class QgsTensorT4(QgsTensor):
                         U_inv[i, j] = bips.U(i, j)
                 U_inv = np.linalg.inv(U_inv)
                 U_inv = sp.COO(U_inv)
-
-                M_psio = np.zeros((nvar[2], nvar[2]))
-                for i in range(offset, nvar[3]):
-                    for j in range(offset, nvar[3]):
-                        M_psio[i - offset, j - offset] = bips.M(i, j) + par.G * bips.U(i, j)
-                M_psio = np.linalg.inv(M_psio)
-                M_psio = sp.COO(M_psio)
             else:
                 U_inv = np.zeros((nvar[2], nvar[2]))
                 for i in range(nvar[2]):
@@ -904,313 +914,51 @@ class QgsTensorT4(QgsTensor):
         else:
             go = True
 
-        sparse_arrays_dict = dict()
         sparse_arrays_full_dict = dict()
 
         if aips.stored and go:
-            # psi_a part
-            for i in range(nvar[0]):
-                t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
-                for j in range(nvar[0]):
-
-                    jo = j + offset  # skipping the theta 0 variable if it exists
-
-                    val = a_inv[i, :] @ aips._c[offset:, jo]
-                    t[self._psi_a(j), 0] -= val * scp.beta
-
-                    t[self._psi_a(j), 0] -= (ap.kd * _kronecker_delta(i, j)) / 2
-                    t[self._theta_a(jo), 0] = (ap.kd * _kronecker_delta(i, j)) / 2
-
-                    if gp is not None:
-                        if gp.hk is not None:
-                            if gp.orographic_basis == "atmospheric":
-                                oro = a_inv[i, :] @ aips._g[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            else:
-                                oro = a_inv[i, :] @ aips._gh[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            t[self._psi_a(j), 0] -= oro / 2
-                            t[self._theta_a(jo), 0] += oro / 2
-
-                    for k in range(nvar[0]):
-                        ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] @ aips._b[offset:, jo, ko]
-                        t[self._psi_a(j), self._psi_a(k)] = - val
-                        t[self._theta_a(jo), self._theta_a(ko)] = - val
-                if ocean:
-                    for j in range(nvar[2]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] @ aips._d[offset:, jo]
-                        t[self._psi_o(j), 0] += val * ap.kd / 2
-
-                sparse_arrays_dict[self._psi_a(i)] = t.to_coo()
 
             # theta_a part
             for i in range(nvar[1]):
-                t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
                 sparse_arrays_full_dict[self._theta_a(i)] = list()
-
-                if par.Cpa is not None:
-                    t[0, 0] -= a_theta[i, :] @ aips._u @ sp.COO(par.Cpa.astype(float))  # not perfect
-
-                if atp.hd is not None and atp.thetas is not None:  # does not make sense to mix Newton cooling with T4, but who knows...
-                    val = - a_theta[i, :] @ aips._u @ sp.COO(atp.thetas.astype(float))  # not perfect
-                    t[0, 0] += val * atp.hd
-
-                for j in range(nvar[0]):
-
-                    jo = j + offset  # skipping the theta 0 variable if it exists
-
-                    val = a_theta[i, :] @ aips._a[:, jo]
-                    t[self._psi_a(j), 0] += val * ap.kd * ap.sig0 / 2
-                    t[self._theta_a(jo), 0] -= val * (ap.kd / 2 + 2 * ap.kdp) * ap.sig0
-
-                    val = - a_theta[i, :] @ aips._c[:, jo]
-                    t[self._theta_a(jo), 0] += val * scp.beta * ap.sig0
-
-                    if gp is not None:
-                        if gp.hk is not None:
-                            if gp.orographic_basis == "atmospheric":
-                                oro = a_theta[i, :] @ aips._g[:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            else:
-                                oro = a_theta[i, :] @ aips._gh[:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            t[self._theta_a(jo), 0] -= ap.sig0 * oro / 2
-                            t[self._psi_a(j), 0] += ap.sig0 * oro / 2
-
-                    for k in range(nvar[0]):
-                        ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = a_theta[i, :] @ aips._b[:, jo, ko]
-                        t[self._psi_a(j), self._theta_a(ko)] = - val * ap.sig0
-                        t[self._theta_a(jo), self._psi_a(k)] = - val * ap.sig0
-
-                        val = a_theta[i, :] @ aips._g[:, jo, ko]
-                        t[self._psi_a(j), self._theta_a(ko)] += val
-
-                for j in range(nvar[1]):
-                    val = a_theta[i, :] @ aips._u[:, j]
-                    if atp.hd is not None:
-                        t[self._theta_a(j), 0] += val * atp.hd
-                    if par.Lpa is not None:
-                        t[self._theta_a(j), 0] += val * atp.sc * par.Lpa
 
                 if par.T4LSBpa is not None:
                     sparse_arrays_full_dict[self._theta_a(i)].append(self._shift_tensor_coordinates(par.T4LSBpa * sp.tensordot(a_theta[i], aips._z, axes=1), self._theta_a(0)))
 
                 if ocean:
-                    for j in range(nvar[2]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = - a_theta[i, :] @ aips._d[:, jo]
-                        t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
-
-                    if par.Lpa is not None:
-                        for j in range(nvar[3]):
-                            val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_o(j), 0] += val * par.Lpa / 2
-
                     if par.T4LSBpgo is not None:
                         sparse_arrays_full_dict[self._theta_a(i)].append(self._shift_tensor_coordinates(- par.T4LSBpgo * sp.tensordot(a_theta[i], aips._v, axes=1),
                                                                                                         self._deltaT_o(0)))
 
                 if ground_temp:
-                    if par.Lpa is not None:
-                        for j in range(nvar[2]):
-                            val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_o(j), 0] += val * par.Lpa / 2
 
                     if par.T4LSBpgo is not None:
                         sparse_arrays_full_dict[self._theta_a(i)].append(self._shift_tensor_coordinates(- par.T4LSBpgo * sp.tensordot(a_theta[i], aips._v, axes=1),
                                                                                                         self._deltaT_g(0)))
 
-                sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
-
             if ocean:
-                # psi_o part
-                for i in range(nvar[2]):
-
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
-                    for j in range(nvar[0]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = M_psio[i, :] @ bips._K[offset:, jo] * op.d
-                        t[self._psi_a(j), 0] += val
-                        t[self._theta_a(jo), 0] -= val
-
-                    for j in range(nvar[2]):
-                        jo = j + offset  # skipping the T 0 variable if it exists
-                        val = - M_psio[i, :] @ bips._N[offset:, jo]
-                        t[self._psi_o(j), 0] += val * scp.beta
-
-                        val = - M_psio[i, :] @ bips._M[offset:, jo]
-                        t[self._psi_o(j), 0] += val * (op.r + op.d)
-
-                        for k in range(nvar[2]):
-                            ko = k + offset  # skipping the T 0 variable if it exists
-                            t[self._psi_o(j), self._psi_o(k)] -= M_psio[i, :] @ bips._C[offset:, jo, ko]
-
-                    sparse_arrays_dict[self._psi_o(i)] = t.to_coo()
 
                 # deltaT_o part
                 for i in range(nvar[3]):
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
-                    t[0, 0] += U_inv[i, :] @ bips._W @ sp.COO(par.Cpgo.astype(float))
-
-                    for j in range(nvar[1]):
-                        val = U_inv[i, :] @ bips._W[:, j]
-                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
-
-                    for j in range(nvar[3]):
-                        t[self._deltaT_o(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
-
-                    for j in range(nvar[2]):
-                        for k in range(nvar[2]):
-                            jo = j + offset  # skipping the T 0 variable if it exists
-                            ko = k + offset  # skipping the T 0 variable if it exists
-                            t[self._psi_o(j), self._deltaT_o(ko)] -= U_inv[i, :] @ bips._O[:, jo, ko]
-
                     sparse_arrays_full_dict[self._deltaT_o(i)] = list()
                     sparse_arrays_full_dict[self._deltaT_o(i)].append(self._shift_tensor_coordinates(par.T4sbpa * sp.tensordot(U_inv[i], bips._Z, axes=1), self._theta_a(0)))
                     sparse_arrays_full_dict[self._deltaT_o(i)].append(self._shift_tensor_coordinates(- par.T4sbpgo * sp.tensordot(U_inv[i], bips._V, axes=1), self._deltaT_o(0)))
-                    sparse_arrays_dict[self._deltaT_o(i)] = t.to_coo()
 
             # deltaT_g part
             if ground_temp:
                 for i in range(nvar[2]):
-
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-                    t[0, 0] += U_inv[i, :] @ bips._W @ sp.COO(par.Cpgo.astype(float))  # not perfect
-
-                    for j in range(nvar[1]):
-                        val = U_inv[i, :] @ bips._W[:, j]
-                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
-
-                    for j in range(nvar[2]):
-                        t[self._deltaT_g(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
-
                     sparse_arrays_full_dict[self._deltaT_g(i)] = list()
                     sparse_arrays_full_dict[self._deltaT_g(i)].append(self._shift_tensor_coordinates(par.T4sbpa * sp.tensordot(U_inv[i], bips._Z, axes=1), self._theta_a(0)))
                     sparse_arrays_full_dict[self._deltaT_g(i)].append(self._shift_tensor_coordinates(- par.T4sbpgo * sp.tensordot(U_inv[i], bips._V, axes=1), self._deltaT_g(0)))
-                    sparse_arrays_dict[self._deltaT_g(i)] = t.to_coo()
 
         else:
-            # psi_a part
-            for i in range(nvar[0]):
-                t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
-                for j in range(nvar[0]):
-
-                    jo = j + offset
-
-                    val = 0
-                    for jj in range(nvar[0]):
-                        val += a_inv[i, jj] * aips.c(offset + jj, jo)
-                    t[self._psi_a(j), 0] -= val * scp.beta
-
-                    t[self._psi_a(j), 0] -= (ap.kd * _kronecker_delta(i, j)) / 2
-                    t[self._theta_a(jo), 0] = (ap.kd * _kronecker_delta(i, j)) / 2
-
-                    if gp is not None:
-                        if gp.hk is not None:
-                            oro = 0
-                            if gp.orographic_basis == "atmospheric":
-                                for jj in range(nvar[0]):
-                                    for kk in range(nvar[0]):
-                                        oro += a_inv[i, jj] * aips.g(offset + jj, j, offset + kk) * gp.hk[kk]
-                            else:
-                                for jj in range(nvar[0]):
-                                    for kk in range(nvar[0]):
-                                        oro += a_inv[i, jj] * aips.gh(offset + jj, j, offset + kk) * gp.hk[kk]
-                            t[self._psi_a(j), 0] -= oro / 2
-                            t[self._theta_a(jo), 0] += oro / 2
-
-                    for k in range(nvar[0]):
-                        ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = 0
-                        for jj in range(nvar[0]):
-                            val += a_inv[i, jj] * aips.b(offset + jj, j, ko)
-                        t[self._psi_a(j), self._psi_a(k)] = - val
-                        t[self._theta_a(jo), self._theta_a(ko)] = - val
-                if ocean:
-                    for j in range(nvar[2]):
-                        jo = j + offset
-                        val = 0
-                        for jj in range(nvar[0]):
-                            val += a_inv[i, jj] * aips.d(offset + jj, jo)
-                        t[self._psi_o(j), 0] += val * ap.kd / 2
-
-                sparse_arrays_dict[self._psi_a(i)] = t.to_coo()
 
             # theta_a part
             for i in range(nvar[1]):
-                t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
                 t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
-                if par.Cpa is not None:
-                    for jj in range(nvar[1]):
-                        for kk in range(nvar[1]):
-                            t[0, 0] -= a_theta[i, jj] * aips.u(jj, kk) * par.Cpa[kk]
-
-                if atp.hd is not None and atp.thetas is not None:
-                    val = 0
-                    for jj in range(nvar[1]):
-                        for kk in range(nvar[1]):
-                            val -= a_theta[i, jj] * aips.u(jj, kk) * atp.thetas[kk]
-                    t[0, 0] += val * atp.hd
-
-                for j in range(nvar[0]):
-
-                    jo = j + offset  # skipping the theta 0 variable if it exists
-
-                    val = 0
-                    for jj in range(nvar[1]):
-                        val += a_theta[i, jj] * aips.a(jj, jo)
-                    t[self._psi_a(j), 0] += val * ap.kd * ap.sig0 / 2
-                    t[self._theta_a(jo), 0] -= val * (ap.kd / 2 + 2 * ap.kdp) * ap.sig0
-
-                    val = 0
-                    for jj in range(nvar[1]):
-                        val -= a_theta[i, jj] * aips.c(jj, j)
-                    t[self._theta_a(jo), 0] += val * scp.beta * ap.sig0
-
-                    if gp is not None:
-                        if gp.hk is not None:
-                            oro = 0
-                            if gp.orographic_basis == "atmospheric":
-                                for jj in range(nvar[1]):
-                                    for kk in range(nvar[0]):
-                                        oro += a_theta[i, jj] * aips.g(jj, jo, offset + kk) * gp.hk[kk]
-                            else:
-                                for jj in range(nvar[1]):
-                                    for kk in range(nvar[0]):
-                                        oro += a_theta[i, jj] * aips.gh(jj, j, offset + kk) * gp.hk[kk]
-                            t[self._theta_a(jo), 0] -= ap.sig0 * oro / 2
-                            t[self._psi_a(j), 0] += ap.sig0 * oro / 2
-
-                    for k in range(nvar[0]):
-                        ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = 0
-                        for jj in range(nvar[1]):
-                            val += a_theta[i, jj] * aips.b(jj, jo, ko)
-                        t[self._psi_a(j), self._theta_a(ko)] = - val * ap.sig0
-                        t[self._theta_a(jo), self._psi_a(k)] = - val * ap.sig0
-
-                        val = 0
-                        for jj in range(nvar[1]):
-                            val += a_theta[i, jj] * aips.g(jj, jo, ko)
-
-                        t[self._psi_a(j), self._theta_a(ko)] += val
-
-                for j in range(nvar[1]):
-
-                    val = 0
-                    for jj in range(nvar[1]):
-                        val += a_theta[i, jj] * aips.u(jj, j)
-
-                    if par.Lpa is not None:
-                        t[self._theta_a(j), 0] += val * atp.sc * par.Lpa
-                    if atp.hd is not None:
-                        t[self._theta_a(j), 0] += val * atp.hd
-
-                    if par.T4LSBpa is not None:
+                if par.T4LSBpa is not None:
+                    for j in range(nvar[1]):
                         for k in range(nvar[1]):
                             for ell in range(nvar[1]):
                                 for m in range(nvar[1]):
@@ -1220,21 +968,8 @@ class QgsTensorT4(QgsTensor):
                                     t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = par.T4LSBpa * val
 
                 if ocean:
-                    for j in range(nvar[2]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = 0
-                        for jj in range(nvar[1]):
-                            val -= a_theta[i, jj] * aips.d(jj, jo)
-                        t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
-
-                        if par.Lpa is not None:
-                            for j in range(nvar[3]):
-                                val = 0
-                                for jj in range(nvar[1]):
-                                    val -= a_theta[i, jj] * aips.s(jj, j)
-                                t[self._deltaT_o(j), 0] += val * par.Lpa / 2
-
-                        if par.T4LSBpgo is not None:
+                    if par.T4LSBpgo is not None:
+                        for j in range(nvar[2]):
                             for k in range(nvar[3]):
                                 for ell in range(nvar[3]):
                                     for m in range(nvar[3]):
@@ -1244,75 +979,26 @@ class QgsTensorT4(QgsTensor):
                                         t_full[self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)] = par.T4LSBpgo * val
 
                 if ground_temp:
-                    if par.Lpa is not None:
-                        for j in range(nvar[2]):
-                            val = 0
-                            for jj in range(nvar[1]):
-                                val -= a_theta[i, jj] * aips.s(jj, j)
-                            t[self._deltaT_g(j), 0] += val * par.Lpa / 2
-
                     if par.T4LSBpgo is not None:
-                        for k in range(nvar[2]):
-                            for ell in range(nvar[2]):
-                                for m in range(nvar[2]):
-                                    val = 0
-                                    for jj in range(nvar[2]):
-                                        val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
-                                    t_full[self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)] = par.T4LSBpgo * val
+                        for j in range(nvar[2]):
+                            for k in range(nvar[2]):
+                                for ell in range(nvar[2]):
+                                    for m in range(nvar[2]):
+                                        val = 0
+                                        for jj in range(nvar[2]):
+                                            val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
+                                        t_full[self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)] = par.T4LSBpgo * val
 
-                sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
                 sparse_arrays_full_dict[self._theta_a(i)] = t_full.to_coo()
 
             if ocean:
-                # psi_o part
-                for i in range(nvar[2]):
-
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
-                    for j in range(nvar[0]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-
-                        for jj in range(nvar[2]):
-                            val = M_psio[i, jj] * bips.K(offset + jj, jo) * op.d
-                            t[self._psi_a(j), 0] += val
-                            t[self._theta_a(jo), 0] -= val
-
-                    for j in range(nvar[2]):
-                        jo = j + offset  # skipping the T 0 variable if it exists
-
-                        val = 0
-                        for jj in range(nvar[2]):
-                            val -= M_psio[i, jj] * bips.N(offset + jj, jo)
-                        t[self._psi_o(j), 0] += val * scp.beta
-
-                        val = 0
-                        for jj in range(nvar[2]):
-                            val -= M_psio[i, jj] * bips.M(offset + jj, jo)
-                        t[self._psi_o(j), 0] += val * (op.r + op.d)
-
-                        for k in range(nvar[2]):
-                            ko = k + offset  # skipping the T 0 variable if it exists
-                            for jj in range(nvar[2]):
-                                t[self._psi_o(j), self._psi_o(k)] -= M_psio[i, jj] * bips.C(offset + jj, jo, ko)
-
-                    sparse_arrays_dict[self._psi_o(i)] = t.to_coo()
 
                 # deltaT_o part
                 for i in range(nvar[3]):
 
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
                     t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
-                    for jj in range(nvar[1]):
-                        for kk in range(nvar[3]):
-                            t[0, 0] += U_inv[i, kk] * bips.W(kk, jj) * par.Cpgo[jj]
-
                     for j in range(nvar[1]):
-                        val = 0
-                        for jj in range(nvar[3]):
-                            val += U_inv[i, jj] * bips.W(jj, j)
-                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
-
                         for k in range(nvar[1]):
                             for ell in range(nvar[1]):
                                 for m in range(nvar[1]):
@@ -1322,8 +1008,6 @@ class QgsTensorT4(QgsTensor):
                                     t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = par.T4sbpa * val
 
                     for j in range(nvar[3]):
-                        t[self._deltaT_o(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
-
                         for k in range(nvar[3]):
                             for ell in range(nvar[3]):
                                 for m in range(nvar[3]):
@@ -1332,32 +1016,15 @@ class QgsTensorT4(QgsTensor):
                                         val -= U_inv[i, jj] * bips.V(jj, j, k, ell, m)
                                     t_full[self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)] = par.T4sbpgo * val
 
-                    for j in range(nvar[2]):
-                        for k in range(offset, nvar[3]):
-                            jo = j + offset  # skipping the T 0 variable if it exists
-                            for jj in range(nvar[3]):
-                                t[self._psi_o(j), self._deltaT_o(k)] -= U_inv[i, jj] * bips.O(jj, jo, k)
-
-                    sparse_arrays_dict[self._deltaT_o(i)] = t.to_coo()
                     sparse_arrays_full_dict[self._deltaT_o(i)] = t_full.to_coo()
 
             # deltaT_g part
             if ground_temp:
                 for i in range(nvar[2]):
 
-                    t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
                     t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
-                    for jj in range(nvar[1]):
-                        for kk in range(nvar[2]):
-                            t[0, 0] += U_inv[i, kk] * bips.W(kk, jj) * par.Cpgo[jj]
-
                     for j in range(nvar[1]):
-                        val = 0
-                        for jj in range(nvar[2]):
-                            val += U_inv[i, jj] * bips.W(jj, j)
-                        t[self._theta_a(j), 0] += val * 2 * atp.sc * par.Lpgo
-
                         for k in range(nvar[1]):
                             for ell in range(nvar[1]):
                                 for m in range(nvar[1]):
@@ -1367,8 +1034,6 @@ class QgsTensorT4(QgsTensor):
                                     t_full[self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)] = par.T4sbpa * val
 
                     for j in range(nvar[2]):
-                        t[self._deltaT_g(j), 0] = - par.Lpgo * _kronecker_delta(i, j)
-
                         for k in range(nvar[2]):
                             for ell in range(nvar[2]):
                                 for m in range(nvar[2]):
@@ -1377,8 +1042,18 @@ class QgsTensorT4(QgsTensor):
                                         val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                                     t_full[self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)] = par.T4sbpgo * val
 
-                    sparse_arrays_dict[self._deltaT_g(i)] = t.to_coo()
                     sparse_arrays_full_dict[self._deltaT_g(i)] = t_full.to_coo()
+
+        return sparse_arrays_full_dict
+
+    def compute_tensor(self):
+        """Routine to compute the tensor."""
+        # gathering
+        par = self.params
+        ndim = par.ndim
+
+        sparse_arrays_dict = QgsTensor._compute_tensor_dicts(self)
+        sparse_arrays_full_dict = self._compute_tensor_dicts()
 
         tensor = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='coo')
         tensor = self._add_dict_to_tensor(sparse_arrays_dict, tensor)
