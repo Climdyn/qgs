@@ -69,8 +69,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
         If `None` or `False`, no timeout occurs.
         Default to `None`.
+    dynTinnerproducts: bool, optional
+        If the inner products are stored, allow to compute or not the inner products corresponding to the dynamic temperature tendencies.
+        Supersedes the parameters in params if provided.
+        Default to `False`.
     T4innerproducts: bool, optional
         If the inner products are stored, allow to compute or not the inner products corresponding to the :math:`T^4` tendencies.
+        Compute the inner products corresponding to the dynamic temperature tendencies as well.
         Supersedes the parameters in params if provided.
         Default to `False`.
 
@@ -96,10 +101,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """
 
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
 
         AtmosphericInnerProducts.__init__(self)
 
+        self.quadrature = quadrature
         if quadrature:
             timeout = True
 
@@ -122,6 +128,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = params.T4
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = params.dynamic_T
             else:
                 self.n = params[0]
                 self.atmospheric_basis = params[1]
@@ -132,6 +142,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = False
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = False
             self._gh = None
         else:  # initialize an empty inner product object
             self.n = None
@@ -145,6 +159,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 self._T4 = T4innerproducts
             else:
                 self._T4 = False
+            if dynTinnerproducts is not None:
+                self._dynamic_T = dynTinnerproducts
+            else:
+                self._dynamic_T = False
 
         self.oceanic_basis = None
         self.connected_to_ocean = False
@@ -219,7 +237,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 self._gh = None
                 self._d = sp.zeros((self.natm, noc), dtype=float, format='dok')
                 self._s = sp.zeros((self.natm, noc), dtype=float, format='dok')
-                if self._T4:
+                if self._T4 or self._dynamic_T:
                     self._v = sp.zeros((self.natm, noc, noc, noc, noc), dtype=float, format='dok')
 
                 # d inner products
@@ -240,10 +258,16 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                                  for j in range(noc) for k in range(j, noc) for ell in range(k, noc) for m in range(ell, noc)]
 
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                elif self._dynamic_T:
+                    # v inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.natm)
+                                 for m in range(noc)]
+
+                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
             self._s = self._s.to_coo()
             self._d = self._d.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._v = self._v.to_coo()
 
     def connect_to_ground(self, ground_basis, orographic_basis, num_threads=None, timeout=None):
@@ -290,7 +314,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     self._gh = sp.zeros((self.natm, self.natm, ngr), dtype=float, format='dok')
                 self._d = None
                 self._s = sp.zeros((self.natm, ngr), dtype=float, format='dok')
-                if self._T4:
+                if self._T4 or self._dynamic_T:
                     self._v = sp.zeros((self.natm, ngr, ngr, ngr, ngr), dtype=float, format='dok')
 
                 # s inner products
@@ -311,11 +335,17 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                                  for j in range(ngr) for k in range(j, ngr) for ell in range(k, ngr) for m in range(ell, ngr)]
 
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                elif self._dynamic_T:
+                    # v inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.natm)
+                                 for m in range(ngr)]
+
+                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
             self._s = self._s.to_coo()
             if self._gh is not None:
                 self._gh = self._gh.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._v = self._v.to_coo()
 
     def compute_inner_products(self, num_threads=None, timeout=None):
@@ -338,7 +368,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self._c = sp.zeros((self.natm, self.natm), dtype=float, format='dok')
         self._b = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
         self._g = sp.zeros((self.natm, self.natm, self.natm), dtype=float, format='dok')
-        if self._T4:
+        if self._T4 or self._dynamic_T:
             self._z = sp.zeros((self.natm, self.natm, self.natm, self.natm, self.natm), dtype=float, format='dok')
 
         if self.stored:
@@ -385,13 +415,19 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                                  for j in range(self.natm) for k in range(j, self.natm) for ell in range(k, self.natm) for m in range(ell, self.natm)]
 
                     _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
+                elif self._dynamic_T:
+                    # z inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.natm)
+                                 for m in range(self.natm)]
+
+                    _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
 
             self._a = self._a.to_coo()
             self._u = self._u.to_coo()
             self._c = self._c.to_coo()
             self._g = self._g.to_coo()
             self._b = self._b.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._z = self._z.to_coo()
 
     @property
@@ -403,114 +439,142 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     # ! Inner products in the equations for the atmosphere  !
     # !-----------------------------------------------------!
 
+    def _integrate(self, subs, args):
+        if self.quadrature:
+            res = _num_apply(args)
+            return res[1]
+        else:
+            res = _apply(args)[1]
+            return float(res.subs(subs))
+
     def a(self, i, j):
         """Function to compute the matrix of the eigenvalues of the Laplacian (atmospheric): :math:`a_{i, j} = (F_i, {\\nabla}^2 F_j)`."""
         if not self.stored:
-            res = self.ip.ip_lap(self._F(i), self._F(j))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j), self.ip.ip_lap, (self._F(i), self._F(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._a[i, j]
 
     def u(self, i, j):
         """Function to compute the matrix of inner product: :math:`u_{i, j} = (F_i, F_j)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._F(i), self._F(j))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._u[i, j]
 
     def b(self, i, j, k):
         """Function to compute the tensors holding the Jacobian inner products: :math:`b_{i, j, k} = (F_i, J(F_j, \\nabla^2 F_k))`."""
         if not self.stored:
-            res = self.ip.ip_jac_lap(self._F(i), self._F(j), self._F(k))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k)), subs)
+            return self._integrate(subs, args)
         else:
             return self._b[i, j, k]
 
     def c(self, i, j):
         """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \\partial_x F_j)`."""
         if not self.stored:
-            res = self.ip.ip_diff_x(self._F(i), self._F(j))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j), self.ip.ip_diff_x, (self._F(i), self._F(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._c[i, j]
 
     def g(self, i, j, k):
         """Function to compute tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, F_k))`."""
         if not self.stored:
-            res = self.ip.ip_jac(self._F(i), self._F(j), self._F(k))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k)), subs)
+            return self._integrate(subs, args)
         else:
             return self._g[i, j, k]
 
     def gh(self, i, j, k):
         """Function to compute tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, \\phi_k))`."""
-        if self.connected_to_ocean:
-            extra_subs = self.oceanic_basis.substitutions
-        elif self.connected_to_ground:
-            extra_subs = self.ground_basis.substitutions
-        else:
-            extra_subs = None
 
         if self.oceanic_basis or self.connected_to_ground:
             if self.stored and self._gh is not None:
                 return self._gh[i, j, k]
             else:
-                res = self.iip.ip_jac(self._F(i), self._F(j), self._phi(k))
-                return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
+                if self.connected_to_ocean:
+                    extra_subs = self.oceanic_basis.substitutions
+                elif self.connected_to_ground:
+                    extra_subs = self.ground_basis.substitutions
+                else:
+                    extra_subs = None
 
+                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                args = ((i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k)), subs)
+                return self._integrate(subs, args)
         else:
             return 0
 
     def s(self, i, j):
         """Function to compute the forcing (thermal) of the ocean on the atmosphere: :math:`s_{i,j} = (F_i, \\phi_j)`."""
-        if self.connected_to_ocean:
-            extra_subs = self.oceanic_basis.substitutions
-        elif self.connected_to_ground:
-            extra_subs = self.ground_basis.substitutions
-        else:
-            extra_subs = None
-
         if self.connected_to_ocean or self.connected_to_ground:
             if self.stored and self._s is not None:
                 return self._s[i, j]
             else:
-                res = self.iip.symbolic_inner_product(self._F(i), self._phi(j))
-                return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
+                if self.connected_to_ocean:
+                    extra_subs = self.oceanic_basis.substitutions
+                elif self.connected_to_ground:
+                    extra_subs = self.ground_basis.substitutions
+                else:
+                    extra_subs = None
+
+                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                args = ((i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j)), subs)
+                return self._integrate(subs, args)
         else:
             return 0
 
     def d(self, i, j):
         """Function to compute the forcing of the ocean on the atmosphere: :math:`d_{i,j} = (F_i, \\nabla^2 \\phi_j)`."""
-        if self.connected_to_ocean:
-            extra_subs = self.oceanic_basis.substitutions
-        elif self.connected_to_ground:
-            extra_subs = self.ground_basis.substitutions
-        else:
-            extra_subs = None
-
         if self.connected_to_ocean or self.connected_to_ground:
             if self.stored and self._d is not None:
                 return self._d[i, j]
             else:
-                res = self.iip.ip_lap(self._F(i), self._phi(j))
-                return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(extra_subs))
+                if self.connected_to_ocean:
+                    extra_subs = self.oceanic_basis.substitutions
+                elif self.connected_to_ground:
+                    extra_subs = self.ground_basis.substitutions
+                else:
+                    extra_subs = None
+
+                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                args = ((i, j), self.iip.ip_lap, (self._F(i), self._phi(j)), subs)
+                return self._integrate(subs, args)
         else:
             return 0
 
     def z(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing for the radiation lost by atmosphere to space & ground/ocean: :math:`z_{i,j,k,l,m} = (F_i, F_j F_k F_l F_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._F(i), self._F(j) * self._F(k) * self._F(l) * self._F(m))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._F(i), self._F(j) * self._F(k) * self._F(l) * self._F(m)), subs)
+            if self.quadrature:
+                res = _num_apply(args)
+                return res[1]
+            else:
+                res = _apply(args)[1]
+                return float(res.subs(subs))
         else:
             return self._z[i, j, k, l, m]
 
     def v(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing of the ocean on the atmosphere: :math:`v_{i,j,k,l,m} = (F_i, \\phi_j \\phi_k \\phi_l \\phi_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._F(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m))
-            return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions))
+            subs = self.subs + self.atmospheric_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m)), subs)
+            if self.quadrature:
+                res = _num_apply(args)
+                return res[1]
+            else:
+                res = _apply(args)[1]
+                return float(res.subs(subs))
         else:
             return self._v[i, j, k, l, m]
 
@@ -546,8 +610,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
         If `None` or `False`, no timeout occurs.
         Default to `None`.
+    dynTinnerproducts: bool, optional
+        If the inner products are stored, allow to compute or not the inner products corresponding to the dynamic temperature tendencies.
+        Supersedes the parameters in params if provided.
+        Default to `False`.
     T4innerproducts: bool, optional
         If the inner products are stored, allow to compute or not the inner products corresponding to the :math:`T^4` tendencies.
+        Compute the inner products corresponding to the dynamic temperature tendencies as well.
         Supersedes the parameters in params if provided.
         Default to `False`.
 
@@ -572,10 +641,11 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         symbolic computation.
     """
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
 
         OceanicInnerProducts.__init__(self)
 
+        self.quadrature = quadrature
         if quadrature:
             timeout = True
 
@@ -588,6 +658,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = params.T4
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = params.dynamic_T
             else:
                 self.n = params[0]
                 self.oceanic_basis = params[1]
@@ -596,6 +670,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = False
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = False
         else:
             self.n = None
             self.oceanic_basis = None
@@ -605,6 +683,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 self._T4 = T4innerproducts
             else:
                 self._T4 = False
+            if dynTinnerproducts is not None:
+                self._dynamic_T = dynTinnerproducts
+            else:
+                self._dynamic_T = False
 
         self.atmospheric_basis = None
         self.connected_to_atmosphere = False
@@ -669,7 +751,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 natm = len(atmosphere_basis)
                 self._K = sp.zeros((self.noc, natm), dtype=float, format='dok')
                 self._W = sp.zeros((self.noc, natm), dtype=float, format='dok')
-                if self._T4:
+                if self._T4 or self._dynamic_T:
                     self._Z = sp.zeros((self.noc, natm, natm, natm, natm), dtype=float, format='dok')
 
                 # K inner products
@@ -690,10 +772,16 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                                  for j in range(natm) for k in range(j, natm) for ell in range(k, natm) for m in range(ell, natm)]
 
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
+                elif self._dynamic_T:
+                    # Z inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.noc)
+                                 for m in range(natm)]
+
+                    _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
 
             self._K = self._K.to_coo()
             self._W = self._W.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._Z = self._Z.to_coo()
 
     def compute_inner_products(self, num_threads=None, timeout=None):
@@ -716,7 +804,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         self._N = sp.zeros((self.noc, self.noc), dtype=float, format='dok')
         self._O = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
         self._C = sp.zeros((self.noc, self.noc, self.noc), dtype=float, format='dok')
-        if self._T4:
+        if self._T4 or self._dynamic_T:
             self._V = sp.zeros((self.noc, self.noc, self.noc, self.noc, self.noc), dtype=float, format='dok')
 
         if self.stored:
@@ -760,13 +848,19 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                                  for j in range(self.noc) for k in range(j, self.noc) for ell in range(k, self.noc) for m in range(ell, self.noc)]
 
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
+                elif self._dynamic_T:
+                    # V inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.noc)
+                                 for m in range(self.noc)]
+
+                    _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
 
             self._M = self._M.to_coo()
             self._U = self._U.to_coo()
             self._N = self._N.to_coo()
             self._O = self._O.to_coo()
             self._C = self._C.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._V = self._V.to_coo()
             
     @property
@@ -778,43 +872,56 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
     # ! Inner products in the equations for the ocean       !
     # !-----------------------------------------------------!
 
+    def _integrate(self, subs, args):
+        if self.quadrature:
+            res = _num_apply(args)
+            return res[1]
+        else:
+            res = _apply(args)[1]
+            return float(res.subs(subs))
+
     def M(self, i, j):
         """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`."""
         if not self.stored:
-            res = self.ip.ip_lap(self._phi(i), self._phi(j))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j), self.ip.ip_lap, (self._phi(i), self._phi(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._M[i, j]
 
     def U(self, i, j):
         """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._phi(j))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._U[i, j]
 
     def N(self, i, j):
         """Function computing the beta term for the ocean: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`."""
         if not self.stored:
-            res = self.ip.ip_diff_x(self._phi(i), self._phi(j))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._N[i, j]
 
     def O(self, i, j, k):
         """Function to compute the temperature advection term (passive scalar): :math:`O_{i,j,k} = (\\phi_i, J(\\phi_j, \\phi_k))`"""
         if not self.stored:
-            res = self.ip.ip_jac(self._phi(i), self._phi(j), self._phi(k))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j, k), self.ip.ip_jac, (self._phi(i), self._phi(j), self._phi(k)), subs)
+            return self._integrate(subs, args)
         else:
             return self._O[i, j, k]
 
     def C(self, i, j, k):
         """Function to compute the tensors holding the Jacobian inner products: :math:`C_{i,j,k} = (\\phi_i, J(\\phi_j,\\nabla^2 \\phi_k))`."""
         if not self.stored:
-            res = self.ip.ip_jac_lap(self._phi(i), self._phi(j), self._phi(k))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j, k), self.ip.ip_jac_lap, (self._phi(i), self._phi(j), self._phi(k)), subs)
+            return self._integrate(subs, args)
         else:
             return self._C[i, j, k]
 
@@ -822,8 +929,9 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         """Function to commpute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.iip.ip_lap(self._phi(i), self._F(j))
-                return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions).subs(self.atmospheric_basis.substitutions))
+                subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
+                args = ((i, j), self.iip.ip_lap, (self._phi(i), self._F(j)), subs)
+                return self._integrate(subs, args)
             else:
                 return self._K[i, j]
         else:
@@ -833,8 +941,9 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\\phi_i, F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.iip.symbolic_inner_product(self._phi(i), self._F(j))
-                return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(self.oceanic_basis.substitutions))
+                subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
+                args = ((i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j)), subs)
+                return self._integrate(subs, args)
             else:
                 return self._W[i, j]
         else:
@@ -843,16 +952,18 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
     def V(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing from the ocean to the atmosphere: :math:`V_{i,j,k,l,m} = (\\phi_i, \\phi_j, \\phi_k, \\phi_l, \\phi_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m)), subs)
+            return self._integrate(subs, args)
         else:
             return self._V[i, j, k, l, m]
 
     def Z(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing from the atmosphere to the ocean: :math:`Z_{i,j,k,l,m} = (\\phi_i, F_j, F_k, F_l, F_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._F(j) * self._F(k) * self._F(l) * self._F(m))
-            return float(res.subs(self.subs).subs(self.oceanic_basis.substitutions))
+            subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(j) * self._F(k) * self._F(l) * self._F(m)), subs)
+            return self._integrate(subs, args)
         else:
             return self._Z[i, j, k, l, m]
 
@@ -888,8 +999,13 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         The timeout for the computation of each inner product. After the timeout, compute the inner product with a quadrature instead of symbolic integration.
         If `None` or `False`, no timeout occurs.
         Default to `None`.
+    dynTinnerproducts: bool, optional
+        If the inner products are stored, allow to compute or not the inner products corresponding to the dynamic temperature tendencies.
+        Supersedes the parameters in params if provided.
+        Default to `False`.
     T4innerproducts: bool, optional
         If the inner products are stored, allow to compute or not the inner products corresponding to the :math:`T^4` tendencies.
+        Compute the inner products corresponding to the dynamic temperature tendencies as well.
         Default to `False`.
 
     Attributes
@@ -914,10 +1030,11 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     """
 
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
 
         GroundInnerProducts.__init__(self)
 
+        self.quadrature = quadrature
         if quadrature:
             timeout = True
 
@@ -930,6 +1047,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = params.T4
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = params.dynamic_T
             else:
                 self.n = params[0]
                 self.ground_basis = params[1]
@@ -938,6 +1059,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     self._T4 = T4innerproducts
                 else:
                     self._T4 = False
+                if dynTinnerproducts is not None:
+                    self._dynamic_T = dynTinnerproducts
+                else:
+                    self._dynamic_T = False
         else:
             self.n = None
             self.ground_basis = None
@@ -947,6 +1072,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                 self._T4 = T4innerproducts
             else:
                 self._T4 = False
+            if dynTinnerproducts is not None:
+                self._dynamic_T = dynTinnerproducts
+            else:
+                self._dynamic_T = False
 
         self.atmospheric_basis = None
         self.connected_to_atmosphere = False
@@ -1009,7 +1138,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
                 natm = len(atmosphere_basis)
                 self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
-                if self._T4:
+                if self._T4 or self._dynamic_T:
                     self._Z = sp.zeros((self.ngr, natm, natm, natm, natm), dtype=float, format='dok')
 
                 # W inner products
@@ -1023,9 +1152,15 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                                  for j in range(natm) for k in range(j, natm) for ell in range(k, natm) for m in range(ell, natm)]
 
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
+                elif self._dynamic_T:
+                    # Z inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.ngr)
+                                 for m in range(natm)]
+
+                    _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
 
             self._W = self._W.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._Z = self._Z.to_coo()
 
     def compute_inner_products(self, num_threads=None, timeout=None):
@@ -1044,7 +1179,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         """
 
         self._U = sp.zeros((self.ngr, self.ngr), dtype=float, format='dok')
-        if self._T4:
+        if self._T4 or self._dynamic_T:
             self._V = sp.zeros((self.ngr, self.ngr, self.ngr, self.ngr, self.ngr), dtype=float, format='dok')
 
         if self.stored:
@@ -1064,9 +1199,15 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                                  for j in range(self.ngr) for k in range(j, self.ngr) for ell in range(k, self.ngr) for m in range(ell, self.ngr)]
 
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
+                elif self._dynamic_T:
+                    # V inner products
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.ngr)
+                                 for m in range(self.ngr)]
+
+                    _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
 
             self._U = self._U.to_coo()
-            if self._T4:
+            if self._T4 or self._dynamic_T:
                 self._V = self._V.to_coo()
 
     @property
@@ -1078,20 +1219,30 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     # ! Inner products in the equations for the ocean       !
     # !-----------------------------------------------------!
 
+    def _integrate(self, subs, args):
+        if self.quadrature:
+            res = _num_apply(args)
+            return res[1]
+        else:
+            res = _apply(args)[1]
+            return float(res.subs(subs))
+
     def K(self, i, j):
-        """Function to commpute the forcing of the ocean by the atmosphere: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`.
+        """Function to commpute the forcing: :math:`K_{i,j} = (\\phi_i, \\nabla^2 F_j)`.
 
         Warnings
         --------
-        Not defined and not used."""
+        Not defined and not used.
+        """
         return 0
 
     def M(self, i, j):
-        """Function to compute the forcing of the ocean fields on the ocean: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`.
+        """Function to compute the forcing: :math:`M_{i,j} = (\\phi_i, \\nabla^2 \\phi_j)`.
 
         Warnings
         --------
-        Not defined and not used."""
+        Not defined and not used.
+        """
         return 0
 
     def U(self, i, j):
@@ -1103,11 +1254,12 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             return self._U[i, j]
 
     def N(self, i, j):
-        """Function computing the beta term for the ocean: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`.
+        """Function computing the beta term: :math:`N_{i,j} = (\\phi_i, \\partial_x \\phi_j)`.
 
         Warnings
         --------
-        Not defined and not used."""
+        Not defined and not used.
+        """
         return 0
 
     def O(self, i, j, k):
@@ -1115,7 +1267,8 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
         Warnings
         --------
-        Not defined and not used."""
+        Not defined and not used.
+        """
         return 0
 
     def C(self, i, j, k):
@@ -1123,15 +1276,17 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
         Warnings
         --------
-        Not defined and not used."""
+        Not defined and not used.
+        """
         return 0
 
     def W(self, i, j):
-        """Function to compute the short-wave radiative forcing of the ocean: :math:`W_{i,j} = (\\phi_i, F_j)`."""
+        """Function to compute the short-wave radiative forcing of the ground: :math:`W_{i,j} = (\\phi_i, F_j)`."""
         if self.connected_to_atmosphere:
             if not self.stored:
-                res = self.iip.symbolic_inner_product(self._phi(i), self._F(j))
-                return float(res.subs(self.subs).subs(self.atmospheric_basis.substitutions).subs(self.ground_basis.substitutions))
+                subs = self.subs + self.ground_basis.substitutions + self.atmospheric_basis.substitutions
+                args = ((i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j)), subs)
+                return self._integrate(subs, args)
             else:
                 return self._W[i, j]
         else:
@@ -1140,16 +1295,18 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     def V(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing from the ground to the atmosphere: :math:`V_{i,j,k,l,m} = (\\phi_i, \\phi_j, \\phi_k, \\phi_l, \\phi_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m))
-            return float(res.subs(self.subs).subs(self.ground_basis.substitutions))
+            subs = self.subs + self.ground_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m)), subs)
+            return self._integrate(subs, args)
         else:
             return self._V[i, j, k, l, m]
 
     def Z(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing from the atmosphere to the ground: :math:`Z_{i,j,k,l,m} = (\\phi_i, F_j, F_k, F_l, F_m)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._F(j) * self._F(k) * self._F(l) * self._F(m))
-            return float(res.subs(self.subs).subs(self.ground_basis.substitutions))
+            subs = self.subs + self.ground_basis.substitutions + self.atmospheric_basis.substitutions
+            args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(j) * self._F(k) * self._F(l) * self._F(m)), subs)
+            return self._integrate(subs, args)
         else:
             return self._Z[i, j, k, l, m]
 
@@ -1252,7 +1409,7 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
 
 if __name__ == '__main__':
     from qgs.params.params import QgParams
-    pars = QgParams(dynamic_T=True, T4=True)
+    pars = QgParams(dynamic_T=True)  # , T4=True)
     pars.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
     pars.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
     # aip = AtmosphericSymbolicInnerProducts(pars, quadrature=True)

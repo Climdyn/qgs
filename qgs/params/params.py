@@ -555,8 +555,6 @@ class OceanicTemperatureParams(Params):
         self.C = None
 
         self.T0 = None
-        # self.T0 = Parameter(285.0, units='[K]', scale_object=scale_params, return_dimensional=True,
-        #                     description="stationary solution for the 0-th order oceanic temperature")
 
         self.set_params(dic)
 
@@ -712,8 +710,7 @@ class GroundTemperatureParams(Params):
                                description='specific heat capacity of the ground')
         self.C = None
 
-        self.T0 = Parameter(285.0, units='[K]', scale_object=scale_params, return_dimensional=True,
-                            description="stationary solution for the 0-th order ground temperature")
+        self.T0 = None
 
         self.set_params(dic)
 
@@ -803,7 +800,7 @@ class QgParams(Params):
         Default to `False`.
     T4: bool, optional
         Use or not the :math:`T^4` forcing for the evolution of the temperature field if the heat exchange is activated.
-        Activate also the dynamic 0-th temperature.
+        Activate also the dynamical 0-th temperature.
         Default to `False`.
 
     Attributes
@@ -836,7 +833,6 @@ class QgParams(Params):
         The atmospheric and possibly oceanic (or ground) basis must be reset if this parameter is changed.
     T4: bool
         Use or not the :math:`T^4` forcing for the evolution of the temperature field if the heat exchange is activated.
-
 
     .. _Gas constant: https://en.wikipedia.org/wiki/Gas_constant
     .. _dry air: https://en.wikipedia.org/wiki/Gas_constant#Specific_gas_constant
@@ -1360,7 +1356,6 @@ class QgParams(Params):
             else:
                 self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.atemperature_params.set_insolation(100.0, 0)
-            if not self.T4:
                 self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                         return_dimensional=True,
                                                         description="stationary solution for the 0-th order atmospheric temperature")
@@ -1380,7 +1375,6 @@ class QgParams(Params):
             else:
                 self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.gotemperature_params.set_insolation(350.0, 0)
-            if not self.T4:
                 self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
                                                          description="stationary solution for the 0-th order oceanic temperature")
             # if setting an ocean, then disable the orography
@@ -1417,7 +1411,6 @@ class QgParams(Params):
             else:
                 self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.atemperature_params.set_insolation(100.0, 0)
-            if not self.T4:
                 self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                         return_dimensional=True,
                                                         description="stationary solution for the 0-th order atmospheric temperature")
@@ -1447,7 +1440,6 @@ class QgParams(Params):
             else:
                 self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.gotemperature_params.set_insolation(350.0, 0)
-            if not self.T4:
                 self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
                                                          description="stationary solution for the 0-th order oceanic temperature")
 

@@ -12,7 +12,7 @@ from numba import njit
 
 from qgs.inner_products.analytic import AtmosphericAnalyticInnerProducts, OceanicAnalyticInnerProducts, GroundAnalyticInnerProducts
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-from qgs.tensors.qgtensor import QgsTensor, QgsTensorT4
+from qgs.tensors.qgtensor import QgsTensor, QgsTensorDynamicT, QgsTensorT4
 from qgs.functions.sparse_mul import sparse_mul5, sparse_mul4, sparse_mul3, sparse_mul2
 
 
@@ -83,6 +83,8 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
 
     if params.T4:
         agotensor = QgsTensorT4(params, aip, oip, gip)
+    elif params.dynamic_T:
+        agotensor = QgsTensorDynamicT(params, aip, oip, gip)
     else:
         agotensor = QgsTensor(params, aip, oip, gip)
 
