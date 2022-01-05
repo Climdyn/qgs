@@ -260,8 +260,8 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
                 elif self._dynamic_T:
                     # v inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.natm)
-                                 for m in range(noc)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
+                                 for i in range(self.natm) for m in range(noc)]
 
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
@@ -337,8 +337,8 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
                 elif self._dynamic_T:
                     # v inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.natm)
-                                 for m in range(ngr)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
+                                 for i in range(self.natm) for m in range(ngr)]
 
                     _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
@@ -417,8 +417,8 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
                 elif self._dynamic_T:
                     # z inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.natm)
-                                 for m in range(self.natm)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
+                                 for i in range(self.natm) for m in range(self.natm)]
 
                     _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
 
@@ -774,8 +774,8 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
                 elif self._dynamic_T:
                     # Z inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.noc)
-                                 for m in range(natm)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
+                                 for i in range(self.noc) for m in range(natm)]
 
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
 
@@ -850,8 +850,8 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
                 elif self._dynamic_T:
                     # V inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.noc)
-                                 for m in range(self.noc)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
+                                 for i in range(self.noc) for m in range(self.noc)]
 
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
 
@@ -1154,8 +1154,8 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
                 elif self._dynamic_T:
                     # Z inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))] for i in range(self.ngr)
-                                 for m in range(natm)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
+                                 for i in range(self.ngr) for m in range(natm)]
 
                     _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
 
@@ -1201,8 +1201,8 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
                 elif self._dynamic_T:
                     # V inner products
-                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))] for i in range(self.ngr)
-                                 for m in range(self.ngr)]
+                    args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
+                                 for i in range(self.ngr) for m in range(self.ngr)]
 
                     _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True)
 
@@ -1248,8 +1248,9 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     def U(self, i, j):
         """Function to compute the inner products: :math:`U_{i,j} = (\\phi_i, \\phi_j)`."""
         if not self.stored:
-            res = self.ip.symbolic_inner_product(self._phi(i), self._phi(j))
-            return float(res.subs(self.subs).subs(self.ground_basis.substitutions))
+            subs = self.subs + self.ground_basis.substitutions
+            args = ((i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j)), subs)
+            return self._integrate(subs, args)
         else:
             return self._U[i, j]
 

@@ -94,7 +94,7 @@ def create_tendencies(params, return_inner_products=False, return_qgtensor=False
     jcoo = agotensor.jacobian_tensor.coords.T
     jval = agotensor.jacobian_tensor.data
 
-    if params.T4:
+    if params.T4 or params.dynamic_T:
         @njit
         def f(t, x):
             xx = np.concatenate((np.full((1,), 1.), x))

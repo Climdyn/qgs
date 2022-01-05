@@ -16,6 +16,8 @@ real_eps = np.finfo(np.float64).eps
 
 real_eps = np.finfo(np.float64).eps
 
+real_eps = np.finfo(np.float64).eps
+
 
 class QgsTensor(object):
     """qgs tendencies tensor class.
