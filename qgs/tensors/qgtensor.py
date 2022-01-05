@@ -10,11 +10,6 @@ from contextlib import redirect_stdout
 import numpy as np
 import sparse as sp
 import pickle
-import time
-
-real_eps = np.finfo(np.float64).eps
-
-real_eps = np.finfo(np.float64).eps
 
 real_eps = np.finfo(np.float64).eps
 
