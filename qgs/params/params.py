@@ -53,6 +53,7 @@ from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 from sympy import simplify
 
 # TODO: - store model version in a variable somewhere
+#       - force the user to define the aspect ratio n at parameter object instantiation
 
 
 class Params(ABC):
@@ -1478,14 +1479,13 @@ class QgParams(Params):
         self._atmospheric_latex_var_string = list()
         self._atmospheric_var_string = list()
         for i in range(1, self.nmod[0] + 1):
-            self._atmospheric_latex_var_string.append(r'psi_{\rm a,' + str(i) + "}")
+            self._atmospheric_latex_var_string.append(r'psi_{{\rm a},' + str(i) + "}")
             self._atmospheric_var_string.append(r'psi_a_' + str(i))
         if self.dynamic_T:
-            start = 0
-        else:
-            start = 1
-        for i in range(start, self.nmod[0] + 1):
-            self._atmospheric_latex_var_string.append(r'theta_{\rm a,' + str(i) + "}")
+            self._atmospheric_latex_var_string.append(r', T_{{\rm a},0}')
+            self._atmospheric_var_string.append(r'T_a_0')
+        for i in range(1, self.nmod[0] + 1):
+            self._atmospheric_latex_var_string.append(r'theta_{{\rm a},' + str(i) + "}")
             self._atmospheric_var_string.append(r'theta_a_' + str(i))
 
     def set_oceanic_modes(self, basis, auto=True):
@@ -1537,12 +1537,11 @@ class QgParams(Params):
             self._oceanic_latex_var_string.append(r'psi_{\rm o,' + str(i) + "}")
             self._oceanic_var_string.append(r'psi_o_' + str(i))
         if self.dynamic_T:
-            start = 0
-        else:
-            start = 1
-        for i in range(start, self.nmod[1] + 1):
-            self._oceanic_latex_var_string.append(r'theta_{\rm o,' + str(i) + "}")
-            self._oceanic_var_string.append(r'theta_o_' + str(i))
+            self._oceanic_latex_var_string.append(r', T_{{\rm o},0}')
+            self._oceanic_var_string.append(r'T_o_0')
+        for i in range(1, self.nmod[1] + 1):
+            self._oceanic_latex_var_string.append(r'delta T_{{\rm o},' + str(i) + "}")
+            self._oceanic_var_string.append(r'delta_T_o_' + str(i))
 
     def set_ground_modes(self, basis=None, auto=True):
         """Function to configure the ground modes (basis functions) used to project the PDEs onto.
@@ -1592,12 +1591,11 @@ class QgParams(Params):
         self._ground_latex_var_string = list()
         self._ground_var_string = list()
         if self.dynamic_T:
-            start = 0
-        else:
-            start = 1
-        for i in range(start, self.nmod[1] + 1):
-            self._ground_latex_var_string.append(r'theta_{\rm g,' + str(i) + "}")
-            self._ground_var_string.append(r'theta_g_' + str(i))
+            self._oceanic_latex_var_string.append(r', T_{{\rm g},0}')
+            self._oceanic_var_string.append(r'T_g_0')
+        for i in range(1, self.nmod[1] + 1):
+            self._ground_latex_var_string.append(r'delta T_{\rm g,' + str(i) + "}")
+            self._ground_var_string.append(r'delta_T_g_' + str(i))
 
     # -------------------------------------------------------------------
     # Specific basis setters
@@ -1925,8 +1923,8 @@ class QgParams(Params):
             self._oceanic_latex_var_string.append(r'psi_{\rm o,' + str(i + 1) + "}")
             self._oceanic_var_string.append(r'psi_o_' + str(i + 1))
         for i in range(self.nmod[1]):
-            self._oceanic_latex_var_string.append(r'theta_{\rm o,' + str(i + 1) + "}")
-            self._oceanic_var_string.append(r'theta_o_' + str(i + 1))
+            self._oceanic_latex_var_string.append(r'delta T_{\rm o,' + str(i + 1) + "}")
+            self._oceanic_var_string.append(r'delta_T_o_' + str(i + 1))
 
     def _set_ground_analytic_fourier_modes(self, nxmax=None, nymax=None, auto=True):
 
@@ -1961,5 +1959,5 @@ class QgParams(Params):
         self._ground_latex_var_string = list()
         self._ground_var_string = list()
         for i in range(self.nmod[1]):
-            self._ground_latex_var_string.append(r'theta_{\rm g,' + str(i + 1) + "}")
-            self._ground_var_string.append(r'theta_g_' + str(i + 1))
+            self._ground_latex_var_string.append(r'delta T_{\rm g,' + str(i + 1) + "}")
+            self._ground_var_string.append(r'delta_T_g_' + str(i + 1))

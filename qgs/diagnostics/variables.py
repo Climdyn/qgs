@@ -64,21 +64,20 @@ class VariablesDiagnostic(Diagnostic):
 
     def _get_diagnostic(self, dimensional):
         if dimensional:
-            natm = self._model_params.nmod[0]
-            ngoc = self._model_params.nmod[1]
+            vr = self._model_params.variables_range
             for i, j in enumerate(self._variable_list):
                 v = self._data[j].copy()
-                if j < natm:
+                if j < vr[0]:
                     v *= self._model_params.streamfunction_scaling
-                if natm <= j < 2 * natm:
+                if vr[0] <= j < vr[1]:
                     v *= self._model_params.temperature_scaling * 2
                 if self._ocean:
-                    if 2 * natm <= j < 2 * natm + ngoc:
+                    if vr[1] <= j < vr[2]:
                         v *= self._model_params.streamfunction_scaling
-                    if 2 * natm + ngoc <= j < 2 * natm + 2 * ngoc:
+                    if vr[2] <= j < vr[3]:
                         v *= self._model_params.temperature_scaling
                 if self._ground:
-                    if 2 * natm <= j < 2 * natm + ngoc:
+                    if vr[1] <= j < vr[2]:
                         v *= self._model_params.temperature_scaling
 
                 if i == 0:
@@ -158,7 +157,7 @@ class VariablesDiagnostic(Diagnostic):
         elif style == "2Dscatter":
             ax.plot(self.diagnostic[variables[0]], self.diagnostic[variables[1]], marker='o', ls='', **plot_kwargs)
 
-            # TODO: Still to test
+            # TODO: Still to test (and adapt to variables ranges)
             # if self._ocean:
             #     natm = self._model_params.nmod[0]
             #     ngoc = self._model_params.nmod[1]
@@ -711,29 +710,37 @@ class GeopotentialHeightDifferenceDiagnostic(VariablesDiagnostic):
         self._compute_functions_value()
 
     def _compute_functions_value(self):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
         self._func_points1 = list()
         self._func_points2 = list()
 
         basis = self._model_params.atmospheric_basis
 
+        funcs_list = basis.num_functions()
+
         for point in self._point1:
             self._func_points1.append(list())
-            for func in basis.num_functions():
+            for func in funcs_list[offset:]:
                 self._func_points1[-1].append(func(point[0], point[1]))
 
         for point in self._point2:
             self._func_points2.append(list())
-            for func in basis.num_functions():
+            for func in funcs_list[offset:]:
                 self._func_points2[-1].append(func(point[0], point[1]))
 
         self._func_points1 = np.array(self._func_points1)
         self._func_points2 = np.array(self._func_points2)
 
     def _get_diagnostic(self, dimensional):
-        natm = self._model_params.nmod[0]
+        vr = self._model_params.variables_range
         for i in range(len(self._variable_list)):
-            val1 = self._func_points1[i] @ self._data[:natm, ...]
-            val2 = self._func_points2[i] @ self._data[:natm, ...]
+            val1 = self._func_points1[i] @ self._data[:vr[0], ...]
+            val2 = self._func_points2[i] @ self._data[:vr[0], ...]
             v = val1 - val2
             if i == 0:
                 self._diagnostic_data = v[np.newaxis, :]

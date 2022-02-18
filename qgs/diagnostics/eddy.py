@@ -19,7 +19,7 @@ from scipy.integrate import simpson
 import matplotlib.pyplot as plt
 
 from qgs.diagnostics.base import FieldDiagnostic, ProfileDiagnostic
-from qgs.diagnostics.temperatures import MiddleAtmosphericTemperatureDiagnostic
+from qgs.diagnostics.temperatures import MiddleAtmosphericTemperatureAnomalyDiagnostic
 from qgs.diagnostics.wind import MiddleAtmosphericVWindDiagnostic
 
 
@@ -75,7 +75,7 @@ class MiddleAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
         self._default_plot_kwargs['cmap'] = plt.get_cmap('magma')
         self._color_bar_format = False
 
-        self._tdiag = MiddleAtmosphericTemperatureDiagnostic(model_params, delta_x, delta_y, dimensional)
+        self._tdiag = MiddleAtmosphericTemperatureAnomalyDiagnostic(model_params, delta_x, delta_y, dimensional)
         self._vdiag = MiddleAtmosphericVWindDiagnostic(model_params, delta_x, delta_y, dimensional)
 
         self._X = self._tdiag._X

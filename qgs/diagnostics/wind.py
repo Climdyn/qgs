@@ -24,6 +24,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
+from qgs.diagnostics.util import create_grid_basis
 
 from qgs.diagnostics.base import FieldDiagnostic
 
@@ -98,30 +99,12 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
 
         if self.type == "V":
             dx_basis = self._model_params.atmospheric_basis.x_derivative
-            grid_dx_basis = list()
+            self._grid_basis = create_grid_basis(dx_basis, self._X, self._Y)
 
-            for func in dx_basis.num_functions():
-                grid_dx_basis.append(func(self._X, self._Y))
-
-            # Check for cases where the symbolic derivative is the 0 function
-            for i in range(len(grid_dx_basis)):
-                if not hasattr(grid_dx_basis[i], 'data'):
-                    grid_dx_basis[i] = np.full_like(self._X, grid_dx_basis[i])
-
-            self._grid_basis = np.array(grid_dx_basis)
         elif self.type == "U":
             dy_basis = self._model_params.atmospheric_basis.y_derivative
-            grid_dy_basis = list()
+            self._grid_basis = create_grid_basis(dy_basis, self._X, self._Y)
 
-            for func in dy_basis.num_functions():
-                grid_dy_basis.append(func(self._X, self._Y))
-
-            # Check for cases where the symbolic derivative is the 0 function
-            for i in range(len(grid_dy_basis)):
-                if not hasattr(grid_dy_basis[i], 'data'):
-                    grid_dy_basis[i] = np.full_like(self._X, grid_dy_basis[i])
-
-            self._grid_basis = np.array(grid_dy_basis)
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
                           " Unable to configure the diagnostic properly.")
@@ -168,9 +151,14 @@ class LowerLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         psi3 = psi - theta
 
@@ -221,9 +209,14 @@ class LowerLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         psi3 = psi - theta
 
@@ -275,8 +268,13 @@ class MiddleAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = psi * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
@@ -326,8 +324,13 @@ class MiddleAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = - psi * self._model_params.streamfunction_scaling / self._model_params.scale_params.L
@@ -376,9 +379,14 @@ class UpperLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         psi1 = psi + theta
 
@@ -429,9 +437,14 @@ class UpperLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         psi1 = psi + theta
 

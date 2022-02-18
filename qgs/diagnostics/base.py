@@ -30,6 +30,9 @@ from ipywidgets import interactive
 
 from qgs.diagnostics.misc import *
 
+# TODO: - need to introduce an oro_basis specific to the orography !!
+#       - no orography plot when oro_basis is none
+
 
 class Diagnostic(ABC):
     """General base class to create diagnostics.

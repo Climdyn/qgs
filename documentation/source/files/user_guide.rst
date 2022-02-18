@@ -489,9 +489,12 @@ Note that it is also possible to use other ordinary differential equations integ
 
 **Full list of currently available diagnostics**
 
-    * :class:`.MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric temperature  anomaly fields :math:`\delta T_{\rm a}`.
-    * :class:`.OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\delta T_{\rm o}`.
-    * :class:`.GroundTemperatureDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\delta T_{\rm g}`.
+    * :class:`.MiddleAtmosphericTemperatureAnomalyDiagnostic`: Diagnostic giving the middle atmospheric temperature anomaly fields :math:`\delta T_{\rm a}`.
+    * :class:`.MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric temperature fields :math:`T_{\rm a}`.
+    * :class:`.OceanicLayerTemperatureAnomalyDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\delta T_{\rm o}`.
+    * :class:`.OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature fields :math:`T_{\rm o}`.
+    * :class:`.GroundTemperatureAnomalyDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\delta T_{\rm g}`.
+    * :class:`.GroundTemperatureDiagnostic`: Diagnostic giving the ground layer temperature fields :math:`T_{\rm g}`.
     * :class:`.LowerLayerAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the lower layer atmospheric streamfunction fields :math:`\psi^3_{\rm a}`.
     * :class:`.UpperLayerAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the upper layer atmospheric streamfunction fields :math:`\psi^1_{\rm a}`.
     * :class:`.MiddleAtmosphericStreamfunctionDiagnostic`: Diagnostic giving the middle atmospheric streamfunction fields :math:`\psi_{\rm a}`.

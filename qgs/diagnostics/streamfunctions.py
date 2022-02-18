@@ -20,8 +20,11 @@ import warnings
 import numpy as np
 from scipy.integrate import dblquad
 import matplotlib.pyplot as plt
+from qgs.diagnostics.util import create_grid_basis
 
 from qgs.diagnostics.base import FieldDiagnostic
+
+# TODO: - convert the matmul and swapaxes into tensordot (cleaner)
 
 
 class AtmosphericStreamfunctionDiagnostic(FieldDiagnostic):
@@ -88,12 +91,7 @@ class AtmosphericStreamfunctionDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.atmospheric_basis
 
-        self._grid_basis = list()
-
-        for func in basis.num_functions():
-            self._grid_basis.append(func(self._X, self._Y))
-
-        self._grid_basis = np.array(self._grid_basis)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
 
 
 class LowerLayerAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDiagnostic):
@@ -133,9 +131,14 @@ class LowerLayerAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDia
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         psi3 = psi - theta
 
@@ -185,17 +188,22 @@ class UpperLayerAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDia
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
 
-        psi3 = psi + theta
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+
+        psi1 = psi + theta
 
         if dimensional:
-            self._diagnostic_data = psi3 * self._model_params.streamfunction_scaling
+            self._diagnostic_data = psi1 * self._model_params.streamfunction_scaling
             self._diagnostic_data_dimensional = True
         else:
-            self._diagnostic_data = psi3
+            self._diagnostic_data = psi1
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
 
@@ -246,8 +254,13 @@ class MiddleAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDiagnos
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        psi = np.swapaxes(self._data[:natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         factor = 1.
 
@@ -334,12 +347,7 @@ class OceanicStreamfunctionDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.oceanic_basis
 
-        self._grid_basis = list()
-
-        for func in basis.num_functions():
-            self._grid_basis.append(func(self._X, self._Y))
-
-        self._grid_basis = np.array(self._grid_basis)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
 
 
 class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
@@ -373,9 +381,9 @@ class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
 
         OceanicStreamfunctionDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        natm = self._model_params.nmod[0]
+        vr = self._model_params.variables_range
         self._plot_title = r'Oceanic streamfunction'
-        self._plot_units = r" (in " + self._model_params.get_variable_units(2 * natm) + r")"
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[1]) + r")"
 
         self._conserved = conserved
 
@@ -390,13 +398,17 @@ class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        noc = self._model_params.nmod[1]
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
         if self._conserved:
             cgrid = np.swapaxes(np.swapaxes(self._grid_basis, 0, -1) - self._fields_average, 0, -1)
         else:
             cgrid = self._grid_basis
-        psi = np.swapaxes(self._data[2 * natm:2 * natm + noc, ...].T @ np.swapaxes(cgrid, 0, 1), 0, 1)
+        psi = np.swapaxes(self._data[vr[1]:vr[2], ...].T @ np.swapaxes(cgrid[offset:], 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = psi * self._model_params.streamfunction_scaling

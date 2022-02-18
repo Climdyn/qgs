@@ -8,16 +8,20 @@
     --------------------------
 
     * :class:`AtmosphericTemperatureDiagnostic`: General base class for atmospheric temperature fields diagnostic.
-    * :class:`MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric temperature  anomaly fields :math:`\\delta T_{\\rm a}`.
+    * :class:`MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric anomaly fields :math:`T_{\\rm a}`.
+    * :class:`MiddleAtmosphericTemperatureAnomalyDiagnostic`: Diagnostic giving the middle atmospheric temperature  anomaly fields :math:`\\delta T_{\\rm a}`.
     * :class:`OceanicTemperatureDiagnostic`: General base class for oceanic temperature fields diagnostic.
-    * :class:`OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\\delta T_{\\rm o}`.
-    * :class:`GroundTemperatureDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\\delta T_{\\rm g}`.
+    * :class:`OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature fields :math:`T_{\\rm o}`.
+    * :class:`OceanicLayerTemperatureAnomalyDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\\delta T_{\\rm o}`.
+    * :class:`GroundTemperatureDiagnostic`: Diagnostic giving the ground layer temperature fields :math:`T_{\\rm g}`.
+    * :class:`GroundTemperatureAnomalyDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\\delta T_{\\rm g}`.
 
 """
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from qgs.diagnostics.util import create_grid_basis
 
 from qgs.diagnostics.base import FieldDiagnostic
 
@@ -85,16 +89,11 @@ class AtmosphericTemperatureDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.atmospheric_basis
 
-        self._grid_basis = list()
-
-        for func in basis.num_functions():
-            self._grid_basis.append(func(self._X, self._Y))
-
-        self._grid_basis = np.array(self._grid_basis)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
 
 
-class MiddleAtmosphericTemperatureDiagnostic(AtmosphericTemperatureDiagnostic):
-    """Diagnostic giving the middle atmospheric temperature  anomaly fields :math:`\\delta T_{\\rm a}` at 500hPa.
+class MiddleAtmosphericTemperatureAnomalyDiagnostic(AtmosphericTemperatureDiagnostic):
+    """Diagnostic giving the middle atmospheric temperature anomaly fields :math:`\\delta T_{\\rm a}` at 500hPa.
     It is identified with the baroclinic streamfunction :math:`\\theta_{\\rm a}` of the system.
     See also :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
 
@@ -124,22 +123,90 @@ class MiddleAtmosphericTemperatureDiagnostic(AtmosphericTemperatureDiagnostic):
 
         AtmosphericTemperatureDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        natm = self._model_params.nmod[0]
+        vr = self._model_params.variables_range
         self._plot_title = r'Atmospheric 500hPa temperature anomaly'
-        self._plot_units = r" (in " + self._model_params.get_variable_units(natm) + r")"
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[0]) + r")"
 
         self._color_bar_format = False
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        theta = np.swapaxes(self._data[natm:2*natm, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = theta * self._model_params.temperature_scaling * 2
             self._diagnostic_data_dimensional = True
         else:
             self._diagnostic_data = theta
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class MiddleAtmosphericTemperatureDiagnostic(AtmosphericTemperatureDiagnostic):
+    """Diagnostic giving the middle atmospheric temperature fields :math:`T_{\\rm a} = T_{{\\rm a}, 0} + \\delta T_{\\rm a}` at 500hPa,
+    where :math:`T_{{\\rm a}, 0}` is the reference temperature :attr:`~.params.params.AtmosphericTemperatureParams.T0` or the 0-th order dynamic temperature.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    Notes
+    -----
+
+    Only works if the heat exchange scheme is activated, i.e. does not work with the Newton cooling scheme.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        AtmosphericTemperatureDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        vr = self._model_params.variables_range
+        self._plot_title = r'Atmospheric 500hPa temperature'
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[0]) + r")"
+
+        self._color_bar_format = False
+
+        if not self._heat_exchange:
+            warnings.warn('Heat exchange scheme is not activated, this diagnostic will not work properly !')
+
+    def _get_diagnostic(self, dimensional):
+
+        vr = self._model_params.variables_range
+        T = np.swapaxes(self._data[vr[0]:vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = T * self._model_params.temperature_scaling * 2
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.atemperature_params.T0
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = T
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.atemperature_params.T0 / (self._model_params.temperature_scaling * 2)
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
 
@@ -170,6 +237,7 @@ class OceanicTemperatureDiagnostic(FieldDiagnostic):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
         self._configure(delta_x=delta_x, delta_y=delta_y)
+        self._default_plot_kwargs['cmap'] = plt.get_cmap('coolwarm')
 
     def _compute_grid(self, delta_x=None, delta_y=None):
 
@@ -211,15 +279,10 @@ class OceanicTemperatureDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.oceanic_basis
 
-        self._grid_basis = list()
-
-        for func in basis.num_functions():
-            self._grid_basis.append(func(self._X, self._Y))
-
-        self._grid_basis = np.array(self._grid_basis)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
 
 
-class OceanicLayerTemperatureDiagnostic(OceanicTemperatureDiagnostic):
+class OceanicLayerTemperatureAnomalyDiagnostic(OceanicTemperatureDiagnostic):
     """Diagnostic giving the oceanic layer temperature anomaly fields :math:`\\delta T_{\\rm o}`.
 
     Parameters
@@ -248,29 +311,86 @@ class OceanicLayerTemperatureDiagnostic(OceanicTemperatureDiagnostic):
 
         OceanicTemperatureDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        natm = self._model_params.nmod[0]
-        noc = self._model_params.nmod[1]
+        vr = self._model_params.variables_range
         self._plot_title = r'Oceanic temperature anomaly'
-        self._plot_units = r" (in " + self._model_params.get_variable_units(2 * natm + noc) + r")"
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[2]) + r")"
 
         self._color_bar_format = False
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        noc = self._model_params.nmod[1]
-        theta = np.swapaxes(self._data[2*natm+noc:, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        delta_T = np.swapaxes(self._data[vr[2]+offset:, ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         if dimensional:
-            self._diagnostic_data = theta * self._model_params.temperature_scaling
+            self._diagnostic_data = delta_T * self._model_params.temperature_scaling
             self._diagnostic_data_dimensional = True
         else:
-            self._diagnostic_data = theta
+            self._diagnostic_data = delta_T
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
 
 
-class GroundTemperatureDiagnostic(FieldDiagnostic):
+class OceanicLayerTemperatureDiagnostic(OceanicTemperatureDiagnostic):
+    """Diagnostic giving the oceanic layer temperature fields :math:`T_{\\rm o} = T_{{\\rm o}, 0} + \\delta T_{\\rm o}`,
+    where :math:`T_{{\\rm o}, 0}` is the reference temperature :attr:`~.params.params.OceanicTemperatureParams.T0` or the 0-th order dynamic temperature.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        OceanicTemperatureDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        vr = self._model_params.variables_range
+        self._plot_title = r'Oceanic temperature'
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[2]) + r")"
+
+        self._color_bar_format = False
+
+    def _get_diagnostic(self, dimensional):
+
+        vr = self._model_params.variables_range
+        T = np.swapaxes(self._data[vr[2]:, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = T * self._model_params.temperature_scaling
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.gotemperature_params.T0
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = T
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.gotemperature_params.T0 / self._model_params.temperature_scaling
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class GroundTemperatureAnomalyDiagnostic(FieldDiagnostic):
     """Diagnostic giving the ground temperature anomaly fields :math:`\\delta T_{\\rm g}`.
 
     Parameters
@@ -299,10 +419,11 @@ class GroundTemperatureDiagnostic(FieldDiagnostic):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
         self._configure(delta_x=delta_x, delta_y=delta_y)
+        self._default_plot_kwargs['cmap'] = plt.get_cmap('coolwarm')
 
-        natm = self._model_params.nmod[0]
+        vr = self._model_params.variables_range
         self._plot_title = r'Ground temperature anomaly'
-        self._plot_units = r" (in " + self._model_params.get_variable_units(2 * natm) + r")"
+        self._plot_units = r" (in " + self._model_params.get_variable_units(vr[1]) + r")"
 
         self._color_bar_format = False
 
@@ -346,23 +467,72 @@ class GroundTemperatureDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.ground_basis
 
-        self._grid_basis = list()
-
-        for func in basis.num_functions():
-            self._grid_basis.append(func(self._X, self._Y))
-
-        self._grid_basis = np.array(self._grid_basis)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
 
     def _get_diagnostic(self, dimensional):
 
-        natm = self._model_params.nmod[0]
-        theta = np.swapaxes(self._data[2*natm:, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        delta_T = np.swapaxes(self._data[vr[1]+offset:, ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
 
         if dimensional:
-            self._diagnostic_data = theta * self._model_params.temperature_scaling
+            self._diagnostic_data = delta_T * self._model_params.temperature_scaling
             self._diagnostic_data_dimensional = True
         else:
-            self._diagnostic_data = theta
+            self._diagnostic_data = delta_T
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class GroundTemperatureDiagnostic(GroundTemperatureAnomalyDiagnostic):
+    """Diagnostic giving the ground temperature fields :math:`T_{\\rm g} = T_{{\\rm g}, 0} + \\delta T_{\\rm g}`,
+    where :math:`T_{{\\rm g}, 0}` is the reference temperature :attr:`~.params.params.GroundTemperatureParams.T0` or the 0-th order dynamic temperature.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        GroundTemperatureAnomalyDiagnostic.__init__(self, model_params, dimensional, delta_x, delta_y, dimensional)
+        self._plot_title = r'Ground temperature'
+
+    def _get_diagnostic(self, dimensional):
+
+        vr = self._model_params.variables_range
+        T = np.swapaxes(self._data[vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = T * self._model_params.temperature_scaling
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.gotemperature_params.T0
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = T
+            if not self._model_params.dynamic_T:
+                self._diagnostic_data += self._model_params.gotemperature_params.T0 / self._model_params.temperature_scaling
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
 
