@@ -2,6 +2,8 @@
 Code Description
 ================
 
+TODO: Add a description of the dynamic T / T4 tensor
+
 Presently, the `ordinary differential equations`_ (ODEs) of the qgs model are at most bilinear
 in their variables :math:`\eta_i` (:math:`1\leq i\leq` :attr:`~.params.QgParams.ndim`).
 This system of ODEs can therefore be expressed as the sum of

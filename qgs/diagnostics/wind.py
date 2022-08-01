@@ -41,6 +41,12 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
 
     model_params: QgParams
         An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
     dimensional: bool
         Indicate if the output diagnostic must be dimensionalized or not.
 

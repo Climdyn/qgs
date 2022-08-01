@@ -2,7 +2,9 @@
     qgs tensor module
     =================
 
-    This module computes and holds the tensor representing the tendencies of the model's equations.
+    This module computes and holds the tensors representing the tendencies of the model's equations.
+
+    TODO: Add a list of the different tensor available
 
 """
 from contextlib import redirect_stdout
@@ -709,16 +711,14 @@ class QgsTensor(object):
             The Jacobian tensor.
         """
 
-        n_perm = len(tensor.shape) - 1
+        n_perm = len(tensor.shape) - 2
 
-        jacobian = tensor.copy()
-        tmp = jacobian.copy()
+        jacobian_tensor = tensor.copy()
 
-        for i in range(1, n_perm):
-            tmp = tmp.swapaxes(i, i+1)
-            jacobian += tmp
+        for i in range(1, n_perm+1):
+            jacobian_tensor += tensor.swapaxes(1, i+1)
 
-        return jacobian
+        return jacobian_tensor
 
     @staticmethod
     def simplify_tensor(tensor):
@@ -801,6 +801,33 @@ class QgsTensor(object):
         with open(filename, 'w') as f:
             with redirect_stdout(f):
                 self.print_tensor(tensor_name)
+
+    def print_jacobian_tensor(self, tensor_name=""):
+        """Routine to print the Jacobian tensor.
+
+        Parameters
+        ----------
+        tensor_name: str, optional
+            Specify the name to print beside the values of the tensor. Default to `QgsTensorJacobian`.
+        """
+        if not tensor_name:
+            tensor_name = 'QgsTensorJacobian'
+        for coo, val in zip(self.jacobian_tensor.coords.T, self.jacobian_tensor.data):
+            self._string_format(print, tensor_name, coo, val)
+
+    def print_jacobian_tensor_to_file(self, filename, tensor_name=""):
+        """Routine to print the Jacobian tensor to a file.
+
+        Parameters
+        ----------
+        filename: str
+            The filename where to print the tensor.
+        tensor_name: str, optional
+            Specify the name to print beside the values of the tensor. Default to `QgsTensorJacobian`.
+        """
+        with open(filename, 'w') as f:
+            with redirect_stdout(f):
+                self.print_jacobian_tensor(tensor_name)
 
     @staticmethod
     def _string_format(func, symbol, indices, value):

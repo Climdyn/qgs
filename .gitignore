@@ -8,3 +8,4 @@ documentation/build/
 documentation/source/files/examples/.ipynb_checkpoints/
 documentation/source/files/examples/*_files/
 documentation/source/files/examples/*.rst
+documentation/source/_build/

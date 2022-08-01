@@ -10,7 +10,7 @@ The coupling between the two components includes wind forcings, radiative and he
     :scale: 50%
     :align: center
 
-    Sketch of the ocean-atmosphere coupled model layers.
+    Sketch of the ocean-atmosphere coupled model layers. The atmosphere is here a periodic channel while the ocean is a closed basin.
     The domain (:math:`\beta`-plane) `zonal and meridional`_ coordinates are labeled as the :math:`x` and
     :math:`y` variables.
 
@@ -66,8 +66,8 @@ temperatures as :math:`T_\text{a} = T_{\text{a},0} + \delta T_\text{a}` and :mat
 linearized around spatially uniform and constant temperatures :math:`T_{\text{a},0}` (:attr:`.AtmosphericTemperatureParams.T0`) and
 :math:`T_{\text{o},0}` (:attr:`.OceanicTemperatureParams.T0`), as detailed in Appendix B of :cite:`mao-VDDG2015`. :math:`R_\text{a}`
 and :math:`R_\text{o}` are the short-wave radiation fluxes entering the atmosphere
-and the ocean that are also decomposed as :math:`R_\text{a}=R_\text{a}^0 + \delta
-R_\text{a}` and :math:`R_\text{o} = R_\text{o}^0 + \delta R_\text{o}`. It results in these evolution equations for the temperature anomalies:
+and the ocean that are also decomposed as :math:`R_\text{a}=R_{\text{a}, 0} + \delta R_\text{a}` and :math:`R_\text{o} = R_{\text{o}, 0} + \delta R_\text{o}`.
+It results in these evolution equations for the temperature anomalies:
 
 .. math::
 
@@ -222,7 +222,7 @@ The ordinary differential equations of the truncated model are:
   & & \qquad \qquad \qquad \qquad  + \left(\frac{\lambda'_{\rm a}}{2}+ S_{B, {\rm o}}\right) \sum_{j=1}^{n_{\mathrm{o}}} \, s_{i, j} \, \delta T_{{\rm o},j} + C'_{\text{a},i} \\
   \dot\psi_{{\rm o},i} & = & \frac{1}{\left(M_{i,i} + G\right)} \, \left\{ - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
-  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j} + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
+  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,m} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},m} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j} + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 where the parameters values have been replaced by their non-dimensional ones and we have also defined
 :math:`G = - L^2/L_R^2` (:attr:`~.params.QgParams.G`),
@@ -272,12 +272,12 @@ The vertical velocity :math:`\omega_i` can be eliminated, leading to the final e
   \dot\psi_{{\rm a},i} & = & - a_{i,i}^{-1} \sum_{j,m = 1}^{n_{\mathrm{a}}} b_{i, j, m} \left(\psi_{{\rm a},j}\, \psi_{{\rm a},m} + \theta_{{\rm a},j}\, \theta_{{\rm a},m}\right) - \beta\, a_{i,i}^{-1} \, \sum_{j=1}^{n_{\mathrm{a}}} \, c_{i, j} \, \psi_{{\rm a},j} \nonumber \\
   & & \qquad \qquad \qquad \qquad - \frac{k_d}{2} \left(\psi_{{\rm a},i} - \theta_{{\rm a},i}\right) + \frac{k_d}{2}  \, a_{i,i}^{-1} \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} \\
   \dot\theta_{{\rm a},i} & = & \frac{\sigma/2}{a_{i,i} \,\sigma/2  - 1}  \left\{ - \sum_{j,m = 1}^{n_{\mathrm{a}}} b_{i, j, m} \left(\psi_{{\rm a},j}\, \theta_{{\rm a},m} + \theta_{{\rm a},j}\, \psi_{{\rm a},m}\right) - \beta\, \, \sum_{j=1}^{n_{\mathrm{a}}} \, c_{i, j} \, \theta_{{\rm a},j} \right. \nonumber  \\
-  & & \qquad \qquad \qquad \qquad + \left. \frac{k_d}{2} \, a_{i,i} \left(\psi_{{\rm a},i} - \theta_{{\rm a},i}\right)  - \frac{k_d}{2}  \, a_{i,i}^{-1} \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} -2 \, k'_d \, a_{i,i} \, \theta_{{\rm a},i} \right\} \nonumber \\
+  & & \qquad \qquad \qquad \qquad + \left. \frac{k_d}{2} \, a_{i,i} \left(\psi_{{\rm a},i} - \theta_{{\rm a},i}\right)  - \frac{k_d}{2}  \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} -2 \, k'_d \, a_{i,i} \, \theta_{{\rm a},i} \right\} \nonumber \\
   & & + \frac{1}{a_{i,i} \,\sigma/2  - 1} \left\{ \sum_{j,m = 1}^{n_{\mathrm{a}}} g_{i, j, m} \, \psi_{{\rm a},j}\, \theta_{{\rm a},m}  + \left(\lambda'_{\rm a} + S_{B,{\rm a}} \right)  \, \theta_{\rm{a},i} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad - \left.\left(\frac{\lambda'_{\rm a}}{2}+ S_{B, {\rm o}}\right) \sum_{j=1}^{n_{\mathrm{o}}} \, s_{i, j} \, \delta T_{{\rm o},j} - C'_{\text{a},i} \right\} \\
   \dot\psi_{{\rm o},i} & = & \frac{1}{\left(M_{i,i} + G\right)} \, \left\{ - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j} \right. \nonumber \\
   & & \qquad \qquad \qquad \qquad + \left. d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right)\right\} \\
-  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,k} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},k} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
+  \dot\delta T_{{\rm o},i} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, O_{i,j,m} \, \psi_{{\rm o},j} \, \delta T_{{\rm o},m} - \left(\lambda'_{\rm o}+ s_{B,{\rm o}}\right) \, \delta T_{{\rm o},i} + \left(2 \,\lambda'_{\rm o} + s_{B,{\rm a}}\right) \, \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, \theta_{{\rm a},j}  + \sum_{j=1}^{n_{\mathrm{a}}} \, W_{i,j} \, C'_{{\rm o},j}
 
 that are implemented by means of a tensorial contraction:
 
@@ -288,12 +288,248 @@ that are implemented by means of a tensorial contraction:
 with :math:`\boldsymbol{\eta} = (1, \psi_{{\rm a},1}, \ldots, \psi_{{\rm a},n_\mathrm{a}}, \theta_{{\rm a},1}, \ldots, \theta_{{\rm a},n_\mathrm{a}}, \psi_{{\rm o},1}, \ldots, \psi_{{\rm o},n_\mathrm{o}}, \delta T_{{\rm o},1}, \ldots, \delta T_{{\rm o},n_\mathrm{o}})`, as described in the :ref:`files/technical_description:Code Description`. Note that :math:`\eta_0 \equiv 1`.
 The tensor :math:`\mathcal{T}`, which fully encodes the bilinear system of ODEs above, is computed and stored in the :class:`~.tensors.qgtensor.QgsTensor`.
 
-.. TODO: section about MAOSOAM
-
 Example
 -------
 
 An example about how to setup the model to use this model version is shown in :ref:`files/examples/DDV:Recovering the result of De Cruz, Demaeyer and Vannitsem (2016)`.
+
+
+MAOSOAM model version
+---------------------
+
+qgs allows one to specify the basis of functions over which the PDE equations of the model are projected.
+Therefore it is easy to reproduce the model proposed in :cite:`mao-VSD2019` where the atmosphere and the ocean are subject to the same periodic channel boundary conditions.
+
+.. figure:: figures/model_variables_maosoam_duck.png
+    :scale: 50%
+    :align: center
+
+    Sketch of the ocean-atmosphere coupled model layers for the MAOSOAM model version, where both the atmosphere and the ocean are periodic channels.
+    The domain (:math:`\beta`-plane) `zonal and meridional`_ coordinates are labeled as the :math:`x` and
+    :math:`y` variables.
+
+The basis of functions in the ocean is thus defined as
+
+.. math::
+
+   \begin{aligned}
+       \phi_{1}(x, y)&= F_{1} (x, y) = \sqrt{2}\cos(y),\\
+       \phi_{2}(x, y)&= F_{2} (x, y) = 2 \cos (n x) \sin (y),\\
+       &\vdots
+   \end{aligned}
+
+while the basis of functions is the same as above.
+
+Since these boundary conditions mimicks the situation in the southern hemisphere, this model is sometimes called the Modular Arbitrary-Order Southern Ocean-Atmosphere Model (MAOSOAM).
+Once these basis are defined, the ordinary differential equations above remain valid.
+
+An example about how to setup the model to use this model version is shown in :ref:`files/examples/VSPD:Recovering the result of Vannitsem, Solé-Pomies and De Cruz (2019)`.
+
+Dynamical temperatures and quartic temperature tendencies model version
+-----------------------------------------------------------------------
+
+It is possible to calculate solutions of the model without linearizing the quartic long-wave radiation terms of the equations for the temperatures :math:`T_\text{a}` and
+:math:`T_\text{o}`. These radiation terms can instead be expanded onto the set of basis functions, including the 0-th order temperatures :math:`T_{\text{a}, 0}` and :math:`T_{\text{o}, 0}`.
+
+This requires the introduction of a new basis function, which is the
+constant basis: ‘:math:`1`’. Thus the atmospheric and oceanic basis
+functions are now expanded as follow:
+
+.. math::
+
+   \begin{aligned}
+       \phi_0(x, y)&=1,\\
+       \phi_{1}(x, y)&=2 \sin \left(\frac{n}{2} x\right) \sin (y),\\
+       \phi_{2}(x, y)&=2 \sin (n x) \sin (y),\\
+       &\vdots
+   \end{aligned}
+   \qquad
+   \begin{aligned}
+       F_0(x, y)&=1,\\
+       F_{1}(x, y)&=\sqrt{2}\cos(y),\\
+       F_{2}(x, y)&=2 \cos (n x) \sin (y),\\
+       &\vdots
+   \end{aligned}
+
+The temperature fields are expanded onto these functions:
+
+.. math:: T_\text{o}(x, y)=\sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)\qquad T_\text{a}(x, y)=\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\, F_j(x, y) = T_{\text{a}, 0} \, F_0(x, y) + 2 \frac{f_{0}}{R} \sum_{i=1}^{n_{\mathrm{a}}} \theta_{\mathrm{a}, i} F_{i}(x, y)
+
+and concomitantly, the short-wave radiation fluxes are expanded as
+
+.. math:: R_\text{o}=R_{\text{o}, 0} + \delta R_\text{o} = \sum_{j=0}^{n_\text{o}}C_{\text{o}, j}\, F_j(x, y)\qquad R_\text{a}=R_{\text{a}, 0} + \delta R_\text{a} = \sum_{j=0}^{n_\text{a}}C_{\text{a}, j}\, F_j(x, y),
+
+where we are thus identifying :math:`R_{\text{o}, 0}=C_{\text{o}, 0}` and :math:`R_{\text{a}, 0}=C_{\text{a}, 0}`.
+
+Consequences in the ocean
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This expansion allows the ocean temperature equations to be re-written as:
+
+.. math::
+
+   &\gamma_{\mathrm{o}}\Bigg(\frac{\partial }{\partial t} \sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)+J\left(\sum_{m=1}^{n_\text{o}} \psi_{\mathrm{o}, m}\,\phi_m(x, y), \sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)\right) \Bigg)=\\
+   &\qquad \qquad \qquad \qquad -\lambda\left(\sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)-\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\,F_j(x, y)\right)\\
+   &\qquad \qquad \qquad \qquad -\sigma_{B} \left(\sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)\right)^{4}
+   +\epsilon_{\mathrm{a}} \sigma_{B} \left(\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\, F_j(x, y)\right)^4+R_{\mathrm{o}}
+
+
+This equation is then simplified and non-dimensionalized as in the above section.
+This leads to the ordinary differential equation for the ocean temperature with quartic terms:
+
+.. math::
+
+   &\sum_{j=0}^{n_\text{o}}U_{i, j}\,\dot{T}_{\text{o}, j}=
+   -\sum_{j,k=1}^{n_\text{o}}O_{i,j,m}\,\psi_{\text{o}, j}\,T_{\text{o}, m}
+   -\sum_{j=0}^{n_\text{o}}\lambda'_\text{o}\, U_{i,j}T_{\text{o}, j}\\
+   &\qquad \qquad \qquad -s_{B, \text{o}}\sum_{j,k,l,m=0}^{n_\text{o}}V_{i,j,k,l,m}\, T_{\text{o}, j}T_{\text{o},k}T_{\text{o},l}T_{\text{o},m}+2\lambda_\text{o}'\sum_{j=0}^{n_\text{a}}W_{i,j}\,\theta_{\text{a},j}\\
+   &\qquad \qquad \qquad +s_{B, \text{a}} \sum_{j,k,l,m=0}^{n_\text{a}}Z_{i,j,k,l,m}\,\theta_{\text{a},j}\theta_{\text{a},k}\theta_{\text{a},l}\theta_{\text{a},m}
+   +\sum_{j=0}^{n_\text{o}}W_{i,j}\, C'_{\text{o},j}
+
+where here :math:`s_{B,\text{o}}=\sigma_B f_0^5 L^6/(\gamma_\text{o} R^3)` (:attr:`~.params.QgParams.T4sbpgo`), and
+:math:`s_{B, \text{a}}=16 \varepsilon_\text{a} \sigma_B f_0^5 L^6/(\gamma_\text{o} R^3)` (:attr:`~.params.QgParams.T4sbpa`).
+
+The coefficients :math:`U_{i, j}`, :math:`V_{i,j,k,l,m}`, and
+:math:`Z_{i,j,k,l,m}` are the inner products of the basis functions :math:`\phi_{i}` and are defined as:
+
+.. math:: U_{i, j}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} \phi_{i}(x, y)~\phi_{j}(x, y)\, \mathrm{d} x \, \mathrm{d} y
+
+.. math:: V_{i, j, k, l, m}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} \phi_{i}(x, y)~\phi_{j}(x, y)~\phi_{k}(x, y)~\phi_{l}(x, y)~\phi_{m}(x, y)\, \mathrm{d} x \, \mathrm{d} y
+
+.. math:: Z_{i, j, k, l, m}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} \phi_{i}(x, y)~F_{j}(x, y)~F_{k}(x, y)~F_{l}(x, y)~F_{m}(x, y)\, \mathrm{d} x \, \mathrm{d} y,
+
+These inner products are stored in objects derived from the :class:`~.inner_products.base.OceanicInnerProducts` classes.
+
+The equation corresponding to the oceanic barotropic streamfunction :math:`\psi_\text{o}(x, y)=\sum_{j=1}^{n_\text{o}}\psi_{\text{o}, j}\, \phi_j(x, y)`
+is left untouched and is given by:
+
+.. math::
+
+  \sum_{j=1}^{n_\text{o}} \left(M_{i,j} + G\, U_{i,j}\right) \dot\psi_{{\rm o},j} & = & - \sum_{j,m = 1}^{n_{\mathrm{o}}} \, C_{i,j,k} \, \psi_{{\rm o},j} \, \psi_{{\rm o},k} - \beta \, \sum_{j = 1}^{n_{\mathrm{o}}} \, N_{i,j} \, \psi_{{\rm o}, j} - (d + r) \, \sum_{j = 1}^{n_{\mathrm{o}}} \, M_{i,j} \, \psi_{{\rm o},j}  \nonumber \\
+  & & \qquad \qquad \qquad \qquad + d \, \sum_{j = 1}^{n_{\mathrm{a}}} \, K_{i,j} \, \left(\psi_{{\rm a}, j} - \theta_{{\rm a}, j}\right) \\
+
+
+Consequences in the atmosphere
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The atmosphere temperature equation now reads:
+
+.. math::
+
+   &\gamma_{\mathrm{a}}\left(\frac{\partial}{\partial t}\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\, F_j(x, y)+J\left(\sum_{m=1}^{n_\text{a}} \psi_{\mathrm{a}, m}\, F_m(x, y), \sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\,F_j(x, y)\right)-\sigma \omega \frac{p}{R}\right)=\\
+   &\qquad \qquad \qquad \qquad -\lambda\left(\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\, F_j(x, y)-\sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)\right)\\
+   &\qquad \qquad \qquad \qquad +\epsilon_{\mathrm{a}} \sigma_{B} \left(\sum_{j=0}^{n_\text{o}}T_{\text{o}, j}\,\phi_j(x, y)\right)^4-2 \epsilon_{\mathrm{a}} \sigma_{B} \left(\sum_{j=0}^{n_\text{a}}T_{\text{a}, j}\, F_j(x, y)\right)^4+R_{\mathrm{a}}.
+
+If we proceed similarly as for the ocean but for the atmosphere, with for sake of simplicity the identification :math:`T_{\text{a}, 0} \equiv 2 \frac{f_{0}}{R} \theta_{\mathrm{a}, 0}`, it gives in term of the baroclinic streamfunction:
+
+.. math::
+
+   &\sum_{j=0}^{n_\text{a}}u_{i, j}\,\dot{\theta}_{\text{a}, j}=
+   -\sum_{j,k=1}^{n_\text{a}}g_{i,j,m}\,\psi_{\text{a}, j}\,\theta_{\text{a}, m}+\frac{\sigma}{2}\sum_{j=1}^{n_\text{a}}u_{i,j}\,\omega_j-\lambda'_\text{a}\sum_{j=0}^{n_\text{a}}u_{i,j}\,\theta_{\text{a}, j}\\
+   &\qquad \qquad \qquad -S_{B,\text{a}}\sum_{j,k,l,m=0}^{n_\text{a}}z_{i,j,k,l,m}\,\theta_{\text{a}, j}\theta_{\text{a},k}\theta_{\text{a},l}\theta_{\text{a},m}+\frac{\lambda'_\text{a}}{2}\sum_{j=0}^{n_\text{o}}s_{i,j}\, T_{\text{o}, j}\\
+   &\qquad \qquad \qquad +S_{B, \text{o}}\sum_{j,k,l,m=0}^{n_\text{o}}v_{i,j,k,l,m}\, T_{\text{o}, j}T_{\text{o},k}T_{\text{o},l}T_{\text{o},m}+\sum_{j=0}^{n_\text{a}}u_{i,j}\, C'_{\text{a},j}
+
+where :math:`S_{B,\text{a}}=16\varepsilon_\text{a}\sigma_B L^6 f_0^5/(\gamma_\text{a}R^3)` (:attr:`~.params.QgParams.T4LSBpa`) and
+:math:`S_{B, \text{o}}=\varepsilon_\text{a} \sigma_B L^6 f_0^5/(2\gamma_\text{a}R)` (:attr:`~.params.QgParams.T4LSBpgo`).
+
+The coefficients :math:`u_{i, j}`, :math:`v_{i,j,k,l,m}`, and
+:math:`z_{i,j,k,l,m}` are the corresponding inner products of the basis functions :math:`F_{i}`:
+
+.. math:: u_{i, j}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} F_{i}(x, y)~F_{j}(x, y)\, \mathrm{d} x \mathrm{~d} y
+
+.. math:: v_{i, j, k, l, m}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} F_{i}(x, y)~\phi_{j}(x, y)~\phi_{k}(x, y)~\phi_{l}(x, y)~\phi_{m}(x, y)\, \mathrm{d} x \mathrm{~d} y
+
+.. math:: z_{i, j, k, l, m}=\frac{n}{2 \pi^{2}} \int_{0}^{\pi} \int_{0}^{2 \pi / n} F_{i}(x, y)~F_{j}(x, y)~F_{k}(x, y)~F_{l}(x, y)~F_{m}(x, y)\, \mathrm{d} x \mathrm{~d} y
+
+These inner products are stored in objects derived from the :class:`~.inner_products.base.AtmosphericInnerProducts`.
+
+Besides the two equations for the temperatures, the equations for the atmospheric barotropic and the baroclinic streamfunctions:
+
+.. math:: \psi_\text{a}(x, y)=\sum_{j=1}^{n_\text{a}}\psi_{\text{a}, j}\, F_j(x, y)\qquad \theta_\text{a}(x, y)=\sum_{j=1}^{n_\text{a}} \theta_{\text{a}, j}\, F_j(x, y),
+
+derived above are still valid here:
+
+.. math::
+
+  \sum_{j=1}^{n_\text{a}} a_{i,j} \, \dot\psi_{{\rm a},j} & = & - \sum_{j,m = 1}^{n_{\mathrm{a}}} b_{i, j, m} \left(\psi_{{\rm a},j}\, \psi_{{\rm a},m} + \theta_{{\rm a},j}\, \theta_{{\rm a},m}\right) - \beta\, \sum_{j=1}^{n_{\mathrm{a}}} \, c_{i, j} \, \psi_{{\rm a},j} \nonumber \\
+  & & \qquad \qquad \qquad \qquad - \frac{k_d}{2} \sum_{j=1}^{n_\text{a}} a_{i,j} \left(\psi_{{\rm a},j} - \theta_{{\rm a},j}\right) + \frac{k_d}{2} \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} \\
+  \sum_{j=1}^{n_\text{a}} a_{i,j} \, \dot\theta_{{\rm a},j} & = & - \sum_{j,m = 1}^{n_{\mathrm{a}}} b_{i, j, m} \left(\psi_{{\rm a},j}\, \theta_{{\rm a},m} + \theta_{{\rm a},j}\, \psi_{{\rm a},m}\right) - \beta\, \sum_{j=1}^{n_{\mathrm{a}}} \, c_{i, j} \, \theta_{{\rm a},j}  \nonumber  \\
+  & & \qquad \qquad \qquad \qquad + \frac{k_d}{2} \sum_{j=1}^{n_\text{a}} a_{i,j} \left(\psi_{{\rm a},j} - \theta_{{\rm a},j}\right) - \frac{k_d}{2}  \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} \nonumber \\
+  & & \qquad \qquad \qquad \qquad - 2 \, k'_d \, \sum_{j=1}^{n_\text{a}} a_{i,j} \, \theta_{{\rm a},j} + \sum_{j=1}^{n_\text{a}} u_{i,j} \, \omega_j \\
+
+As with the MAOOAM model with linearized temperature described above, the vertical velocity is then eliminated to provide a single equation
+for the atmospheric baroclinic streamfunction.
+The resulting closed baroclinic streamfunction equation, with :math:`T_{\text{a}, 0} \equiv 2 \frac{f_{0}}{R} \theta_{\mathrm{a}, 0}`, is:
+
+.. math::
+
+   \frac{\sigma}{2}\sum_{j=1}^{n_\text{a}} a_{i, j}~\dot{\theta}_{\text{a}, j} - \sum_{j=0}^{n_\text{a}} u_{i, j}~\dot{\theta}_{\text{a}, j}&=\frac{\sigma}{2}\bigg\{- \sum_{j,m = 1}^{n_{\mathrm{a}}} b_{i, j, m} \left(\psi_{{\rm a},j}\, \theta_{{\rm a},m} + \theta_{{\rm a},j}\, \psi_{{\rm a},m}\right) - \beta\, \sum_{j=1}^{n_{\mathrm{a}}} \, c_{i, j} \, \theta_{{\rm a},j} \\
+   & + \frac{k_d}{2} \sum_{j=1}^{n_\text{a}} a_{i,j} \left(\psi_{{\rm a},j} - \theta_{{\rm a},j}\right) - \frac{k_d}{2}  \, \sum_{j = 1}^{n_{\mathrm{o}}} d_{i,j} \, \psi_{{\rm o},j} - 2 \, k'_d \, \sum_{j=1}^{n_\text{a}} a_{i,j} \, \theta_{{\rm a},j} \bigg\} \\
+   &+\bigg\{\sum_{j,k=1}^{n_\text{a}}g_{i,j,m}\,\psi_{\text{a}, j}\,\theta_{\text{a}, m}+\lambda'_\text{a}\sum_{j=0}^{n_\text{a}}u_{i,j}\,\theta_{\text{a}, j}\\
+   &+S_{B,\text{a}}\sum_{j,k,l,m=0}^{n_\text{a}}z_{i,j,k,l,m}\,\theta_{\text{a}, j}\theta_{\text{a},k}\theta_{\text{a},l}\theta_{\text{a},m}-\frac{\lambda'_\text{a}}{2}\sum_{j=0}^{n_\text{o}}s_{i,j}\, T_{\text{o}, j}\\
+   &-S_{B, \text{o}}\sum_{j,k,l,m=0}^{n_\text{o}}v_{i,j,k,l,m}\, T_{\text{o}, j}T_{\text{o},k}T_{\text{o},l}T_{\text{o},m}+\sum_{j=0}^{n_\text{a}}u_{i,j}\, C'_{\text{a},j}\bigg\}
+
+.. TODO: continue from here
+These equations are implemented by means of a tensor contraction:
+
+.. math:: \frac{\mathrm{d} \eta_{i}}{\mathrm{~d} t}=\sum_{j, k, l, m, n=0}^{2\left(n_{\mathrm{a}}+n_{\mathrm{o}}+1\right)} \mathcal{T}_{i, j, k, l, m} \eta_{j} \eta_{k}\eta_{l}\eta_{m}
+
+with
+:math:`\eta=(1, \psi_{\text{a},1},\dots,\psi_{\text{a},n_\text{a}},\theta_{\text{a}, 0},\theta_{\text{a}, 1},\dots,\theta_{\text{a}, n_\text{a}},\psi_{\text{o}, 1},\dots,\psi_{\text{o}, n_o},T_{o, 0},T_{\text{o}, 1},\dots,T_{\text{o}, n_o})`,
+which is described in more detail in the Code Descrtiption.
+
+Dynamic Temperature Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The dynamic temperature model (``dynamic_T``) implementes dynamic
+zero-th order temperatures, while preserving the linearisation of
+temperaures in the quartic terms. This differs to the linearised version
+of the model described above, as in the dynamic temperature model the
+temperatures :math:`T_{o, 0}` and :math:`T_{a, 0}` are not spatially
+uniform and constant and are calculated at every time step.
+
+The radiation quintic terms, in the equations described above, are
+linearised by setting the indices :math:`k=l=m=0`. The linearised ocean
+temperature equation is reduced to the following equation:
+
+.. math::
+
+   \dot{T}_{o, i}=&-\sum_{j,k=1}^{n_o}O_{i,j,k}T_{o, k}\psi_j-\lambda'_oT_{o, i}\\
+   &-s_{B, o}\sum_{j=0}^{n_o}V_{i,j,0,0,0}~T_{o, j}T_{o,0}^3+2\lambda_0'\sum_{j=0}^{n_\text{a}}W_{i,j}\theta_{\text{a},j}\\
+   &+s_{B, \text{a}}\sum_{j=0}^{n_\text{a}}Z_{i,j,0,0,0}~\theta_{\text{a},j}~\theta_{\text{a},0}^3+\sum_{j=0}^{n_\text{a}}W_{i,j}C'_{o,j}
+
+And for the atmospheric temperatures:
+
+.. math::
+
+   \dot{\theta}_{\text{a}, i}=&-\sum_{j,k=1}^{n_\text{a}}g_{i,j,k}\psi_j\theta_{\text{a}, j}+\frac{\sigma}{2}\omega_i-\lambda'_\text{a}\theta_{\text{a}, i}\\
+   &-S_{B,\text{a}}\sum_{j=0}^{n_\text{a}}z_{i,j,0,0,0}~\theta_{\text{a}, j}\theta_{\text{a},0}^3+\frac{\lambda'_\text{a}}{2}\sum_{j=0}^{n_o}s_{i,j}T_{o, j}\\
+   &+S_{B, o}\sum_{j=0}^{n_o}v_{i,j,0,0,0}~T_{o, j}T_{o,0}^3+C'_{\text{a},i}
+
+The the zero-th order temperature terms (:math:`T_{o, 0}` and
+:math:`T_{a, 0}`) of the two equations can be extracted from the above
+ocean and atmosphere temperature equations. This provides the behaviour
+of the zero-th order equilibrium temperature:
+
+.. math::
+
+   \dot{T}_{o, 0}=& -\lambda'_oT_{o, 0}+2\lambda_0'\theta_{a,0}\\
+   & -s_{B, o}~V_{0,0,0,0,0}~T_{o, 0}^4+s_{B, a}~Z_{0,0,0,0,0}~\theta_{a,0}^4+C'_{o,0}
+
+.. math::
+
+   \dot{\theta}_{a, 0}=&-\lambda'_a\theta_{a, 0}+\frac{\lambda'_a}{2}~T_{o, 0}\\
+   & -S_{B,a}~z_{0,0,0,0,0}~\theta_{a, 0}^4 +S_{B, o}~v_{0,0,0,0,0}~T_{o, 0}^4+C'_{a,0}
+
+T4 Non-Linearised Model
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The non-linearised T4 (``T4``) version of the model implements the full
+non-linearised temperature equations. This includes the dynamic zero-th
+order temperature equations, as well as the temperature equations
+including the non-linearised temperature equations. This version of the
+model implements the Stefan-Bolzmann radiation equations accurately.
+
 
 References
 ----------
