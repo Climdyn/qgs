@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'qgs'
-copyright = '2020-2021, qgs Developers and Contributors'
-author = 'Jonathan Demaeyer and Lesley De Cruz'
+copyright = '2020-2022, qgs Developers and Contributors'
+author = 'Jonathan Demaeyer, Lesley De Cruz and Oisín Hamilton'
 
 # The full version, including alpha/beta/rc tags
 release = 'v0.2.5'  # temporary

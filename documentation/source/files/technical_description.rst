@@ -2,9 +2,7 @@
 Code Description
 ================
 
-TODO: Add a description of the dynamic T / T4 tensor
-
-Presently, the `ordinary differential equations`_ (ODEs) of the qgs model are at most bilinear
+In general (see the exception below), the `ordinary differential equations`_ (ODEs) of the qgs model are at most bilinear
 in their variables :math:`\eta_i` (:math:`1\leq i\leq` :attr:`~.params.QgParams.ndim`).
 This system of ODEs can therefore be expressed as the sum of
 a constant, a matrix multiplication, and a tensor contraction:
@@ -53,6 +51,30 @@ perturbation :math:`\boldsymbol{\delta\eta}^\text{TL}` of a trajectory
 
     \frac{\text{d}\delta\eta_i^\text{TL}}{\text{d}t} &= \sum_{j=1}^\mathrm{ndim} J^{\ast}_{i,j} \; \delta\eta_j^\text{TL}   \\
              &= \sum_{j=1}^\mathrm{ndim} \sum_{k=0}^\mathrm{ndim} \left ( \mathcal{T}_{i,k,j} + \mathcal{T}_{i,j,k} \right) \eta^{\ast}_k \; \delta\eta_j^\text{TL}
+
+
+Special case with the quartic temperature scheme
+------------------------------------------------
+
+In case the quartic temperature scheme is activated, as detailed in the section :ref:`files/model/maooam_model:Dynamical temperatures and quartic temperature tendencies model version`, then the above system of ODEs becomes
+
+.. math::
+
+    \frac{\text{d}\eta_i}{\text{d}t} = \sum_{j,k,l,m=0}^{\mathrm{ndim}} \mathcal{T}_{i,j,k,l,m} \, \eta_j \, \eta_k \, \eta_l \, \eta_m
+
+The Jacobian matrix becomes
+
+.. math::
+
+    J_{i,j} = \frac{\text{d}f_i}{\text{d}\eta_j}& = \frac{\text{d}}{\text{d}\eta_j } (\sum_{k,l,m,n=0}^\mathrm{ndim} \mathcal{T}_{i,k,l,m,n} \; \eta_k \; \eta_l \; \eta_m \; \eta_n )  \\
+             & = \sum_{k,m,n=0}^{\mathrm{ndim}} \left( \mathcal{T}_{i,j,k,m,n} + \mathcal{T}_{i,k,j,m,n} + \mathcal{T}_{i,k,m,j,n} + \mathcal{T}_{i,k,m,n,j}\right) \eta_k \; \eta_m \; \eta_n
+
+and the tangent linear model can be shown to be provided by the following equation:
+
+.. math::
+
+    \frac{\text{d}\delta\eta_i^\text{TL}}{\text{d}t} &= \sum_{j=1}^\mathrm{ndim} J^{\ast}_{i,j} \; \delta\eta_j^\text{TL}   \\
+             &= \sum_{j=1}^\mathrm{ndim} \sum_{k,m,n=0}^\mathrm{ndim} \left( \mathcal{T}_{i,j,k,m,n} + \mathcal{T}_{i,k,j,m,n} + \mathcal{T}_{i,k,m,j,n} + \mathcal{T}_{i,k,m,n,j}\right) \eta^\ast_k \; \eta^\ast_m \; \eta^\ast_n\; \delta\eta_j^\text{TL}
 
 
 Computational flow
