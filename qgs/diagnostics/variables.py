@@ -721,7 +721,7 @@ class GeopotentialHeightDifferenceDiagnostic(VariablesDiagnostic):
 
         basis = self._model_params.atmospheric_basis
 
-        funcs_list = basis.num_functions()
+        funcs_list = basis.num_functions(self._subs)
 
         for point in self._point1:
             self._func_points1.append(list())

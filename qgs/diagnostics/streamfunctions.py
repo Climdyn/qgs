@@ -97,7 +97,7 @@ class AtmosphericStreamfunctionDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.atmospheric_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
 
 class LowerLayerAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDiagnostic):
@@ -353,7 +353,7 @@ class OceanicStreamfunctionDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.oceanic_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
 
 class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
@@ -396,7 +396,7 @@ class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
         self._fields_average = list()
         basis = self._model_params.oceanic_basis
 
-        for func in basis.num_functions():
+        for func in basis.num_functions(self._subs):
             average = dblquad(func, 0, np.pi, 0, 2*np.pi/model_params.scale_params.n)
             self._fields_average.append(average[0])
 

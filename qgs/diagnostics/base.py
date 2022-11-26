@@ -28,10 +28,15 @@ import matplotlib.animation as animation
 from IPython.display import HTML, display
 from ipywidgets import interactive
 
+from sympy import symbols
+
 from qgs.diagnostics.misc import *
 
 # TODO: - need to introduce an oro_basis specific to the orography !!
 #       - no orography plot when oro_basis is none
+
+
+_n = symbols('n', real=True, nonnegative=True)  # only this works with sympy substitution, don't ask me why...
 
 
 class Diagnostic(ABC):
@@ -65,6 +70,7 @@ class Diagnostic(ABC):
         self._diagnostic_data = None
         self._diagnostic_data_dimensional = None
         self._time = None
+        self._subs = list()
 
         self.dimensional = dimensional
 
@@ -114,6 +120,7 @@ class Diagnostic(ABC):
         """
 
         self._set_params(model_params)
+        self._subs = [(_n, model_params.scale_params.n)]
         if kwargs is not None:
             self._configure(**kwargs)
 
