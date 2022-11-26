@@ -95,7 +95,7 @@ class AtmosphericTemperatureDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.atmospheric_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
 
 class MiddleAtmosphericTemperatureAnomalyDiagnostic(AtmosphericTemperatureDiagnostic):
@@ -285,7 +285,7 @@ class OceanicTemperatureDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.oceanic_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
 
 class OceanicLayerTemperatureAnomalyDiagnostic(OceanicTemperatureDiagnostic):
@@ -473,7 +473,7 @@ class GroundTemperatureAnomalyDiagnostic(FieldDiagnostic):
         self._compute_grid(delta_x, delta_y)
         basis = self._model_params.ground_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y)
+        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
     def _get_diagnostic(self, dimensional):
 

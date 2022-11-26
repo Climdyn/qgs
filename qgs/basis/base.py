@@ -94,9 +94,11 @@ class SymbolicBasis(Basis):
         sf = list()
 
         for f in self.functions:
-            ff = f.subs(self.substitutions)
             if extra_subs is not None:
-                ff = ff.subs(extra_subs)
+                ff = f.subs(extra_subs)
+            else:
+                ff = f
+            ff = ff.subs(self.substitutions)
             sf.append(ff)
 
         return sf

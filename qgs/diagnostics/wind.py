@@ -105,11 +105,11 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
 
         if self.type == "V":
             dx_basis = self._model_params.atmospheric_basis.x_derivative
-            self._grid_basis = create_grid_basis(dx_basis, self._X, self._Y)
+            self._grid_basis = create_grid_basis(dx_basis, self._X, self._Y, self._subs)
 
         elif self.type == "U":
             dy_basis = self._model_params.atmospheric_basis.y_derivative
-            self._grid_basis = create_grid_basis(dy_basis, self._X, self._Y)
+            self._grid_basis = create_grid_basis(dy_basis, self._X, self._Y, self._subs)
 
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
