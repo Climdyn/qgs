@@ -51,7 +51,6 @@ class DifferentialFieldDiagnostic(FieldDiagnostic):
     def _configure_differential(self, basis, derivative, order, delta_x=None, delta_y=None):
 
         self._compute_grid(delta_x, delta_y)
-        self._oro_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
         if derivative == "dx":
             dx_basis = basis.x_derivative(order)

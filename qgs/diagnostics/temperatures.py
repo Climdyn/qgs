@@ -93,10 +93,15 @@ class AtmosphericTemperatureDiagnostic(FieldDiagnostic):
     def _configure(self, model_params=None, delta_x=None, delta_y=None):
 
         self._compute_grid(delta_x, delta_y)
-        basis = self._model_params.atmospheric_basis
 
-        self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
-        self._oro_basis = self._grid_basis
+        self._grid_basis = create_grid_basis(self._model_params.atmospheric_basis, self._X, self._Y, self._subs)
+        if self._orography:
+            if self._model_params.ground_params.orographic_basis == "atmospheric":
+                self._oro_basis = self._grid_basis
+            else:
+                self._oro_basis = create_grid_basis(self._model_params.ground_basis, self._X, self._Y, self._subs)
+        else:
+            self._oro_basis = None
 
 
 class MiddleAtmosphericTemperatureAnomalyDiagnostic(AtmosphericTemperatureDiagnostic):

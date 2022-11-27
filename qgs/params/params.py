@@ -1319,7 +1319,7 @@ class QgParams(Params):
         if self.dynamic_T:
             self._atmospheric_basis.functions.insert(0, simplify("1"))
 
-        if self.ground_params is not None and self.ground_params.orographic_basis == "atmospheric_basis":
+        if self.ground_params is not None and self.ground_params.orographic_basis == "atmospheric":
             self.ground_params.set_orography(self._number_of_atmospheric_modes * [0.e0])
 
         if self.atemperature_params is not None:

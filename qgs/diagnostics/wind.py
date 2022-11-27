@@ -26,6 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from qgs.diagnostics.differential import DifferentialFieldDiagnostic
+from qgs.diagnostics.util import create_grid_basis
 
 
 class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
@@ -100,8 +101,6 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
 
     def _configure(self, delta_x=None, delta_y=None):
 
-        self._compute_grid(delta_x, delta_y)
-
         basis = self._model_params.atmospheric_basis
 
         if self.type == "V":
@@ -117,6 +116,13 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
 
         else:
             self._grid_basis = None
+
+        if self._orography and self._X is not None and self._Y is not None:
+            if self._model_params.ground_params.orographic_basis == "atmospheric":
+                self._oro_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
+            else:
+                self._oro_basis = create_grid_basis(self._model_params.ground_basis, self._X, self._Y, self._subs)
+        else:
             self._oro_basis = None
 
 
