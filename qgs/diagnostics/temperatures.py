@@ -96,6 +96,7 @@ class AtmosphericTemperatureDiagnostic(FieldDiagnostic):
         basis = self._model_params.atmospheric_basis
 
         self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
+        self._oro_basis = self._grid_basis
 
 
 class MiddleAtmosphericTemperatureAnomalyDiagnostic(AtmosphericTemperatureDiagnostic):
@@ -522,7 +523,7 @@ class GroundTemperatureDiagnostic(GroundTemperatureAnomalyDiagnostic):
 
     def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
 
-        GroundTemperatureAnomalyDiagnostic.__init__(self, model_params, dimensional, delta_x, delta_y, dimensional)
+        GroundTemperatureAnomalyDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
         self._plot_title = r'Ground temperature'
 
     def _get_diagnostic(self, dimensional):

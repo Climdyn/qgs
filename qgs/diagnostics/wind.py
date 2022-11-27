@@ -24,12 +24,11 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from qgs.diagnostics.util import create_grid_basis
 
-from qgs.diagnostics.base import FieldDiagnostic
+from qgs.diagnostics.differential import DifferentialFieldDiagnostic
 
 
-class AtmosphericWindDiagnostic(FieldDiagnostic):
+class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
     """General base class for atmospheric wind fields diagnostic.
     Provide a spatial gridded representation of the fields.
     This is an `abstract base class`_, it must be subclassed to create new diagnostics!
@@ -62,7 +61,7 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
         if not hasattr(self, 'type'):
             self.type = None
 
-        FieldDiagnostic.__init__(self, model_params, dimensional)
+        DifferentialFieldDiagnostic.__init__(self, model_params, dimensional)
         self._configure(delta_x=delta_x, delta_y=delta_y)
 
         self._plot_units = r" (in " + r'm s$^{-1}$' + r")"
@@ -103,20 +102,22 @@ class AtmosphericWindDiagnostic(FieldDiagnostic):
 
         self._compute_grid(delta_x, delta_y)
 
+        basis = self._model_params.atmospheric_basis
+
         if self.type == "V":
-            dx_basis = self._model_params.atmospheric_basis.x_derivative
-            self._grid_basis = create_grid_basis(dx_basis, self._X, self._Y, self._subs)
+            self._configure_differential(basis, "dx", 1, delta_x, delta_y)
 
         elif self.type == "U":
-            dy_basis = self._model_params.atmospheric_basis.y_derivative
-            self._grid_basis = create_grid_basis(dy_basis, self._X, self._Y, self._subs)
+            self._configure_differential(basis, "dy", 1, delta_x, delta_y)
 
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
                           " Unable to configure the diagnostic properly.")
             return 1
+
         else:
             self._grid_basis = None
+            self._oro_basis = None
 
 
 class LowerLayerAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):

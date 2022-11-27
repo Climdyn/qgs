@@ -98,6 +98,7 @@ class AtmosphericStreamfunctionDiagnostic(FieldDiagnostic):
         basis = self._model_params.atmospheric_basis
 
         self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
+        self._oro_basis = self._grid_basis
 
 
 class LowerLayerAtmosphericStreamfunctionDiagnostic(AtmosphericStreamfunctionDiagnostic):

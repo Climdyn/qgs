@@ -155,17 +155,37 @@ class SymbolicBasis(Basis):
 
         return dbasis
 
-    @property
-    def x_derivative(self):
-        """SymbolicBasis: Basis functions differentiated with respect to :math:`x` coordinate."""
-        x = symbols('x')
-        return self.derivative(x)
+    def x_derivative(self, order=1):
+        """Return the basis functions differentiated with respect to the :math:`x` coordinate.
 
-    @property
-    def y_derivative(self):
-        """SymbolicBasis: Basis functions differentiated with respect to :math:`y` coordinate."""
+        Parameters
+        ----------
+        order: int, optional
+            The order of the derivative. Default to first order.
+
+        Returns
+        -------
+        SymbolicBasis:
+            A new basis object with the differentiated basis function.
+        """
+        x = symbols('x')
+        return self.derivative(x, order)
+
+    def y_derivative(self, order=1):
+        """SymbolicBasis: Basis functions differentiated with respect to the :math:`y` coordinate.
+
+        Parameters
+        ----------
+        order: int, optional
+            The order of the derivative. Default to first order.
+
+        Returns
+        -------
+        SymbolicBasis:
+            A new basis object with the differentiated basis function.
+        """
         y = symbols('y')
-        return self.derivative(y)
+        return self.derivative(y, order)
 
 
 # Rem: Class not used currently in the model.

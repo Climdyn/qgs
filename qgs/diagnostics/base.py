@@ -1,6 +1,6 @@
 """
     Diagnostic base classes
-    ==============================
+    =======================
 
     Abstract base classes defining the diagnostics of the model and used to analyze its outputs.
 
@@ -223,10 +223,13 @@ class FieldDiagnostic(Diagnostic):
         self._Y = None
 
         self._grid_basis = None
+        self._oro_basis = None
 
         self._color_bar_format = True
 
         self._default_plot_kwargs = {'cmap': plt.get_cmap('jet'), 'interpolation': 'spline36'}
+
+        self._configure()
 
     def __len__(self):
         if self.diagnostic is not None:
@@ -318,9 +321,9 @@ class FieldDiagnostic(Diagnostic):
                     cl = fig.colorbar(im, ax=ax)
 
         elif style == "contour":
-            if self._orography and oro_kwargs is not False:
+            if self._orography and oro_kwargs is not False and self._oro_basis is not None:
                 hk = np.array(self._model_params.ground_params.hk, dtype=np.float)
-                oro = hk @ np.swapaxes(self._grid_basis, 0, 1) * 8500  # average height in meters of the 500 hPa pressure level at midlatitude
+                oro = hk @ np.swapaxes(self._oro_basis, 0, 1) * 8500  # average height in meters of the 500 hPa pressure level at midlatitude
                 im = ax.imshow(oro, origin='lower',
                                extent=[0, 2 * np.pi / self._model_params.scale_params.n, 0, np.pi], **oro_kwargs)
                 if color_bar:
