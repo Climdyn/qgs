@@ -144,9 +144,8 @@ Forthcoming developments
 ------------------------
 
 * Scientific development (short-to-mid-term developments)
-    + Dynamical equilibrium temperature equations
     + Non-autonomous equation (seasonality, etc...)
-    + Quartic T⁴ temperature tendencies
+    + Energy diagnostics
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
 * Long-term development track
