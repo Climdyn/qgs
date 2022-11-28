@@ -104,10 +104,10 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
         basis = self._model_params.atmospheric_basis
 
         if self.type == "V":
-            self._configure_differential(basis, "dx", 1, delta_x, delta_y)
+            self._configure_differential_grid(basis, "dx", 1, delta_x, delta_y)
 
         elif self.type == "U":
-            self._configure_differential(basis, "dy", 1, delta_x, delta_y)
+            self._configure_differential_grid(basis, "dy", 1, delta_x, delta_y)
 
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +

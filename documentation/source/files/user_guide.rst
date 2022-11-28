@@ -491,6 +491,7 @@ Note that it is also possible to use other ordinary differential equations integ
 
     * :class:`.MiddleAtmosphericTemperatureAnomalyDiagnostic`: Diagnostic giving the middle atmospheric temperature anomaly fields :math:`\delta T_{\rm a}`.
     * :class:`.MiddleAtmosphericTemperatureDiagnostic`: Diagnostic giving the middle atmospheric temperature fields :math:`T_{\rm a}`.
+    * :class:`.MiddleAtmosphericTemperatureMeridionalGradientDiagnostic`: Diagnostic giving the meridional gradient of the middle atmospheric temperature fields :math:`\partial_y T_{\rm a}`.
     * :class:`.OceanicLayerTemperatureAnomalyDiagnostic`: Diagnostic giving the oceanic layer temperature anomaly fields :math:`\delta T_{\rm o}`.
     * :class:`.OceanicLayerTemperatureDiagnostic`: Diagnostic giving the oceanic layer temperature fields :math:`T_{\rm o}`.
     * :class:`.GroundTemperatureAnomalyDiagnostic`: Diagnostic giving the ground layer temperature anomaly fields :math:`\delta T_{\rm g}`.

@@ -835,6 +835,7 @@ class QgParams(Params):
     T4: bool
         Use or not the :math:`T^4` forcing for the evolution of the temperature field if the heat exchange is activated.
 
+
     .. _Gas constant: https://en.wikipedia.org/wiki/Gas_constant
     .. _dry air: https://en.wikipedia.org/wiki/Gas_constant#Specific_gas_constant
     .. _Stefan-Boltzmann constant: https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_constant

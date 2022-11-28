@@ -79,9 +79,9 @@ html_static_path = ['_static']
 # -- Extension configuration -------------------------------------------------
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-                       'matplotlib': ('https://matplotlib.org', None),
+                       'numpy': ('https://numpy.org/doc/stable/', None),
+                       'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+                       'matplotlib': ('https://matplotlib.org/stable/', None),
                        'sparse': ('https://sparse.pydata.org/en/stable/', None),
                        'sympy': ('https://docs.sympy.org/latest/', None),
                        'ipython': ('https://ipython.readthedocs.io/en/stable/', None),

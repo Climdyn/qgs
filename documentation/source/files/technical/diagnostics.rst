@@ -26,6 +26,10 @@ We describe here the modules used to analyze the output of the model with diagno
 .. automodule:: qgs.diagnostics.multi
     :members:
 
+.. automodule:: qgs.diagnostics.differential
+    :members:
+
+
 .. automodule:: qgs.diagnostics.wind
     :members:
 
