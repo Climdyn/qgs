@@ -14,3 +14,4 @@ Some basic examples are available in this section:
    examples/tgls
    examples/VSPD
    examples/manual
+   examples/Hamiltonetal

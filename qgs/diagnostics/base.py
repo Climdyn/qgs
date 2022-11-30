@@ -229,8 +229,6 @@ class FieldDiagnostic(Diagnostic):
 
         self._default_plot_kwargs = {'cmap': plt.get_cmap('jet'), 'interpolation': 'spline36'}
 
-        self._configure()
-
     def __len__(self):
         if self.diagnostic is not None:
             return self.diagnostic.shape[0]
