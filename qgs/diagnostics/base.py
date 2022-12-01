@@ -321,7 +321,7 @@ class FieldDiagnostic(Diagnostic):
         elif style == "contour":
             if self._orography and oro_kwargs is not False and self._oro_basis is not None:
                 hk = np.array(self._model_params.ground_params.hk, dtype=np.float)
-                oro = hk @ np.swapaxes(self._oro_basis, 0, 1) * 8500  # average height in meters of the 500 hPa pressure level at midlatitude
+                oro = hk @ np.swapaxes(self._oro_basis, 0, 1) * self._model_params.scale_params.Ha
                 im = ax.imshow(oro, origin='lower',
                                extent=[0, 2 * np.pi / self._model_params.scale_params.n, 0, np.pi], **oro_kwargs)
                 if color_bar:

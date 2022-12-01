@@ -257,6 +257,8 @@ class ScaleParams(Params):
         self.phi0_npi = Parameter(0.25e0, input_dimensional=False, description="latitude expressed in fraction of pi")
         self.deltap = Parameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
                                 return_dimensional=True)
+        self.Ha = Parameter(8500., units='[m]', description="Average height of the 500 hPa pressure level at midlatitude",
+                            return_dimensional=True)
         self.set_params(dic)
 
     # ----------------------------------------
