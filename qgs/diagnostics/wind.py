@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 
 from qgs.diagnostics.differential import DifferentialFieldDiagnostic
 from qgs.diagnostics.util import create_grid_basis
+from qgs.functions.tendencies import create_tendencies
 
 
 class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
@@ -629,6 +630,46 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
             self._diagnostic_data_dimensional = True
         else:
             self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class VerticalVelocity(AtmosphericWindDiagnostic):
+
+    def __init__(self, model_params, f=None, atmospheric_inner_products=None, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "W"
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+        self._plot_title = r'Atmospheric vertical wind in the middle layer'
+
+        if f is None or atmospheric_inner_products is None:
+            self._f, _, self._aips = create_tendencies(model_params, return_inner_products=True)
+        else:
+            self._f = f
+            self._aips = atmospheric_inner_products
+
+    def set_data(self, time, data):
+
+        AtmosphericWindDiagnostic.set_data(self, time, data)
+        tendencies = self._f(self._time[0], self._data[:, 0])[:, np.newaxis]
+        for i in range(1, self._data.shape[-1]):
+            new_tendency = self._f(self._time[i], self._data[:, i])[:, np.newaxis]
+            tendencies = np.concatenate((tendencies, new_tendency), axis=-1)
+
+        self._tendencies = tendencies
+
+
+    def _get_diagnostic(self,dimensional):
+
+        vr = self._model_params.variables_range
+
+
+        sigma = self._model_params.atmospheric_params.sig0
+        hd=self._model_params.atemperature_params.hd
+        thetas = self._model_params.atemperature_params.thetas
+        if dimensional:
+            self._diagnostic_data=*self._model_params.scale_params.deltap*self._model_params.scale_params.f0
+        else:
+            self._diagnostic_data=
         return self._diagnostic_data
 
 
