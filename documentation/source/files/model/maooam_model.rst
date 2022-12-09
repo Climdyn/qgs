@@ -122,18 +122,18 @@ expansion, we number the basis functions along increasing values of :math:`H_{\r
 It allows to write the set as :math:`\left\{ \phi_i(x,y); 1 \leq i \leq n_\text{o}\right\}` where :math:`n_{\mathrm{o}}`
 (:attr:`~.params.QgParams.nmod` [1]) is the number of modes of the spectral expansion in the ocean.
 
-For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`H_{\rm o} \in \{1,4\}`; :math:`P_{\rm o} \in \{1,2\}` and the set of basis functions is
+For example, the model derived in :cite:`mao-VDDG2015` can be specified by setting :math:`H_{\rm o} \in \{1,2\}`; :math:`P_{\rm o} \in \{1,4\}` and the set of basis functions is
 
 .. math::
 
     \phi_1(x,y) & = &  2\, \sin(\frac{n}{2} x)\, \sin(y), \nonumber \\
-    \phi_2(x,y) & = &  2\, \sin(n x)\, \sin(y), \nonumber \\
-    \phi_3(x,y) & = &  2\, \sin(\frac{3 n}{2} x)\, \sin(y), \nonumber \\
-    \phi_4(x,y) & = &  2\, \sin(2 n x)\, \sin(y), \nonumber \\
-    \phi_5(x,y) & = &  2\, \sin(\frac{n}{2} x)\, \sin(2 y), \nonumber \\
+    \phi_2(x,y) & = &  2\, \sin(\frac{n}{2} x)\, \sin(2 y), \nonumber \\
+    \phi_3(x,y) & = &  2\, \sin(\frac{n}{2} x)\, \sin(3 y), \nonumber \\
+    \phi_4(x,y) & = &  2\, \sin(\frac{n}{2} x)\, \sin(4 y), \nonumber \\
+    \phi_5(x,y) & = &  2\, \sin(n x)\, \sin(y), \nonumber \\
     \phi_6(x,y) & = &  2\, \sin(n x)\, \sin(2 y), \nonumber \\
-    \phi_7(x,y) & = &  2\, \sin(\frac{3 n}{2} x)\, \sin(2 y), \nonumber \\
-    \phi_8(x,y) & = &  2\, \sin(2 n x)\, \sin(2 y), \nonumber
+    \phi_7(x,y) & = &  2\, \sin(n x)\, \sin(3 y), \nonumber \\
+    \phi_8(x,y) & = &  2\, \sin(n x)\, \sin(4 y), \nonumber
 
 such that
 
