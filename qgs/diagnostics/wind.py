@@ -14,9 +14,10 @@
     * :class:`MiddleAtmosphericUWindDiagnostic`: Diagnostic giving the middle atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}`.
     * :class:`UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\\partial_x \\psi^1_{\\rm a}`.
     * :class:`UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \\partial_y \\psi^1_{\\rm a}`.
-    * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
-    * :class:`MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric wind intensity fields.
-    * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
+    * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
+    * :class:`MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric horizontal wind intensity fields.
+    * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric horizontal wind intensity fields.
+    * :class:`MiddleLayerVerticalVelocity`: Diagnostic giving the middle atmospheric layer vertical wind intensity fields.
 
 """
 
@@ -114,7 +115,6 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
         elif self.type == "W":
             self._compute_grid(delta_x, delta_y)
             self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
-
 
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
@@ -478,7 +478,7 @@ class UpperLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
 
 class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+    """Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
@@ -531,7 +531,7 @@ class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
 
 class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle atmospheric wind intensity fields.
+    """Diagnostic giving the middle atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
@@ -584,7 +584,7 @@ class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
 
 class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+    """Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
