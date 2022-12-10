@@ -681,7 +681,7 @@ class MiddleLayerVerticalVelocity(AtmosphericWindDiagnostic):
 
         self._time = time
         self._data = _compute_omega_term(time, data, self._f, self._f_thermo)
-        self._data = 2 * self._data / self._model_params.atmospheric_params.sig0
+        self._data = self._data / self._model_params.atmospheric_params.sig0
 
     def _get_diagnostic(self, dimensional):
 

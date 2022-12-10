@@ -1,8 +1,8 @@
 """
-    qgs tensor module
-    =================
+    qgs atmospheric thermodynamic tensor module
+    ===========================================
 
-    This module computes and holds the tensors representing the tendencies of the model's equations.
+    This module computes and holds the tensors representing the atmospheric tendencies of the model's equations.
 
     TODO: Add a list of the different tensor available
 
@@ -68,10 +68,6 @@ class AtmoThermoTensor(QgsTensor):
         aips = self.atmospheric_inner_products
         par = self.params
         atp = par.atemperature_params
-        ap = par.atmospheric_params
-        op = par.oceanic_params
-        scp = par.scale_params
-        gp = par.ground_params
         nvar = par.number_of_variables
         ndim = par.ndim
 
@@ -599,29 +595,29 @@ if __name__ == '__main__':
 
     # Symbolic dynamic T test
 
-    params_t = QgParams({'rr': 287.e0, 'sb': 5.6e-8}, dynamic_T=True)
-    params_t.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
-    params_t.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
-    params_t.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
-
-    aip = AtmosphericSymbolicInnerProducts(params_t, quadrature=True)  # , stored=False)
-    oip = OceanicSymbolicInnerProducts(params_t, quadrature=True)  # , stored=False)
-    agotensor_t = AtmoThermoTensorDynamicT(params_t, aip, oip)
-
-    # Symbolic dynamic T4 test
-
-    params_t4 = QgParams({'rr': 287.e0, 'sb': 5.6e-8}, T4=True)
-    params_t4.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
-    params_t4.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
-    params_t4.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
-
-    aip = AtmosphericSymbolicInnerProducts(params_t4, quadrature=True)  # , stored=False)
-    oip = OceanicSymbolicInnerProducts(params_t4, quadrature=True)  # , stored=False)
-
-    aip.save_to_file("aip.ip")
-    oip.save_to_file("oip.ip")
-
-    aip.load_from_file("aip.ip")
-    oip.load_from_file("oip.ip")
-
-    agotensor_t4 = AtmoThermoTensorT4(params_t4, aip, oip)
+    # params_t = QgParams({'rr': 287.e0, 'sb': 5.6e-8}, dynamic_T=True)
+    # params_t.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
+    # params_t.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
+    # params_t.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
+    #
+    # aip = AtmosphericSymbolicInnerProducts(params_t, quadrature=True)  # , stored=False)
+    # oip = OceanicSymbolicInnerProducts(params_t, quadrature=True)  # , stored=False)
+    # agotensor_t = AtmoThermoTensorDynamicT(params_t, aip, oip)
+    #
+    # # Symbolic dynamic T4 test
+    #
+    # params_t4 = QgParams({'rr': 287.e0, 'sb': 5.6e-8}, T4=True)
+    # params_t4.set_params({'kd': 0.04, 'kdp': 0.04, 'n': 1.5})
+    # params_t4.set_atmospheric_channel_fourier_modes(2, 2, mode='symbolic')
+    # params_t4.set_oceanic_basin_fourier_modes(2, 4, mode='symbolic')
+    #
+    # aip = AtmosphericSymbolicInnerProducts(params_t4, quadrature=True)  # , stored=False)
+    # oip = OceanicSymbolicInnerProducts(params_t4, quadrature=True)  # , stored=False)
+    #
+    # # aip.save_to_file("aip.ip")
+    # # oip.save_to_file("oip.ip")
+    # #
+    # # aip.load_from_file("aip.ip")
+    # # oip.load_from_file("oip.ip")
+    #
+    # agotensor_t4 = AtmoThermoTensorT4(params_t4, aip, oip)
