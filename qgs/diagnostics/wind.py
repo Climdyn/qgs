@@ -685,8 +685,13 @@ class MiddleLayerVerticalVelocity(AtmosphericWindDiagnostic):
 
     def _get_diagnostic(self, dimensional):
 
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
         vr = self._model_params.variables_range
-        omega = np.swapaxes(self._data[vr[0]:vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        omega = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = omega * self._model_params.scale_params.deltap * self._model_params.scale_params.f0
