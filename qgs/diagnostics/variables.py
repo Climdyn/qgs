@@ -630,7 +630,7 @@ class VariablesDiagnostic(Diagnostic):
     def _make_anim(self, variables='all', style="2Dscatter", background=None, ax=None, figsize=(16, 9),
                    show_time=True, plot_kwargs=None, anim_kwargs=None, blit=True):
 
-        fig, ax, fargs, kwargs = self._init_anim(variables, style, background, ax, figsize, show_time, plot_kwargs, anim_kwargs)
+        fig, ax, fargs, kwargs = self._init_anim(variables, style, background, ax, figsize, False, show_time, plot_kwargs, anim_kwargs)
 
         update = self._make_update(**kwargs)
 

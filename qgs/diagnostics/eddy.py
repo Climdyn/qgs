@@ -100,6 +100,9 @@ class MiddleAtmosphericEddyHeatFluxDiagnostic(FieldDiagnostic):
         T = self._tdiag._get_diagnostic(dimensional)
         V = self._vdiag._get_diagnostic(dimensional)
 
+        self._tdiag.set_data(None, None)
+        self._vdiag.set_data(None, None)
+
         if self._temp_mean_state is not None:
             Tmean = self._temp_mean_state._get_diagnostic(dimensional).mean(axis=0)
         else:
@@ -185,6 +188,8 @@ class MiddleAtmosphericEddyHeatFluxProfileDiagnostic(ProfileDiagnostic):
 
         flux = self._flux._get_diagnostic(dimensional)
         dX = self._flux._X[0, 1] - self._flux._X[0, 0]
+
+        self._flux.set_data(None, None)
 
         iflux = simpson(flux, dx=dX, axis=2) / (2*np.pi / self._model_params.scale_params.n)
 

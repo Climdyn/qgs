@@ -122,6 +122,7 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
             return 1
 
         else:
+            self._compute_grid(delta_x, delta_y)
             self._grid_basis = None
 
         if self._orography and self._X is not None and self._Y is not None:
@@ -523,6 +524,9 @@ class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
         self._diagnostic_data = np.sqrt(U**2 + V**2)
 
+        self._udiag.set_data(None, None)
+        self._vdiag.set_data(None, None)
+
         if dimensional:
             self._diagnostic_data_dimensional = True
         else:
@@ -575,6 +579,9 @@ class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         V = self._vdiag._get_diagnostic(dimensional)
 
         self._diagnostic_data = np.sqrt(U**2 + V**2)
+
+        self._udiag.set_data(None, None)
+        self._vdiag.set_data(None, None)
 
         if dimensional:
             self._diagnostic_data_dimensional = True
@@ -631,6 +638,9 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         V = self._vdiag._get_diagnostic(dimensional)
 
         self._diagnostic_data = np.sqrt(U**2 + V**2)
+
+        self._udiag.set_data(None, None)
+        self._vdiag.set_data(None, None)
 
         if dimensional:
             self._diagnostic_data_dimensional = True
