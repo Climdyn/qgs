@@ -640,7 +640,8 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
 
 class MiddleLayerVerticalVelocity(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle atmospheric layer vertical wind intensity fields.
+    """Diagnostic giving the middle atmospheric layer vertical wind intensity fields :math:`\\omega`.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
 
     Parameters
     ----------

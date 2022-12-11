@@ -2,7 +2,8 @@
     qgs atmospheric thermodynamic tensor module
     ===========================================
 
-    This module computes and holds the tensors representing the atmospheric tendencies of the model's equations.
+    This module computes and holds the tensors representing the atmospheric thermodynamic tendencies of the model's equations
+    needed to compute the vertical wind velocity :math:`\\omega`.
 
     TODO: Add a list of the different tensor available
 
