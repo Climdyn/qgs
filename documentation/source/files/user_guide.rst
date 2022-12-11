@@ -510,9 +510,10 @@ Note that it is also possible to use other ordinary differential equations integ
     * :class:`.MiddleAtmosphericUWindDiagnostic`: Diagnostic giving the middle atmospheric U wind fields :math:`- \partial_y \psi_{\rm a}`.
     * :class:`.UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\partial_x \psi^1_{\rm a}`.
     * :class:`.UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \partial_y \psi^1_{\rm a}`.
-    * :class:`.LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
-    * :class:`.MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric wind intensity fields.
-    * :class:`.UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
+    * :class:`.LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
+    * :class:`.MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric horizontal wind intensity fields.
+    * :class:`.UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric horizontal wind intensity fields.
+    * :class:`.MiddleLayerVerticalVelocity`: Diagnostic giving the middle atmospheric layer vertical wind intensity fields.
     * :class:`.MiddleAtmosphericEddyHeatFluxDiagnostic`: Diagnostic giving the middle atmospheric eddy heat flux field.
     * :class:`.MiddleAtmosphericEddyHeatFluxProfileDiagnostic`: Diagnostic giving the middle atmospheric eddy heat flux zonally averaged profile.
 

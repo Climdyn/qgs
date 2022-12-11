@@ -14,19 +14,22 @@
     * :class:`MiddleAtmosphericUWindDiagnostic`: Diagnostic giving the middle atmospheric U wind fields :math:`- \\partial_y \\psi_{\\rm a}`.
     * :class:`UpperLayerAtmosphericVWindDiagnostic`: Diagnostic giving the upper layer atmospheric V wind fields :math:`\\partial_x \\psi^1_{\\rm a}`.
     * :class:`UpperLayerAtmosphericUWindDiagnostic`: Diagnostic giving the upper layer atmospheric U wind fields :math:`- \\partial_y \\psi^1_{\\rm a}`.
-    * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric wind intensity fields.
-    * :class:`MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric wind intensity fields.
-    * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric wind intensity fields.
+    * :class:`LowerLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
+    * :class:`MiddleAtmosphericWindIntensityDiagnostic`: Diagnostic giving the middle atmospheric horizontal wind intensity fields.
+    * :class:`UpperLayerAtmosphericWindIntensityDiagnostic`: Diagnostic giving the upper layer atmospheric horizontal wind intensity fields.
+    * :class:`MiddleLayerVerticalVelocity`: Diagnostic giving the middle atmospheric layer vertical wind intensity fields.
 
 """
 
 import warnings
 
 import numpy as np
+from numba import njit
 import matplotlib.pyplot as plt
 
 from qgs.diagnostics.differential import DifferentialFieldDiagnostic
 from qgs.diagnostics.util import create_grid_basis
+from qgs.functions.tendencies import create_tendencies, create_atmo_thermo_tendencies
 
 
 class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
@@ -108,6 +111,10 @@ class AtmosphericWindDiagnostic(DifferentialFieldDiagnostic):
 
         elif self.type == "U":
             self._configure_differential_grid(basis, "dy", 1, delta_x, delta_y)
+
+        elif self.type == "W":
+            self._compute_grid(delta_x, delta_y)
+            self._grid_basis = create_grid_basis(basis, self._X, self._Y, self._subs)
 
         elif self.type is None:
             warnings.warn("AtmosphericWindDiagnostic: Basis type note specified." +
@@ -471,7 +478,7 @@ class UpperLayerAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
 
 class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+    """Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
@@ -524,7 +531,7 @@ class LowerLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
 
 class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the middle atmospheric wind intensity fields.
+    """Diagnostic giving the middle atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
@@ -577,7 +584,7 @@ class MiddleAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
 
 
 class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
-    """Diagnostic giving the lower layer atmospheric wind intensity fields.
+    """Diagnostic giving the lower layer atmospheric horizontal wind intensity fields.
 
     Parameters
     ----------
@@ -632,10 +639,83 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         return self._diagnostic_data
 
 
+class MiddleLayerVerticalVelocity(AtmosphericWindDiagnostic):
+    """Diagnostic giving the middle atmospheric layer vertical wind intensity fields :math:`\\omega`.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        self.type = "W"
+
+        AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric vertical wind in the middle layer'
+        self._plot_units = r" (in " + r'Pa s$^{-1}$' + r")"
+
+        self._f, _ = create_tendencies(model_params)
+        self._f_thermo = create_atmo_thermo_tendencies(model_params)
+
+    def set_data(self, time, data):
+
+        self._time = time
+        self._data = _compute_omega_term(time, data, self._f, self._f_thermo)
+        self._data = self._data / self._model_params.atmospheric_params.sig0
+
+    def _get_diagnostic(self, dimensional):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        omega = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = omega * self._model_params.scale_params.deltap * self._model_params.scale_params.f0
+        else:
+            self._diagnostic_data = omega
+
+        return self._diagnostic_data
+
+
+@njit
+def _compute_omega_term(time, data, func, thermo_func):
+    tendencies = np.zeros_like(data)
+    thermo_tendencies = np.zeros_like(tendencies)
+    for i in range(data.shape[-1]):
+        tendencies[:, i] = func(time[i], data[:, i])
+        thermo_tendencies[:, i] = thermo_func(time[i], data[:, i])
+
+    return tendencies - thermo_tendencies
+
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     from qgs.integrators.integrator import RungeKuttaIntegrator
-    from qgs.functions.tendencies import create_tendencies
 
     pars = QgParams()
     pars.set_atmospheric_channel_fourier_modes(2, 2)
@@ -643,7 +723,7 @@ if __name__ == '__main__':
     integrator = RungeKuttaIntegrator()
     integrator.set_func(f)
     ic = np.random.rand(pars.ndim) * 0.1
-    integrator.integrate(0., 200000., 0.1, ic=ic, write_steps=5)
+    integrator.integrate(0., 10000., 0.1, ic=ic, write_steps=5)
     time, traj = integrator.get_trajectories()
     integrator.terminate()
 
@@ -673,3 +753,6 @@ if __name__ == '__main__':
 
     psi1_wind = UpperLayerAtmosphericWindIntensityDiagnostic(pars)
     psi1_wind(time, traj)
+
+    vert_wind = MiddleLayerVerticalVelocity(pars)
+    vert_wind(time, traj)
