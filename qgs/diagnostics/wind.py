@@ -634,9 +634,6 @@ class UpperLayerAtmosphericWindIntensityDiagnostic(AtmosphericWindDiagnostic):
         U = self._udiag._get_diagnostic(dimensional)
         V = self._vdiag._get_diagnostic(dimensional)
 
-        U = self._udiag._get_diagnostic(dimensional)
-        V = self._vdiag._get_diagnostic(dimensional)
-
         self._diagnostic_data = np.sqrt(U**2 + V**2)
 
         self._udiag.set_data(None, None)
