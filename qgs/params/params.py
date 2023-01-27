@@ -1013,7 +1013,7 @@ class QgParams(Params):
         """float: Long wave radiation lost by ground/ocean to the atmosphere :math:`s_{B,{\\rm g/\\rm o}} = 4\\,\\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm g/\\rm o} f_0)` in the linearized temperature model equations."""
         gotp = self.gotemperature_params
         scp = self.scale_params
-        if gotp is not None:
+        if gotp is not None and not self.dynamic_T:
             try:
                 return 4 * self.sb * gotp.T0 ** 3 / (gotp.gamma * scp.f0)
             except:
@@ -1027,7 +1027,7 @@ class QgParams(Params):
         atp = self.atemperature_params
         gotp = self.gotemperature_params
         scp = self.scale_params
-        if gotp is not None and atp is not None:
+        if gotp is not None and atp is not None and not self.dynamic_T:
             try:
                 return 8 * atp.eps * self.sb * atp.T0 ** 3 / (gotp.gamma * scp.f0)
             except:
@@ -1041,7 +1041,7 @@ class QgParams(Params):
         atp = self.atemperature_params
         gotp = self.gotemperature_params
         scp = self.scale_params
-        if atp is not None and gotp is not None:
+        if atp is not None and gotp is not None and not self.dynamic_T:
             try:
                 return 2 * atp.eps * self.sb * gotp.T0 ** 3 / (atp.gamma * scp.f0)
             except:
@@ -1054,7 +1054,7 @@ class QgParams(Params):
         """float: Long wave radiation lost by atmosphere to space & ground/ocean :math:`S_{B,{\\rm a}} = 8\\,\\epsilon_{\\rm a}\\, \\sigma_B \\, T_{{\\rm a},0}^3 / (\\gamma_{\\rm a} f_0)` in the linearized temperature model equations."""
         atp = self.atemperature_params
         scp = self.scale_params
-        if atp is not None:
+        if atp is not None and not self.dynamic_T:
             try:
                 return 8 * atp.eps * self.sb * atp.T0 ** 3 / (atp.gamma * scp.f0)
             except:
