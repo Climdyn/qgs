@@ -11,7 +11,7 @@ dependencies:
   - numba
   - numpy
   - scipy
-  - sympy
+  - sympy=1.8
   - sphinx
   - sphinx_rtd_theme
   - pytest
