@@ -199,6 +199,8 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def _phi(self, i):
         if self.oceanic_basis is not None:
             return self.oceanic_basis.functions[i]
+        elif self.ground_basis is not None:
+            return self.ground_basis.functions[i]
 
     def connect_to_ocean(self, ocean_basis, num_threads=None, timeout=None):
         """Connect the atmosphere to an ocean.
@@ -324,10 +326,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 _parallel_compute(pool, args_list, subs, self._s, timeout)
 
                 # gh inner products
-                args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
-                             for j in range(self.natm) for k in range(ngr)]
+                if orographic_basis != "atmospheric":
+                    args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
+                                 for j in range(self.natm) for k in range(ngr)]
 
-                _parallel_compute(pool, args_list, subs, self._gh, timeout)
+                    _parallel_compute(pool, args_list, subs, self._gh, timeout)
 
                 if self._T4:
                     # v inner products

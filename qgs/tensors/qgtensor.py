@@ -246,6 +246,7 @@ class QgsTensor(object):
                             if gp.orographic_basis == "atmospheric":
                                 oro = a_inv[i, :] @ aips._g[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
                             else:
+                                # TODO: Can only be used with symbolic inner products here - a warning or an error should be raised if this is not the case.
                                 oro = a_inv[i, :] @ aips._gh[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
                             t[self._psi_a(j), 0] -= oro / 2
                             t[self._theta_a(jo), 0] += oro / 2

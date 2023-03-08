@@ -1397,6 +1397,8 @@ class QgParams(Params):
         self._gms = None
 
         self._ground_basis = basis
+        self._number_of_ground_modes = len(basis)
+        self._number_of_oceanic_modes = 0
         if self.dynamic_T:
             self._ground_basis.functions.insert(0, simplify("1"))
 
@@ -1427,8 +1429,6 @@ class QgParams(Params):
                                                          description="sensible+turbulent heat exchange between ocean and atmosphere")
 
         if self.gotemperature_params is not None:
-            self._number_of_ground_modes = len(basis)
-            self._number_of_oceanic_modes = 0
             # if orography is disabled, enable it!
             if self.ground_params is not None:
                 if self.ground_params.hk is None:
