@@ -33,8 +33,11 @@ from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProduc
 from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
 from sympy import lambdify
 from scipy.integrate import dblquad
+from sympy import symbols
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
+
+_n = symbols('n', real=True, nonnegative=True)
 
 
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
@@ -170,7 +173,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self.ground_basis = None
         self.connected_to_ground = False
 
-        self.subs = [('n', self.n)]
+        self.subs = [(_n, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -694,7 +697,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         self.atmospheric_basis = None
         self.connected_to_atmosphere = False
 
-        self.subs = [('n', self.n)]
+        self.subs = [(_n, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -1083,7 +1086,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         self.atmospheric_basis = None
         self.connected_to_atmosphere = False
 
-        self.subs = [('n', self.n)]
+        self.subs = [(_n, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
