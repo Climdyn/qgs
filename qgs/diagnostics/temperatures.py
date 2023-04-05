@@ -537,7 +537,7 @@ class GroundTemperatureDiagnostic(GroundTemperatureAnomalyDiagnostic):
     def _get_diagnostic(self, dimensional):
 
         vr = self._model_params.variables_range
-        T = np.swapaxes(self._data[vr[1], ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
+        T = np.swapaxes(self._data[vr[1]:, ...].T @ np.swapaxes(self._grid_basis, 0, 1), 0, 1)
 
         if dimensional:
             self._diagnostic_data = T * self._model_params.temperature_scaling
