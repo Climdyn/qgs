@@ -158,3 +158,115 @@ class LowerLayerAtmosphericVorticityDiagnostic(AtmosphericVorticityDiagnostic):
             self._diagnostic_data = psi3
             self._diagnostic_data_dimensional = False
         return self._diagnostic_data
+
+
+class MiddleAtmosphericVorticityDiagnostic(AtmosphericVorticityDiagnostic):
+    """Diagnostic giving the middle atmospheric vorticity fields :math:`\\nabla^2 \\psi_{\\rm a}`
+    where :math:`\\psi_{\\rm a}` is the barotropic streamfunction.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations
+    and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        AtmosphericVorticityDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric vorticity in the middle of the atmosphere'
+
+    def _get_diagnostic(self, dimensional):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+
+        if dimensional:
+            self._diagnostic_data = psi * self._model_params.streamfunction_scaling / (self._model_params.scale_params.L ** 2)
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = psi
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class UpperLayerAtmosphericVorticityDiagnostic(AtmosphericVorticityDiagnostic):
+    """Diagnostic giving the upper layer atmospheric vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a}`.
+    Computed as :math:`\\nabla^2 \\psi^1_{\\rm a} = \\nabla^2 \\psi_{\\rm a} + \\nabla^2 \\theta_{\\rm a}` where :math:`\\psi_{\\rm a}` and :math:`\\theta_{\\rm a}` are respectively the barotropic and baroclinic streamfunctions.
+    See also the :ref:`files/model/atmosphere:Atmospheric component` and :ref:`files/model/oro_model:Mid-layer equations and the thermal wind relation` sections.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        AtmosphericVorticityDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric vorticity in the upper layer'
+
+    def _get_diagnostic(self, dimensional):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        psi = np.swapaxes(self._data[:vr[0], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+
+        psi1 = psi + theta
+
+        if dimensional:
+            self._diagnostic_data = psi1 * self._model_params.streamfunction_scaling / (self._model_params.scale_params.L ** 2)
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = psi1
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+

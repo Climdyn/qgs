@@ -284,7 +284,7 @@ class MiddleAtmosphericVWindDiagnostic(AtmosphericWindDiagnostic):
 
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        self._plot_title = r'V wind in the middle of the atmosphere'
+        self._plot_title = r'Atmospheric V wind in the middle of the atmosphere'
 
     def _get_diagnostic(self, dimensional):
 
@@ -340,7 +340,7 @@ class MiddleAtmosphericUWindDiagnostic(AtmosphericWindDiagnostic):
 
         AtmosphericWindDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
 
-        self._plot_title = r'U wind in the middle of the atmosphere'
+        self._plot_title = r'Atmospheric U wind in the middle of the atmosphere'
 
     def _get_diagnostic(self, dimensional):
 
