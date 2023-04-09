@@ -87,7 +87,7 @@ class LaplacianFieldDiagnostic(FieldDiagnostic):
 
         FieldDiagnostic.__init__(self, model_params, dimensional)
 
-    def _configure_differential_grid(self, basis, delta_x=None, delta_y=None):
+    def _configure_laplacian_grid(self, basis, delta_x=None, delta_y=None):
 
         self._compute_grid(delta_x, delta_y)
 
