@@ -11,6 +11,8 @@
     * :class:`LowerLayerAtmosphericVorticityDiagnostic`: Diagnostic giving the lower layer atmospheric vorticity fields :math:`\\nabla^2 \\psi^3_{\\rm a}`.
     * :class:`MiddleAtmosphericVorticityDiagnostic`: Diagnostic giving the middle atmospheric vorticity fields :math:`\\nabla^2 \\psi_{\\rm a}`.
     * :class:`UpperLayerAtmosphericVorticityDiagnostic`: Diagnostic giving the upper layer atmospheric vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a}`.
+    * :class:`LowerLayerAtmosphericPotentialVorticityDiagnostic`: Diagnostic giving the lower layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^3_{\\rm a} + f_0 + \\beta\\, y + \\frac{f_0^2}{\\sigma_0\\, \\delta p^2} \\theta_{\\rm a}`.
+    * :class:`UpperLayerAtmosphericPotentialVorticityDiagnostic`: Diagnostic giving the upper layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a} + f_0 + \\beta\\, y - \\frac{f_0^2}{\\sigma_0\\, \\delta p^2} \\theta_{\\rm a}`.
 
 """
 
@@ -271,7 +273,7 @@ class UpperLayerAtmosphericVorticityDiagnostic(AtmosphericVorticityDiagnostic):
 
 
 class UpperLayerAtmosphericPotentialVorticityDiagnostic(AtmosphericVorticityDiagnostic):
-    """Diagnostic giving the upper layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a} + f - \\frac{f_0^2}{\\sigma_0\\, (\\delta p)^2} \\theta_{\\rm a}`.
+    """Diagnostic giving the upper layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a} + f_0 + \\beta\\, y - \\frac{f_0^2}{\\sigma_0\\, \\delta p^2} \\theta_{\\rm a}`.
 
     Parameters
     ----------
@@ -329,7 +331,7 @@ class UpperLayerAtmosphericPotentialVorticityDiagnostic(AtmosphericVorticityDiag
 
 
 class LowerLayerAtmosphericPotentialVorticityDiagnostic(AtmosphericVorticityDiagnostic):
-    """Diagnostic giving the lower layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^3_{\\rm a} + f + \\frac{f_0^2}{\\sigma_0\\, (\\delta p)^2} \\theta_{\\rm a}`.
+    """Diagnostic giving the lower layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^3_{\\rm a} + f_0 + \\beta\\, y + \\frac{f_0^2}{\\sigma_0\\, \\delta p^2} \\theta_{\\rm a}`.
 
     Parameters
     ----------
