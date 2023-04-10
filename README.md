@@ -148,6 +148,7 @@ Forthcoming developments
     + Energy diagnostics
 * Technical mid-term developments
     + Dimensionally robust Parameter class operation
+    + Vectorization of the tensor computation
 * Long-term development track
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
