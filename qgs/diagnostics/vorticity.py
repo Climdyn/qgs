@@ -270,3 +270,117 @@ class UpperLayerAtmosphericVorticityDiagnostic(AtmosphericVorticityDiagnostic):
         return self._diagnostic_data
 
 
+class UpperLayerAtmosphericPotentialVorticityDiagnostic(AtmosphericVorticityDiagnostic):
+    """Diagnostic giving the upper layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^1_{\\rm a} + f - \\frac{f_0^2}{\\sigma_0\\, (\\delta p)^2} \\theta_{\\rm a}`.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        AtmosphericVorticityDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric potential vorticity in the upper layer'
+
+        self._vorticity = UpperLayerAtmosphericVorticityDiagnostic(model_params, delta_x, delta_y, dimensional)
+
+    def _get_diagnostic(self, dimensional):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        self._vorticity.set_data(self._time, self._data)
+        vorticity = self._vorticity._get_diagnostic(dimensional)
+
+        if dimensional:
+            self._diagnostic_data = vorticity
+            self._diagnostic_data += self._model_params.scale_params.f0 + self._model_params.scale_params.beta.dimensional_value * self._Y * self._model_params.scale_params.L
+            self._diagnostic_data -= (self._model_params.scale_params.f0 ** 2) * (theta * self._model_params.streamfunction_scaling) \
+                                     / (self._model_params.atmospheric_params.sig0.dimensional_value * self._model_params.scale_params.deltap ** 2)
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = vorticity + 1 + self._model_params.scale_params.beta * self._Y - theta / self._model_params.atmospheric_params.sig0
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
+
+
+class LowerLayerAtmosphericPotentialVorticityDiagnostic(AtmosphericVorticityDiagnostic):
+    """Diagnostic giving the lower layer atmospheric potential vorticity fields :math:`\\nabla^2 \\psi^3_{\\rm a} + f + \\frac{f_0^2}{\\sigma_0\\, (\\delta p)^2} \\theta_{\\rm a}`.
+
+    Parameters
+    ----------
+
+    model_params: QgParams
+        An instance of the model parameters.
+    delta_x: float, optional
+        Spatial step in the zonal direction `x` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    delta_y: float, optional
+        Spatial step in the meridional direction `y` for the gridded representation of the field.
+        If not provided, take an optimal guess based on the provided model's parameters.
+    dimensional: bool, optional
+        Indicate if the output diagnostic must be dimensionalized or not.
+        Default to `True`.
+
+    Attributes
+    ----------
+
+    dimensional: bool
+        Indicate if the output diagnostic must be dimensionalized or not.
+
+    """
+
+    def __init__(self, model_params, delta_x=None, delta_y=None, dimensional=True):
+
+        AtmosphericVorticityDiagnostic.__init__(self, model_params, delta_x, delta_y, dimensional)
+
+        self._plot_title = r'Atmospheric potential vorticity in the lower layer'
+
+        self._vorticity = LowerLayerAtmosphericVorticityDiagnostic(model_params, delta_x, delta_y, dimensional)
+
+    def _get_diagnostic(self, dimensional):
+
+        if self._model_params.dynamic_T:
+            offset = 1
+        else:
+            offset = 0
+
+        vr = self._model_params.variables_range
+        theta = np.swapaxes(self._data[vr[0]+offset:vr[1], ...].T @ np.swapaxes(self._grid_basis[offset:], 0, 1), 0, 1)
+        self._vorticity.set_data(self._time, self._data)
+        vorticity = self._vorticity._get_diagnostic(dimensional)
+
+        if dimensional:
+            self._diagnostic_data = vorticity
+            self._diagnostic_data += self._model_params.scale_params.f0 + self._model_params.scale_params.beta.dimensional_value * self._Y * self._model_params.scale_params.L
+            self._diagnostic_data += (self._model_params.scale_params.f0 ** 2) * (theta * self._model_params.streamfunction_scaling) \
+                                     / (self._model_params.atmospheric_params.sig0.dimensional_value * self._model_params.scale_params.deltap ** 2)
+            self._diagnostic_data_dimensional = True
+        else:
+            self._diagnostic_data = vorticity + 1 + self._model_params.scale_params.beta * self._Y + theta / self._model_params.atmospheric_params.sig0
+            self._diagnostic_data_dimensional = False
+        return self._diagnostic_data
