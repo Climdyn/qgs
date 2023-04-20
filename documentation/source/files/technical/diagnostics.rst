@@ -35,3 +35,6 @@ We describe here the modules used to analyze the output of the model with diagno
 
 .. automodule:: qgs.diagnostics.eddy
     :members:
+
+.. automodule:: qgs.diagnostics.vorticity
+    :members:
