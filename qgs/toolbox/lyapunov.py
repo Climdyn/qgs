@@ -36,6 +36,8 @@ from qgs.functions.util import normalize_matrix_columns, solve_triangular_matrix
 import multiprocessing
 
 
+# TODO: change the usage of np.squeeze in the return of the estimators. Use specific shape descriptors instead.
+
 class LyapunovsEstimator(object):
     """Class to compute the Forward and Backward `Lyapunov vectors`_ and `exponents`_ along a trajectory of a dynamical system
 
