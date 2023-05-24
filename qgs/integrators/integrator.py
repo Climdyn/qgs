@@ -567,7 +567,7 @@ class RungeKuttaTglsIntegrator(object):
     n_traj: int
         The number of trajectories (initial conditions) of the non-linear ODEs computed at the last integration
         performed by the integrator.
-    n_tgtraj: int
+    n_tg_traj: int
         The number of trajectories (initial conditions) the linear ODEs computed at the last integration
         performed by the integrator.
     n_records: int
@@ -607,7 +607,7 @@ class RungeKuttaTglsIntegrator(object):
         self._recorded_traj = None
         self._recorded_fmatrix = None
         self.n_traj = 0
-        self.n_tgtraj = 0
+        self.n_tg_traj = 0
         self.n_dim = number_of_dimensions
         self.n_records = 0
         self._write_steps = 0
@@ -927,6 +927,7 @@ class RungeKuttaTglsIntegrator(object):
 
         self.n_traj = self.ic.shape[0]
         self.n_dim = self.ic.shape[1]
+        self.n_tg_traj = self.tg_ic.shape[1]
         self._time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
         self._write_steps = write_steps
 

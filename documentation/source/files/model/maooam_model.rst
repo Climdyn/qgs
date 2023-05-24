@@ -71,7 +71,7 @@ It results in these evolution equations for the temperature anomalies:
 
 .. math::
 
-    \gamma_{\rm a} \Big( \frac{\partial \delta T_{\rm a}}{\partial t} + J(\psi_{\rm a}, \delta T_{\rm a} )- \sigma \omega \frac{\delta p}{R}\Big) &= -\lambda (\delta T_{\rm a}- \delta T_{\rm o}) +4 \sigma_B T_{{\rm o},0}^3 \delta T_{\rm o} - 8 \epsilon_{\rm a} \sigma_B T_{{\rm a},0}^3 \delta T_{\rm a} + \delta R_{\rm a} \nonumber \\
+    \gamma_{\rm a} \Big( \frac{\partial \delta T_{\rm a}}{\partial t} + J(\psi_{\rm a}, \delta T_{\rm a} )- \sigma \omega \frac{p}{R}\Big) &= -\lambda (\delta T_{\rm a}- \delta T_{\rm o}) +4 \sigma_B T_{{\rm o},0}^3 \delta T_{\rm o} - 8 \epsilon_{\rm a} \sigma_B T_{{\rm a},0}^3 \delta T_{\rm a} + \delta R_{\rm a} \nonumber \\
     \gamma_{\rm o} \Big( \frac{\partial \delta T_{\rm o}}{\partial t} + J(\psi_{\rm o}, \delta T_{\rm o})\Big) &= -\lambda (\delta T_{\rm o}- \delta T_{\rm a}) -4 \sigma_B T_{{\rm o},0}^3 \delta T_{\rm o} + 4 \epsilon_{\rm a} \sigma_B T_{{\rm a},0}^3 \delta T_{\rm a} + \delta R_{\rm o}. \nonumber
 
 The hydrostatic relation in pressure coordinates is :math:`(\partial \Phi/\partial p)

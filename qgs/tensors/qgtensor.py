@@ -703,7 +703,7 @@ class QgsTensor(object):
 
         Parameters
         ----------
-        tensor: ~sparse.C00
+        tensor: ~sparse.COO
             The qgs tensor.
 
         Returns
