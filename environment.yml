@@ -1,4 +1,4 @@
-name: qgs 
+name: qgs
 channels:
   - conda-forge
   - numba
@@ -13,13 +13,13 @@ dependencies:
   - scipy
   - sympy
   - sphinx
-  - sphinx_rtd_theme
+  - sphinx_rtd_theme>0.5.1
   - pytest
   - sparse
   - ffmpeg
   - pebble
   - pip
   - pip:
-      - sphinxcontrib-bibtex<2.0.0
+      - sphinxcontrib-bibtex
       - diffeqpy
 

@@ -378,7 +378,7 @@ class AtmosphericTemperatureParams(Params):
         Ratio of surface to atmosphere temperature
         Heat exchange scheme is disabled if `None`.
     hlambda: None or Parameter
-        Sensible + turbulent heat exchange between ocean and atmosphere [:math:`W m^{-2} K^{-1}`].
+        Sensible + turbulent heat exchange between ocean/ground and atmosphere [:math:`W m^{-2} K^{-1}`].
         Heat exchange scheme is disabled if `None`.
     """
     _name = "Atmospheric Temperature"
@@ -1369,7 +1369,7 @@ class QgParams(Params):
                                                     description="ratio of surface to atmosphere temperature")
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
 
         if self.gotemperature_params is not None:
             if self.dynamic_T:
@@ -1426,7 +1426,7 @@ class QgParams(Params):
                                                     description="ratio of surface to atmosphere temperature")
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
 
         if self.gotemperature_params is not None:
             # if orography is disabled, enable it!
@@ -1797,7 +1797,7 @@ class QgParams(Params):
                                                     description="ratio of surface to atmosphere temperature")
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
 
         if self.gotemperature_params is not None:
             self._number_of_ground_modes = 0
@@ -1845,7 +1845,7 @@ class QgParams(Params):
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]',
                                                          scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
 
         if self.gotemperature_params is not None:
             gmod = 0

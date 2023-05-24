@@ -115,6 +115,10 @@ mathjax_path = r"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?
 
 autosectionlabel_prefix_document = True
 
+# bibtex config
+
+bibtex_bibfiles = ['files/model/ref.bib']
+
 # ----- conversion script
 
 

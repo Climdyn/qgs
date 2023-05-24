@@ -509,7 +509,7 @@ class FieldDiagnostic(Diagnostic):
         output: str, optional
             Define the kind of animation being created. Can be:
 
-            * `animate`: Create and show a :class:`ipywidgets.widgets.interactive` widget. Works only in Jupyter notebooks.
+            * `animate`: Create and show a :class:`ipywidgets.widgets.interaction.interactive` widget. Works only in Jupyter notebooks.
             * `show`: Create and show an animation with the :mod:`matplotlib.animation` module. Works only in IPython or Python.
 
         style: str, optional
@@ -545,7 +545,7 @@ class FieldDiagnostic(Diagnostic):
 
         Returns
         -------
-        ~matplotlib.animation.FuncAnimation or ~IPython.core.display.DisplayHandle or callable
+        ~matplotlib.animation.FuncAnimation or ~IPython.display.DisplayHandle or callable
             The animation object or the callable to update the widget, depending on the value of the `output` and `show` parameters.
         """
 
@@ -859,7 +859,7 @@ class ProfileDiagnostic(Diagnostic):
         output: str, optional
             Define the kind of animation being created. Can be:
 
-            * `animate`: Create and show a :class:`ipywidgets.widgets.interactive` widget. Works only in Jupyter notebooks.
+            * `animate`: Create and show a :class:`ipywidgets.widgets.interaction.interactive` widget. Works only in Jupyter notebooks.
             * `show`: Create and show an animation with the :mod:`matplotlib.animation` module. Works only in IPython or Python.
 
         ax: ~matplotlib.axes.Axes, optional
@@ -881,7 +881,7 @@ class ProfileDiagnostic(Diagnostic):
 
         Returns
         -------
-        ~matplotlib.animation.FuncAnimation or ~IPython.core.display.DisplayHandle or callable
+        ~matplotlib.animation.FuncAnimation or ~IPython.display.DisplayHandle or callable
             The animation object or the callable to update the widget, depending on the value of the `output` and `show` parameters.
         """
 

@@ -46,19 +46,16 @@ On the other hand, the thermodynamic equation governing the mean `potential temp
 
 .. math::
 
-    2 \, \frac{\partial}{\partial t} T_{\rm a} + J(\psi_{\rm a}, 2 T_{\rm a}) = - \frac{\sigma}{H_{\rm a}} \,\omega + 2 h_d \, (T^\ast - T_{\rm a})
+    \frac{\partial}{\partial t} T_{\rm a} + J(\psi_{\rm a}, T_{\rm a}) = \frac{\sigma \, \Delta p}{R} \,\omega + h_d \, (T^\ast - T_{\rm a})
 
 where :math:`h_d` (:attr:`~.params.AtmosphericTemperatureParams.hd`) is the `Newtonian cooling`_ coefficient indicating the tendency to return to the equilibrium temperature profile :math:`T^\ast`.
 :math:`\sigma` (:attr:`~.params.AtmosphericParams.sigma`) is the static stability of the atmosphere, taken to be constant.
-The thermal wind relation
 
-.. math::
-
-    \nabla^2 T_{\rm a} = A \, \nabla^2 \theta_{\rm a}
-
-where :math:`A` is a constant, relates the baroclinic streamfunction and the temperature fields.
-Upon `nondimensionalization`_, both fields are identified with each other: :math:`\theta_{\rm a} \equiv T_{\rm a}` and
-:math:`\theta^\star \equiv T^\star`, and the equations above fully describe the system.
+The hydrostatic relation in pressure coordinates is :math:`(\partial \Phi/\partial p)
+= -1/\rho_\text{a}` with the geopotential height :math:`\Phi = f_0\;\psi_\text{a}` and :math:`\rho_\text{a}` the dry air density. The ideal gas relation :math:`p=\rho_\text{a} R T_\text{a}`
+and the vertical discretization of the hydrostatic relation at 500 hPa allows to write the spatially dependent atmospheric temperature anomaly :math:`\delta T_\text{a} = 2f_0\;\theta_\text{a} /R` where :math:`R` (:attr:`~.QgParams.rr`) is
+the ideal gas constant. Therefore, upon `nondimensionalization`_, both fields are identified with each other: :math:`2 \theta_{\rm a} \equiv T_{\rm a}` and
+:math:`2 \theta^\star \equiv T^\star`, and the equations above fully describe the system.
 
 The mean streamfunction :math:`\psi_{\rm a}` and temperature :math:`\theta_{\rm a}` can be considered to be the value of these fields at the 500 hPa level.
 
