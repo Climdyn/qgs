@@ -403,8 +403,8 @@ class OceanicLayerStreamfunctionDiagnostic(OceanicStreamfunctionDiagnostic):
         basis = self._model_params.oceanic_basis
 
         for func in basis.num_functions(self._subs):
-            average = dblquad(func, 0, np.pi, 0, 2*np.pi/model_params.scale_params.n)
-            self._fields_average.append(average[0])
+            average = dblquad(func, 0, np.pi, 0, 2*np.pi/model_params.scale_params.n)[0] / (np.pi * 2*np.pi/model_params.scale_params.n)
+            self._fields_average.append(average)
 
         self._fields_average = np.array(self._fields_average)
 
