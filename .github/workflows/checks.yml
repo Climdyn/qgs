@@ -6,8 +6,8 @@ name: test
 on:
   push:
     branches:
-      - main
-      - develop
+#      - main
+#      - develop
 
   pull_request:
     branches:
@@ -21,10 +21,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # platform: ["ubuntu-latest"]
-        # python-version: ["3.8"]
-        platform: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.8", "3.9", "3.10"]
+         platform: ["ubuntu-latest"]
+         python-version: ["3.8"]
+#        platform: ["ubuntu-latest", "macos-latest"]
+#        python-version: ["3.8", "3.9", "3.10"]
 
     
     name: Python ${{ matrix.python-version }} on ${{ matrix.platform }}
@@ -34,17 +34,41 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
-        with:
-          
-          python-version: ${{ matrix.python-version }}
-          
+      - name: Cache conda
+          uses: actions/cache@v2
+          env:
+            # Increase this value to reset cache if etc/example-environment.yml has not changed
+            CACHE_NUMBER: 0
+          with:
+            path: ~/conda_pkgs_dir
+            key:
+              ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+              hashFiles('environment.yml') }}
 
-      - name: Install dependencies
-        run: |
-          $CONDA/bin/conda env update --file environment.yml --name base
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          activate-environment: qgs
+          environment-file: environment.yml
+          auto-activate-base: false
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+#      - uses: actions/setup-python@v2
+#        with:
+#
+#          python-version: ${{ matrix.python-version }}
+#
+
+      - shell: bash -l {0}
+          run: |
+            conda info
+            conda list
+            conda config --show-sources
+            conda config --show
+            printenv | sort
 
       - name: Run tests
         run: |
-          $CONDA/bin/pytest
+          pytest
 
