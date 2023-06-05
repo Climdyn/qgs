@@ -60,7 +60,7 @@ jobs:
 #          python-version: ${{ matrix.python-version }}
 #
 
-      - shell: bash -l {0}
+      - shell: bash -el {0}
         run: |
           conda info
           conda list
@@ -69,6 +69,7 @@ jobs:
           printenv | sort
 
       - name: Run tests
+        shell: bash -el {0}
         run: |
           pytest
 
