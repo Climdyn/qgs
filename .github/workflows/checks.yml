@@ -61,12 +61,12 @@ jobs:
 #
 
       - shell: bash -l {0}
-          run: |
-            conda info
-            conda list
-            conda config --show-sources
-            conda config --show
-            printenv | sort
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          printenv | sort
 
       - name: Run tests
         run: |
