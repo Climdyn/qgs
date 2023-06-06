@@ -927,7 +927,6 @@ class RungeKuttaTglsIntegrator(object):
 
         self.n_traj = self.ic.shape[0]
         self.n_dim = self.ic.shape[1]
-        self.n_tg_traj = self.tg_ic.shape[1]
         self._time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
         self._write_steps = write_steps
 
@@ -955,6 +954,8 @@ class RungeKuttaTglsIntegrator(object):
         elif len(tg_ic.shape) == 3:
             if tg_ic.shape[1] != self.n_dim:
                 self.tg_ic = np.swapaxes(tg_ic, 1, 2)
+
+        self.n_tg_traj = self.tg_ic.shape[1]
 
         if forward:
             self._time_direction = 1
