@@ -6,8 +6,8 @@ name: test
 on:
   push:
     branches:
-#      - main
-#      - develop
+      - main
+      - develop
 
   pull_request:
     branches:
@@ -21,7 +21,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        python-version: ["3.8"]
         platform: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.9", "3.10"]
 
