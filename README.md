@@ -5,6 +5,7 @@ Quasi-Geostrophic Spectral model (qgs)
 [![DOI](https://zenodo.org/badge/246609584.svg)](https://zenodo.org/badge/latestdoi/246609584)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02597/status.svg)](https://doi.org/10.21105/joss.02597)
 [![Documentation Status](https://readthedocs.org/projects/qgs/badge/?version=latest)](https://qgs.readthedocs.io/en/latest/?badge=latest)
+[![tests](https://github.com/Climdyn/qgs/actions/workflows/checks.yml/badge.svg?branch=master)](https://github.com/Climdyn/qgs/actions/workflows/checks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 General Information
