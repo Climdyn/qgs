@@ -5,7 +5,6 @@ Quasi-Geostrophic Spectral model (qgs)
 
 [![PyPI version](https://badge.fury.io/py/qgs.svg)](https://badge.fury.io/py/qgs)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/qgs.svg)](https://pypi.org/project/qgs/)
-[![PyPI Package download count (per month)](https://img.shields.io/pypi/dm/qgs)](https://pypi.org/project/qgs/)
 [![DOI](https://zenodo.org/badge/246609584.svg)](https://zenodo.org/badge/latestdoi/246609584)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02597/status.svg)](https://doi.org/10.21105/joss.02597)
 [![Documentation Status](https://readthedocs.org/projects/qgs/badge/?version=latest)](https://qgs.readthedocs.io/en/latest/?badge=latest)
@@ -44,7 +43,8 @@ Installation
 
 #### With pip
 
-The easiest way to install and run qgs is to use [pip](https://pypi.org/)
+The easiest way to install and run qgs is to use [pip](https://pypi.org/).
+Type in a terminal
 
     pip install qgs
 
