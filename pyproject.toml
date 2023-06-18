@@ -1,0 +1,58 @@
+
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+requires-python = ">=3.8"
+name = "qgs"
+version = "0.2.8"
+description = "A 2-layer quasi-geostrophic atmospheric model. Can be coupled to a simple land or shallow-water ocean component."
+readme = "README.md"
+authors = [
+    { name = "qgs Developers and Contributors", email = "jodemaey@meteo.be" },
+]
+license = { file = "LICENSE.txt" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Jupyter",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+keywords = ["meteorology", "climate", "climate-variability", "atmospheric-models", "ocean-atmosphere-model"]
+dependencies = [
+    "ipython",
+    "jupyter",
+    "matplotlib>=3.4",
+    "numba",
+    "numpy",
+    "scipy",
+    "sympy",
+    "sparse",
+    "pebble",
+]
+
+[project.urls]
+homepage = "https://github.com/Climdyn/qgs"
+documentation = "https://qgs.readthedocs.io"
+
+[tool.setuptools]
+packages = ["qgs",
+            "qgs.basis",
+            "qgs.diagnostics",
+            "qgs.functions",
+            "qgs.inner_products",
+            "qgs.integrators",
+            "qgs.params",
+            "qgs.plotting",
+            "qgs.tensors",
+            "qgs.toolbox",
+            ]

@@ -2,6 +2,10 @@
 Quasi-Geostrophic Spectral model (qgs)
 ======================================
 
+
+[![PyPI version](https://badge.fury.io/py/qgs.svg)](https://badge.fury.io/py/qgs)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/qgs.svg)](https://pypi.org/project/qgs/)
+[![PyPI Package download count (per month)](https://img.shields.io/pypi/dm/qgs)](https://pypi.org/project/qgs/)
 [![DOI](https://zenodo.org/badge/246609584.svg)](https://zenodo.org/badge/latestdoi/246609584)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02597/status.svg)](https://doi.org/10.21105/joss.02597)
 [![Documentation Status](https://readthedocs.org/projects/qgs/badge/?version=latest)](https://qgs.readthedocs.io/en/latest/?badge=latest)
@@ -16,7 +20,7 @@ a 2-layer [quasi-geostrophic](https://en.wikipedia.org/wiki/Quasi-geostrophic_eq
 atmosphere on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane), coupled to a simple land or
 [shallow-water](https://en.wikipedia.org/wiki/Shallow_water_equations) ocean component. 
 
-![](./misc/figs/readme.gif)
+![](https://github.com/Climdyn/qgs/blob/master/misc/figs/readme.gif?raw=true)
 
 About
 -----
@@ -25,7 +29,7 @@ About
 
 Part of the code originates from the Python [MAOOAM](https://github.com/Climdyn/MAOOAM) implementation by Maxime Tondeur and Jonathan Demaeyer.
 
-See [LICENSE.txt](./LICENSE.txt) for license information.
+See [LICENSE.txt](https://raw.githubusercontent.com/Climdyn/qgs/master/LICENSE.txt) for license information.
 
 **Please cite the code description article if you use (a part of) this software for a publication:**
 
@@ -38,7 +42,31 @@ Please consult the qgs [code repository](http://www.github.com/Climdyn/qgs) for 
 Installation
 ------------
 
-The easiest way to run qgs is to use an appropriate environment created through [Anaconda](https://www.anaconda.com/).
+#### With pip
+
+The easiest way to install and run qgs is to use [pip](https://pypi.org/)
+
+    pip install qgs
+
+and you are set!
+
+Additionally, you can clone the repository
+
+    git clone https://github.com/Climdyn/qgs.git
+
+and perform a test by running the script
+
+    python qgs/qgs_rp.py
+
+to see if everything runs smoothly (this should take less than a minute).
+
+> **Note:** 
+> With the pip installation, in order to be able to generate the movies with the diagnostics, 
+> you need to install separately [ffmpeg](https://ffmpeg.org/).
+
+#### With Anaconda
+
+The second easiest way to install and run qgs is to use an appropriate environment created through [Anaconda](https://www.anaconda.com/).
 
 First install Anaconda and clone the repository:
 
@@ -139,7 +167,7 @@ qgs needs mainly:
    * [Numba](https://numba.pydata.org/) for code acceleration
    * [Sympy](https://www.sympy.org/) for symbolic manipulation of inner products
    
-Check the yaml file [environment.yml](./environment.yml) for the dependencies.
+Check the yaml file [environment.yml](https://raw.githubusercontent.com/Climdyn/qgs/master/environment.yml) for the dependencies.
 
 Forthcoming developments
 ------------------------

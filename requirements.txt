@@ -7,7 +7,7 @@ python>=3.8
 scipy
 sympy
 sphinx
-sphinx_rtd_theme
+sphinx_rtd_theme>0.5.1
 sparse
 julia
 diffeqpy
