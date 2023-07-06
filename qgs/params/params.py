@@ -50,7 +50,7 @@ from qgs.params.parameter import Parameter
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
-from sympy import simplify
+from sympy import simplify, Symbol
 
 # TODO: - store model version in a variable somewhere
 #       - force the user to define the aspect ratio n at parameter object instantiation
@@ -66,6 +66,8 @@ class Params(ABC):
     """
 
     _name = ""
+
+    symbolic_params = dict()
 
     def __init__(self, dic=None):
 
@@ -768,6 +770,8 @@ class QgParams(Params):
         Scale parameters instance.
         If `None`, create a new ScaleParams instance. Default to None.
         Default to `None`.
+    symbolic_params: dict(Symbolic Parameters),
+        A dictionary with the parameter names and symbolic variables.
     atmospheric_params: bool, None or AtmosphericParams, optional
         Atmospheric parameters instance.
         If 'True`, create a new AtmosphericParams instance.
@@ -844,6 +848,49 @@ class QgParams(Params):
 
     """
     _name = "General"
+
+    #//TODO: Should this dictionary be separated into three separate for atm, ocn, gnd?   
+    symbolic_params = {
+        # Scale Parameters
+        'L': Symbol('L'),
+        'fo': Symbol('f0'),
+        'beta': Symbol('beta'),
+
+        # Atmosphere Parameters
+        'kd': Symbol('k_d'),
+        'kpd': Symbol('k_p'),
+        'sigma': Symbol('sigma'),
+
+        # Atmosphere Temp Parameters
+        'hd': Symbol('hd'),
+        'theta': Symbol('theta'),
+        'atm_gamma': Symbol('gamma_a'),
+        'atm_C': Symbol('C_a'),
+        'eps': Symbol('epsilon'),
+        'atm_T0': Symbol('T_a0'),
+        'sc': Symbol('sc'),
+        'hlambda': Symbol('lambda'),
+
+        # Ground Parameters
+        'hk': Symbol('h_k'),
+
+        # Ground Temperature Parameters
+        'gnd_gamma': Symbol('gamma_g'),
+        'gnd_C': Symbol('C_g'),
+        'gnd_T0': Symbol('T_g0'),
+
+        # Ocean Parameters
+        'gp': Symbol('g_p'),
+        'r': Symbol('r'),
+        'h': Symbol('h'),
+        'd': Symbol('d'),
+
+        # Ocean Temperature Parameters
+        'ocn_gamma': Symbol('gamma_o'),
+        'ocn_C': Symbol('C_o'),
+        'ocn_T0': Symbol('T_o0')
+
+    }
 
     def __init__(self, dic=None, scale_params=None,
                  atmospheric_params=True, atemperature_params=True,

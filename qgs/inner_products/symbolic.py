@@ -104,7 +104,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """
 
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None, symbolic_returned=False):
 
         AtmosphericInnerProducts.__init__(self)
 
@@ -647,7 +647,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         symbolic computation.
     """
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None, symbolic_returned=False):
 
         OceanicInnerProducts.__init__(self)
 
@@ -1036,7 +1036,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     """
 
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None, symbolic_returned=False):
 
         GroundInnerProducts.__init__(self)
 
