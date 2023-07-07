@@ -50,7 +50,7 @@ from qgs.params.parameter import Parameter
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
-from sympy import simplify, Symbol
+import sympy as sy
 
 # TODO: - store model version in a variable somewhere
 #       - force the user to define the aspect ratio n at parameter object instantiation
@@ -852,43 +852,46 @@ class QgParams(Params):
     #//TODO: Should this dictionary be separated into three separate for atm, ocn, gnd?   
     symbolic_params = {
         # Scale Parameters
-        'L': Symbol('L'),
-        'fo': Symbol('f0'),
-        'beta': Symbol('beta'),
+        'L': sy.Symbol('L'),
+        'fo': sy.Symbol('f0'),
+        'beta': sy.Symbol('beta'),
 
         # Atmosphere Parameters
-        'kd': Symbol('k_d'),
-        'kpd': Symbol('k_p'),
-        'sigma': Symbol('sigma'),
+        'kd': sy.Symbol('k_d'),
+        'kpd': sy.Symbol('k_p'),
+        'sigma': sy.Symbol('sigma'),
 
         # Atmosphere Temp Parameters
-        'hd': Symbol('hd'),
-        'theta': Symbol('theta'),
-        'atm_gamma': Symbol('gamma_a'),
-        'atm_C': Symbol('C_a'),
-        'eps': Symbol('epsilon'),
-        'atm_T0': Symbol('T_a0'),
-        'sc': Symbol('sc'),
-        'hlambda': Symbol('lambda'),
+        'hd': sy.Symbol('hd'),
+        'theta': sy.Symbol('theta'),
+        'atm_gamma': sy.Symbol('gamma_a'),
+        'atm_C_val': sy.Symbol('C_a'),
+        'atm_C': None,
+        'eps': sy.Symbol('epsilon'),
+        'atm_T0': sy.Symbol('T_a0'),
+        'sc': sy.Symbol('sc'),
+        'hlambda': sy.Symbol('lambda'),
 
         # Ground Parameters
-        'hk': Symbol('h_k'),
+        'hk': sy.Symbol('h_k'),
 
         # Ground Temperature Parameters
-        'gnd_gamma': Symbol('gamma_g'),
-        'gnd_C': Symbol('C_g'),
-        'gnd_T0': Symbol('T_g0'),
+        'gnd_gamma': sy.Symbol('gamma_g'),
+        'gnd_C_val': sy.Symbol('C_g'),
+        'gnd_C': None,
+        'gnd_T0': sy.Symbol('T_g0'),
 
         # Ocean Parameters
-        'gp': Symbol('g_p'),
-        'r': Symbol('r'),
-        'h': Symbol('h'),
-        'd': Symbol('d'),
+        'gp': sy.Symbol('g_p'),
+        'r': sy.Symbol('r'),
+        'h': sy.Symbol('h'),
+        'd': sy.Symbol('d'),
 
         # Ocean Temperature Parameters
-        'ocn_gamma': Symbol('gamma_o'),
-        'ocn_C': Symbol('C_o'),
-        'ocn_T0': Symbol('T_o0')
+        'ocn_gamma': sy.Symbol('gamma_o'),
+        'ocn_C_val': sy.Symbol('C_o'),
+        'ocn_C': None,
+        'ocn_T0': sy.Symbol('T_o0')
 
     }
 
@@ -1246,6 +1249,39 @@ class QgParams(Params):
         print("=============================\n")
         print(s)
 
+    def symbolic_insolation_array(self, Cpa=None, Cpgo=None):
+        """Set the array Cpa and Cpgo from given data, or the default symbols
+        
+        Parameters
+        ----------
+        values: List(sympy Symbol)
+            A list of the sympy symbols that will be converted to an ImmutableSparseNDimArray. 
+
+        """
+        if Cpa is not None:
+            atm_C_list = Cpa
+        elif Cpgo is not None:
+            gnd_C_list = Cpgo
+            ocn_C_list = Cpgo
+        else:
+            atm_C_list = [0] * self.nmod[0]
+            gnd_C_list = [0] * self.nmod[0]
+            ocn_C_list = [0] * self.nmod[0]
+
+
+            atm_C_list[0] = self.symbolic_params['atm_C_val']
+            gnd_C_list[0] = self.symbolic_params['gnd_C_val']
+            ocn_C_list[0] = self.symbolic_params['ocn_C_val']
+
+            if self.dynamic_T:
+                atm_C_list[1] = self.symbolic_params['atm_C_val']
+                gnd_C_list[1] = self.symbolic_params['gnd_C_val']
+                ocn_C_list[1] = self.symbolic_params['ocn_C_val']
+        
+        self.symbolic_params['atm_C'] = sy.tensor.array.ImmutableSparseNDimArray(atm_C_list)
+        self.symbolic_params['gnd_C'] = sy.tensor.array.ImmutableSparseNDimArray(gnd_C_list)
+        self.symbolic_params['ocn_C'] = sy.tensor.array.ImmutableSparseNDimArray(ocn_C_list)
+
     @property
     def ndim(self):
         """int: Total number of variables of the model."""
@@ -1367,7 +1403,7 @@ class QgParams(Params):
         self._atmospheric_basis = basis
         self._number_of_atmospheric_modes = len(basis.functions)
         if self.dynamic_T:
-            self._atmospheric_basis.functions.insert(0, simplify("1"))
+            self._atmospheric_basis.functions.insert(0, sy.simplify("1"))
 
         if self.ground_params is not None and self.ground_params.orographic_basis == "atmospheric":
             self.ground_params.set_orography(self._number_of_atmospheric_modes * [0.e0])
@@ -1390,7 +1426,7 @@ class QgParams(Params):
         self._number_of_ground_modes = 0
         self._number_of_oceanic_modes = len(basis)
         if self.dynamic_T:
-            self._oceanic_basis.functions.insert(0, simplify("1"))
+            self._oceanic_basis.functions.insert(0, sy.simplify("1"))
 
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
@@ -1447,7 +1483,7 @@ class QgParams(Params):
         self._number_of_ground_modes = len(basis)
         self._number_of_oceanic_modes = 0
         if self.dynamic_T:
-            self._ground_basis.functions.insert(0, simplify("1"))
+            self._ground_basis.functions.insert(0, sy.simplify("1"))
 
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
