@@ -855,6 +855,7 @@ class QgParams(Params):
         'L': sy.Symbol('L'),
         'fo': sy.Symbol('f0'),
         'beta': sy.Symbol('beta'),
+        'n': sy.Symbol('n', positive=True),
 
         # Atmosphere Parameters
         'kd': sy.Symbol('k_d'),

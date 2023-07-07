@@ -63,6 +63,8 @@ class SymbolicLinTensor(object):
         self.tensor = None
         self.jacobian_tensor = None
 
+        self.params.symbolic_insolation_array()
+
         # self.compute_tensor()
 
     def _psi_a(self, i):
@@ -141,6 +143,8 @@ class SymbolicLinTensor(object):
         """
         return i + self.params.variables_range[1] + 1
     
+    #//TODO: Im not happy with having these set of properties in two places, one for numerics and one for symbolic. This should be combined, or at least put in the parameter section somewhere.
+
     @property
     def sig0(self):
         return self.sym_params['sigma'] / 2
@@ -155,10 +159,55 @@ class SymbolicLinTensor(object):
     
     @property
     def Cpgo(self):
-        return self.sym_params['gnd_C'] / (self.sym_params['gamma_g'] * self.sym_params['fo']) * self.sym_params['rr'] / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
+        return self.sym_params['gnd_C'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
     
-    #//TODO: Finish the rest of the constant functions
-
+    @property
+    def Lpgo(self):
+        return self.sym_params['hlambda'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+    
+    @property
+    def Cpa(self):
+        return self.sym_params['atm_C'] / (self.sym_params['atm_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2) / 2
+    
+    @property
+    def Lpa(self):
+        return self.sym_params['hlambda'] / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+    
+    #//TODO: Do we want to keep everthing symbolic? Including the Stefan Bolzmann const?
+    
+    @property
+    def sbpgo(self):
+        return 4 * self.params.sb * self.sym_params['gnd_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+    
+    @property
+    def sbpa(self):
+        return 8 * self.sym_params['eps'] * self.param.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+    
+    @property
+    def LSBpgo(self):
+        return 2 * self.sym_params['eps'] * self.params.sb * self.sym_params['gnd_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+    
+    @property
+    def LSBpa(self):
+        return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+    
+    @property
+    def T4sbpgo(self):
+        return self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.params.rr ** 3)
+    
+    @property
+    def T4sbpa(self):
+        return 16 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.params.rr ** 3)
+    
+    @property
+    def T4LSBpgo(self):
+        return 0.5 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.params.rr ** 3)
+    
+    @property
+    def T4LSBpa(self):
+        return 16 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.params.rr ** 3)
+    
+    #//TODO: Do i need the scaling parameters?
     
     def _compute_tensor_dicts(self):
 
@@ -200,45 +249,48 @@ class SymbolicLinTensor(object):
 
         # constructing some derived matrices
         if aips is not None:
-            a_inv = np.zeros((nvar[0], nvar[0]))
+            a_inv = {}
             for i in range(offset, nvar[1]):
                 for j in range(offset, nvar[1]):
-                    a_inv[i - offset, j - offset] = aips.a(i, j)
+                    a_inv[(i - offset, j - offset)] = aips.a(i, j)
 
-            a_inv = np.linalg.inv(a_inv)
-            a_inv = sp.COO(a_inv)
+            a_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[0], nvar[0], a_inv)
+            a_inv = sy.matrices.Inverse(a_inv)
 
-            a_theta = np.zeros((nvar[1], nvar[1]))
+            a_theta = {}
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
-                    a_theta[i, j] = ap.sig0 * aips.a(i, j) - aips.u(i, j)
-            a_theta = np.linalg.inv(a_theta)
-            a_theta = sp.COO(a_theta)
+                    a_theta[(i, j)] = ap.sig0 * aips.a(i, j) - aips.u(i, j)
+            
+            a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
+            a_theta = sy.matrices.Inverse(a_theta)
 
         if bips is not None:
             if ocean:
-                U_inv = np.zeros((nvar[3], nvar[3]))
+                U_inv = {}
                 for i in range(nvar[3]):
                     for j in range(nvar[3]):
-                        U_inv[i, j] = bips.U(i, j)
-                U_inv = np.linalg.inv(U_inv)
-                U_inv = sp.COO(U_inv)
+                        U_inv[(i, j)] = bips.U(i, j)
+                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[3], nvar[3], U_inv)
+                U_inv = sy.matrices.Inverse(U_inv)
 
-                M_psio = np.zeros((nvar[2], nvar[2]))
+                M_psio = {}
                 for i in range(offset, nvar[3]):
                     for j in range(offset, nvar[3]):
-                        M_psio[i - offset, j - offset] = bips.M(i, j) + par.G * bips.U(i, j)
-                M_psio = np.linalg.inv(M_psio)
-                M_psio = sp.COO(M_psio)
+                        M_psio[(i - offset, j - offset)] = bips.M(i, j) + par.G * bips.U(i, j)
+
+                M_psio = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], M_psio)
+                M_psio = sy.matrices.Inverse(M_psio)
+
             else:
-                U_inv = np.zeros((nvar[2], nvar[2]))
+                U_inv = {}
                 for i in range(nvar[2]):
                     for j in range(nvar[2]):
-                        U_inv[i, j] = bips.U(i, j)
-                U_inv = np.linalg.inv(U_inv)
-                U_inv = sp.COO(U_inv)
+                        U_inv[(i, j)] = bips.U(i, j)
+                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
+                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(U_inv)
 
-        #################
+        ################
 
         if bips is not None:
             go = bips.stored
@@ -250,39 +302,40 @@ class SymbolicLinTensor(object):
         if aips.stored and go:
             # psi_a part
             for i in range(nvar[0]):
-                t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
+                t = {}  #sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
                 for j in range(nvar[0]):
 
                     jo = j + offset  # skipping the theta 0 variable if it exists
 
-                    val = a_inv[i, :] @ aips._c[offset:, jo]
-                    t[self._psi_a(j), 0] -= val * scp.beta
+                    val = a_inv[i, :] * aips._c[offset:, jo]
+                    t[(self._psi_a(j), 0)] -= val * scp.beta
 
-                    t[self._psi_a(j), 0] -= (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
-                    t[self._theta_a(jo), 0] = (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
+                    t[(self._psi_a(j), 0)] -= (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
+                    t[(self._theta_a(jo), 0)] = (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
 
                     if gp is not None:
+                        # convert 
                         if gp.hk is not None:
                             #//TODO: Need to make this symbolic
                             if gp.orographic_basis == "atmospheric":
-                                oro = a_inv[i, :] @ aips._g[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
+                                oro = a_inv[i, :] * aips._g[offset:, jo, offset:] * self.sym_params['hk']  # not perfect
                             else:
                                 #//TODO: Need to make this symbolic
                                 # TODO: Can only be used with symbolic inner products here - a warning or an error should be raised if this is not the case.
-                                oro = a_inv[i, :] @ aips._gh[offset:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            t[self._psi_a(j), 0] -= oro / 2
-                            t[self._theta_a(jo), 0] += oro / 2
+                                oro = a_inv[i, :] * aips._gh[offset:, jo, offset:] * self.sym_params['hk'] # not perfect
+                            t[(self._psi_a(j), 0)] -= oro / 2
+                            t[(self._theta_a(jo), 0)] += oro / 2
 
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] @ aips._b[offset:, jo, ko]
+                        val = a_inv[i, :] * aips._b[offset:, jo, ko]
                         t[self._psi_a(j), self._psi_a(k)] = - val
                         t[self._theta_a(jo), self._theta_a(ko)] = - val
                 if ocean:
                     for j in range(nvar[2]):
                         jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] @ aips._d[offset:, jo]
+                        val = a_inv[i, :] * aips._d[offset:, jo]
                         t[self._psi_o(j), 0] += val * symbolic_params['kd'] / 2
 
                 sparse_arrays_dict[self._psi_a(i)] = t.to_coo()
@@ -292,10 +345,10 @@ class SymbolicLinTensor(object):
                 t = sp.zeros((ndim + 1, ndim + 1), dtype=np.float64, format='dok')
                 #//TODO: Need to make this symbolic
                 if par.Cpa is not None:
-                    t[0, 0] -= a_theta[i, :] @ aips._u @ sp.COO(par.Cpa.astype(float))  # not perfect
+                    t[0, 0] -= a_theta[i, :] * aips._u * self.Cpa  # not perfect
                 #//TODO: Need to make this symbolic
                 if atp.hd is not None and atp.thetas is not None:
-                    val = - a_theta[i, :] @ aips._u @ sp.COO(atp.thetas.astype(float))  # not perfect
+                    val = - a_theta[i, :] * aips._u * sp.COO(atp.thetas.astype(float))  # not perfect
                     t[0, 0] += val * symbolic_params['hd']
 
                 for j in range(nvar[0]):
@@ -303,11 +356,11 @@ class SymbolicLinTensor(object):
                     jo = j + offset  # skipping the theta 0 variable if it exists
 
                     val = a_theta[i, :] @ aips._a[:, jo]
-                    t[self._psi_a(j), 0] += val * symbolic_params['kd'] * symbolic_params['sigma'] / 2 / 2
-                    t[self._theta_a(jo), 0] -= val * (symbolic_params['kd'] / 2 + 2 * symbolic_params['kdp']) * symbolic_params['sigma'] / 2
+                    t[self._psi_a(j), 0] += val * symbolic_params['kd'] * self.sig0 / 2
+                    t[self._theta_a(jo), 0] -= val * (symbolic_params['kd'] / 2 + 2 * symbolic_params['kdp']) * self.sig0
 
                     val = - a_theta[i, :] @ aips._c[:, jo]
-                    t[self._theta_a(jo), 0] += val * symbolic_params['beta'] * symbolic_params['sigma'] / 2
+                    t[self._theta_a(jo), 0] += val * symbolic_params['beta'] * self.sig0
 
                     if gp is not None:
                         if gp.hk is not None:
@@ -316,14 +369,14 @@ class SymbolicLinTensor(object):
                                 oro = a_theta[i, :] @ aips._g[:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
                             else:
                                 oro = a_theta[i, :] @ aips._gh[:, jo, offset:] @ sp.COO(gp.hk.astype(float))  # not perfect
-                            t[self._theta_a(jo), 0] -= symbolic_params['sigma'] / 2 * oro / 2
-                            t[self._psi_a(j), 0] += symbolic_params['sigma'] / 2 * oro / 2
+                            t[self._theta_a(jo), 0] -= self.sig0 * oro / 2
+                            t[self._psi_a(j), 0] += self.sig0 * oro / 2
 
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
                         val = a_theta[i, :] @ aips._b[:, jo, ko]
-                        t[self._psi_a(j), self._theta_a(ko)] = - val * symbolic_params['sigma'] / 2
-                        t[self._theta_a(jo), self._psi_a(k)] = - val * symbolic_params['sigma'] / 2
+                        t[self._psi_a(j), self._theta_a(ko)] = - val * self.sig0
+                        t[self._theta_a(jo), self._psi_a(k)] = - val * self.sig0
 
                         val = a_theta[i, :] @ aips._g[:, jo, ko]
                         t[self._psi_a(j), self._theta_a(ko)] += val
@@ -342,22 +395,22 @@ class SymbolicLinTensor(object):
                     for j in range(nvar[2]):
                         jo = j + offset  # skipping the theta 0 variable if it exists
                         val = - a_theta[i, :] @ aips._d[:, jo]
-                        t[self._psi_o(j), 0] += val * ap.sig0 * ap.kd / 2
+                        t[self._psi_o(j), 0] += val * self.sig0 * ap.kd / 2
 
                     if par.Lpa is not None:
                         for j in range(nvar[3]):
                             val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_o(j), 0] += val * par.Lpa / 2
+                            t[self._deltaT_o(j), 0] += val * self.Lpa / 2
                             if par.LSBpgo is not None:
-                                t[self._deltaT_o(j), 0] += val * par.LSBpgo
+                                t[self._deltaT_o(j), 0] += val * self.LSBpgo
 
                 if ground_temp:
                     if par.Lpa is not None:
                         for j in range(nvar[2]):
                             val = - a_theta[i, :] @ aips._s[:, j]
-                            t[self._deltaT_g(j), 0] += val * par.Lpa / 2
+                            t[self._deltaT_g(j), 0] += val * self.Lpa / 2
                             if par.LSBpgo is not None:
-                                t[self._deltaT_g(j), 0] += val * par.LSBpgo
+                                t[self._deltaT_g(j), 0] += val * self.LSBpgo
 
                 sparse_arrays_dict[self._theta_a(i)] = t.to_coo()
 

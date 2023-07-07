@@ -31,13 +31,12 @@ from sympy.utilities.iterables import multiset_permutations
 from qgs.params.params import QgParams
 from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
-from sympy import lambdify
 from scipy.integrate import dblquad
-from sympy import symbols
+import sympy as sy
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 
-_n = symbols('n', real=True, nonnegative=True)
+_n = sy.Symbol('n', positive=True)
 
 
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
@@ -104,7 +103,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """
 
     def __init__(self, params=None, stored=True, inner_product_definition=None, interaction_inner_product_definition=None,
-                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None, symbolic_returned=False):
+                 num_threads=None, quadrature=True, timeout=None, dynTinnerproducts=None, T4innerproducts=None, return_symbolic=False):
 
         AtmosphericInnerProducts.__init__(self)
 
@@ -173,7 +172,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self.ground_basis = None
         self.connected_to_ground = False
 
-        self.subs = [(_n, self.n)]
+        self.return_symbolic = return_symbolic
+        if return_symbolic:
+            self._p_compute = _symbolic_compute
+            self.subs = [('n', params.symbolic_params['n'])]
+        else:
+            self._p_compute = _parallel_compute
+            self.subs = [('n', self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -235,7 +240,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-
+                
                 subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
 
                 noc = len(ocean_basis)
@@ -249,31 +254,41 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(noc)]
 
-                _parallel_compute(pool, args_list, subs, self._d, timeout)
+                output = self._p_compute(pool, args_list, subs, self._d, timeout)
+                if self.return_symbolic:
+                    self._d = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
+                else:
+                    self._d = self._d.to_coo()
 
                 # s inner products
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(noc)]
 
-                _parallel_compute(pool, args_list, subs, self._s, timeout)
+                output = self._p_compute(pool, args_list, subs, self._s, timeout)
+                if self.return_symbolic:
+                    self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
+                else:
+                    self._s = self._s.to_coo()
 
                 if self._T4:
                     # v inner products
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.natm)
                                  for j in range(noc) for k in range(j, noc) for ell in range(k, noc) for m in range(ell, noc)]
 
-                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._v, timeout, permute=True)
                 elif self._dynamic_T:
                     # v inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.natm) for m in range(noc)]
 
-                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
-            self._s = self._s.to_coo()
-            self._d = self._d.to_coo()
-            if self._T4 or self._dynamic_T:
-                self._v = self._v.to_coo()
+                
+                if self._T4 or self._dynamic_T:
+                    if self.return_symbolic:
+                        self._v = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, noc, noc, noc, noc))
+                    else:
+                        self._v = self._v.to_coo()            
 
     def connect_to_ground(self, ground_basis, orographic_basis, num_threads=None, timeout=None):
         """Connect the atmosphere to the ground.
@@ -326,33 +341,43 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(ngr)]
 
-                _parallel_compute(pool, args_list, subs, self._s, timeout)
+                output = self._p_compute(pool, args_list, subs, self._s, timeout)
+                if self.return_symbolic:
+                    self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, ngr, output)
+                else:
+                    self._s = self._s.to_coo()
+
 
                 # gh inner products
                 if orographic_basis != "atmospheric":
                     args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
                                  for j in range(self.natm) for k in range(ngr)]
 
-                    _parallel_compute(pool, args_list, subs, self._gh, timeout)
+                    output = self._p_compute(pool, args_list, subs, self._gh, timeout)
+                    if self.return_symbolic:
+                        self._gh = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, ngr))
+                    else:
+                        if self._gh is not None:
+                            self._gh = self._gh.to_coo()
 
                 if self._T4:
                     # v inner products
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.natm)
                                  for j in range(ngr) for k in range(j, ngr) for ell in range(k, ngr) for m in range(ell, ngr)]
 
-                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._v, timeout, permute=True)
                 elif self._dynamic_T:
                     # v inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.natm) for m in range(ngr)]
 
-                    _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._v, timeout, permute=True)
 
-            self._s = self._s.to_coo()
-            if self._gh is not None:
-                self._gh = self._gh.to_coo()
-            if self._T4 or self._dynamic_T:
-                self._v = self._v.to_coo()
+                if self._T4 or self._dynamic_T:
+                    if self.return_symbolic:
+                        self._v = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, ngr, ngr, ngr, ngr))
+                    else:
+                        self._v = self._v.to_coo()
 
     def compute_inner_products(self, num_threads=None, timeout=None):
         """Function computing and storing all the inner products at once.
@@ -382,59 +407,77 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-
-                subs = self.subs + self.atmospheric_basis.substitutions
-
+                #//TODO: Fix substitution here, temporary fix
+                subs = self.subs #+ self.atmospheric_basis.substitutions
+  
                 # a inner products
                 args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
-
-                _parallel_compute(pool, args_list, subs, self._a, timeout)
+                
+                output = self._p_compute(pool, args_list, subs, self._a, timeout)
+                if self.return_symbolic:
+                    self._a = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                else:
+                    self._a = self._a.to_coo()
 
                 # u inner products
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
 
-                _parallel_compute(pool, args_list, subs, self._u, timeout)
+                output = self._p_compute(pool, args_list, subs, self._u, timeout)
+                if self.return_symbolic:
+                    self._u = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                else:
+                    self._u = self._u.to_coo()
 
                 # c inner products
                 args_list = [[(i, j), self.ip.ip_diff_x, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
 
-                _parallel_compute(pool, args_list, subs, self._c, timeout)
+                output = self._p_compute(pool, args_list, subs, self._c, timeout)
+                if self.return_symbolic:
+                    self._c = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                else:
+                    self._c = self._c.to_coo()
 
                 # b inner products
                 args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                              for j in range(self.natm) for k in range(self.natm)]
 
-                _parallel_compute(pool, args_list, subs, self._b, timeout)
+                output = self._p_compute(pool, args_list, subs, self._b, timeout)
+                if self.return_symbolic:
+                    self._b = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
+                else:
+                    self._b = self._b.to_coo()
 
                 # g inner products
                 args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                              for j in range(self.natm) for k in range(self.natm)]
 
-                _parallel_compute(pool, args_list, subs, self._g, timeout)
+                output = self._p_compute(pool, args_list, subs, self._g, timeout)
+                if self.return_symbolic:
+                    self._g = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
+                else:
+                    self._g = self._g.to_coo()
 
                 if self._T4:
                     # z inner products
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._F(j) * self._F(k) * self._F(ell) * self._F(m))] for i in range(self.natm)
                                  for j in range(self.natm) for k in range(j, self.natm) for ell in range(k, self.natm) for m in range(ell, self.natm)]
 
-                    _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._z, timeout, permute=True)
                 elif self._dynamic_T:
                     # z inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.natm) for m in range(self.natm)]
 
-                    _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._z, timeout, permute=True)
 
-            self._a = self._a.to_coo()
-            self._u = self._u.to_coo()
-            self._c = self._c.to_coo()
-            self._g = self._g.to_coo()
-            self._b = self._b.to_coo()
-            if self._T4 or self._dynamic_T:
-                self._z = self._z.to_coo()
+                if self._T4 or self._dynamic_T:
+                    if self.return_symbolic:
+                        self._z = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm, self.natm, self.natm))
+                else:
+                    self._z = self._z.to_coo()
 
     @property
     def natm(self):
@@ -1326,8 +1369,8 @@ def _num_apply(ls):
     integrand = ls[1](*ls[2], integrand=True)
 
     num_integrand = integrand[0].subs(ls[3])
-    func = lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
-   
+    func = sy.lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
+
     try:
         a = integrand[2][1].subs(ls[3])
     except:
@@ -1375,7 +1418,7 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
         timeout = None
 
     if timeout is not True:
-        future = pool.map(_apply, args_list, timeout=timeout)
+        future = pool.map(_apply, args_list, timeout=None)
         results = future.result()
         num_args_list = list()
         i = 0
@@ -1413,6 +1456,37 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
             except StopIteration:
                 break
 
+def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False):
+    result_list = list()
+
+    #//TODO: I am not sure what this timeout does, I have switched if off as it was leading to non-convergence.
+    future = pool.map(_apply, args_list, timeout=None)
+    results = future.result()
+    num_args_list = list()
+    i = 0
+    while True:
+        try:
+            res = next(results)
+            result_list.append(res[1].subs(subs))
+            
+        except StopIteration:
+            break
+        except TimeoutError:
+            num_args_list.append(args_list[i])
+        i += 1
+
+    future = pool.map(_num_apply, num_args_list)
+    results = future.result()
+
+    while True:
+        try:
+            res = next(results)
+            result_list.append(res[1])
+            
+        except StopIteration:
+            break
+            
+    return result_list
 
 if __name__ == '__main__':
     from qgs.params.params import QgParams
