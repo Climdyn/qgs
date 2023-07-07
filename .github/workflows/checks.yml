@@ -69,7 +69,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
 
     name: Pull Request Status
-    needs: tests
+    needs: checks
 
     runs-on: ubuntu-latest
 
