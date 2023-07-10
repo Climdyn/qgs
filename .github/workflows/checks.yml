@@ -66,7 +66,7 @@ jobs:
   status:
 
 
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ always() }} && ${{ github.event_name == 'pull_request' }}
 
     name: Pull Request Status
     needs: checks
