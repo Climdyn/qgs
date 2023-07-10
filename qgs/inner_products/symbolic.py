@@ -842,7 +842,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.noc) for m in range(natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True)
+                    output = self._p_compute(pool, args_list, subs, self._Z, timeout, permute=True)
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
@@ -914,7 +914,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = self._p_compute(pool, args_list, subs, self._O, timeout)
                 if self.return_symbolic:
-                    self._O = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
+                    self._O = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
                     self._O = self._O.to_coo()
 
@@ -924,7 +924,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = self._p_compute(pool, args_list, subs, self._C, timeout)
                 if self.return_symbolic:
-                    self._C = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
+                    self._C = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
                     self._C = self._C.to_coo()
 
@@ -1487,8 +1487,6 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
     else:
         num_args_list = [args + [subs] for args in args_list]
 
-    print(num_args_list)
-    print("\n")
     future = pool.map(_num_apply, num_args_list)
     results = future.result()
     if permute:
