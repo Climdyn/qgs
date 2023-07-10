@@ -74,8 +74,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Issue status
         shell: bash
         run: |
@@ -85,4 +83,4 @@ jobs:
           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           https://api.github.com/repos/Climdyn/qgs/statuses/${{ github.event.pull_request.head.sha }} \
-          -d '{"state":"success","target_url":"https://github.com/Climdyn/qgs/commit/${{ github.event.pull_request.head.sha }}","description":"The tests succeeded!","context":"PR-status"}'
+          -d '{"state":${{ needs.checks.result }},"target_url":"https://github.com/Climdyn/qgs/commit/${{ github.event.pull_request.head.sha }}","description":"qgs tests results","context":"PR-status"}'
