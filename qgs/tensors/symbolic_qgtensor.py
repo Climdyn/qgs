@@ -338,7 +338,7 @@ class SymbolicTensorLinear(object):
 
             # theta_a part
             for i in range(nvar[1]):
-                if par.Cpa is not None:
+                if self.Cpa is not None:
                     symbolic_array_dic[(self._theta_a(i), 0, 0)] -= a_theta[i, :] * aips._u * self.Cpa  # not perfect
 
                 if atp.hd is not None and atp.thetas is not None:
@@ -377,9 +377,9 @@ class SymbolicTensorLinear(object):
 
                 for j in range(nvar[1]):
                     val = a_theta[i, :] @ aips._u[:, j]
-                    if par.Lpa is not None:
+                    if self.Lpa is not None:
                         symbolic_array_dic[(self._theta_a(i), self._theta_a(j), 0)] += val * symbolic_params['sc'] * self.Lpa
-                    if par.LSBpa is not None:
+                    if self.LSBpa is not None:
                         symbolic_array_dic[(self._theta_a(i), self._theta_a(j), 0)] += val * self.LSBpa
 
                     if atp.hd is not None:
@@ -391,7 +391,7 @@ class SymbolicTensorLinear(object):
                         val = - a_theta[i, :] @ aips._d[:, jo]
                         symbolic_array_dic[(self._theta_a(i), self._psi_o(j), 0)] += val * self.sig0 * symbolic_params['kd'] / 2
 
-                    if par.Lpa is not None:
+                    if self.Lpa is not None:
                         for j in range(nvar[3]):
                             val = - a_theta[i, :] @ aips._s[:, j]
                             symbolic_array_dic[(self._theta_a(i), self._deltaT_o(j), 0)] += val * self.Lpa / 2
@@ -648,12 +648,12 @@ class SymbolicTensorLinear(object):
                         for jj in range(nvar[3]):
                             val += U_inv[i, jj] * bips.W(jj, j)
                         symbolic_array_dic[(self._deltaT_o(i), self._theta_a(j), 0)] += val * 2 * symbolic_params['sc'] * self.Lpgo
-                        if par.sbpa is not None:
+                        if self.sbpa is not None:
                             symbolic_array_dic[(self._deltaT_o(i), self._theta_a(j), 0)] += val * self.sbpa
 
                     for j in range(nvar[3]):
                         symbolic_array_dic[(self._deltaT_o(i), self._deltaT_o(j), 0)] = - self.Lpgo * _kronecker_delta(i, j)
-                        if par.sbpgo is not None:
+                        if self.sbpgo is not None:
                             symbolic_array_dic[(self._deltaT_o(i), self._deltaT_o(j), 0)] += - self.sbpgo * _kronecker_delta(i, j)
 
                     for j in range(nvar[2]):
@@ -674,12 +674,12 @@ class SymbolicTensorLinear(object):
                         for jj in range(nvar[2]):
                             val += U_inv[i, jj] * bips.W(jj, j)
                         symbolic_array_dic[(self._deltaT_g(i), self._theta_a(j), 0)] += val * 2 * symbolic_params['sc'] * self.Lpgo
-                        if par.sbpa is not None:
+                        if self.sbpa is not None:
                             symbolic_array_dic[(self._deltaT_g(i), self._theta_a(j), 0)] += val * self.sbpa
 
                     for j in range(nvar[2]):
                         symbolic_array_dic[(self._deltaT_g(i), self._deltaT_g(j), 0)] = - self.Lpgo * _kronecker_delta(i, j)
-                        if par.sbpgo is not None:
+                        if self.sbpgo is not None:
                             symbolic_array_dic[(self._deltaT_g(i), self._deltaT_g(j), 0)] += - self.sbpgo * _kronecker_delta(i, j)
 
         return symbolic_array_dic
@@ -926,7 +926,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         for i in range(nvar[1]):
             # t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
-            if par.T4LSBpa is not None:
+            if self.T4LSBpa is not None:
                 j = k = ell = 0
                 for m in range(nvar[1]):
                     val = 0
@@ -938,7 +938,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                         symbolic_array_full_dict[(self._theta_a(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.T4LSBpa * val
 
             if ocean:
-                if par.T4LSBpgo is not None:
+                if self.T4LSBpgo is not None:
                     j = k = ell = 0
                     for m in range(nvar[3]):
                         val = 0
@@ -950,7 +950,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                             symbolic_array_full_dict[(self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = 4 * self.T4LSBpgo * val
 
             if ground_temp:
-                if par.T4LSBpgo is not None:
+                if self.T4LSBpgo is not None:
                     j = k = ell = 0
                     for m in range(nvar[2]):
                         val = 0
@@ -999,18 +999,18 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for jj in range(nvar[2]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                        symbolic_array_full_dict[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = par.T4sbpa * val
+                        symbolic_array_full_dict[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.T4sbpa * val
                     else:
-                        symbolic_array_full_dict[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * par.T4sbpa * val
+                        symbolic_array_full_dict[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.T4sbpa * val
 
                 for m in range(nvar[2]):
                     val = 0
                     for jj in range(nvar[2]):
                         val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        symbolic_array_full_dict[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = par.T4sbpgo * val
+                        symbolic_array_full_dict[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.T4sbpgo * val
                     else:
-                        symbolic_array_full_dict[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = 4 * par.T4sbpgo * val
+                        symbolic_array_full_dict[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = 4 * self.T4sbpgo * val
 
         return symbolic_array_full_dict
 

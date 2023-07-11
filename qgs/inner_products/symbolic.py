@@ -324,8 +324,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-
-                subs = self.subs + self.atmospheric_basis.substitutions + self.ground_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.atmospheric_basis.substitutions + self.ground_basis.substitutions
 
                 ngr = len(ground_basis)
                 if orographic_basis == "atmospheric":
@@ -804,7 +806,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
             with Pool(max_workers=num_threads) as pool:
                 #//TODO: Check if this needs to be edited for symbolic ip
-                subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
 
                 natm = len(atmosphere_basis)
                 self._K = sp.zeros((self.noc, natm), dtype=float, format='dok')
@@ -881,8 +886,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-
-                subs = self.subs + self.oceanic_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.oceanic_basis.substitutions
 
                 # N inner products
                 args_list = [[(i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
@@ -1227,7 +1234,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
             with Pool(max_workers=num_threads) as pool:
                 #//TODO: Check if this needs changing for symbolic IP.
-                subs = self.subs + self.ground_basis.substitutions + self.atmospheric_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.ground_basis.substitutions + self.atmospheric_basis.substitutions
 
                 natm = len(atmosphere_basis)
                 self._W = sp.zeros((self.ngr, natm), dtype=float, format='dok')
@@ -1286,7 +1296,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-                subs = self.subs + self.ground_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.ground_basis.substitutions
 
                 # U inner products
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
