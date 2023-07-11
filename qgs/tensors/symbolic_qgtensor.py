@@ -305,9 +305,10 @@ class SymbolicTensorLinear(object):
                 for j in range(nvar[0]):
 
                     jo = j + offset  # skipping the theta 0 variable if it exists
-
+                    #//TODO: A =- was converted to = here, I need to make sure this doesnt alter the results
                     val = a_inv[i, :] * aips._c[offset:, jo]
-                    symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] -= val * symbolic_params['beta']
+                    print(val)
+                    symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] = val * symbolic_params['beta']
 
                     symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] -= (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
                     symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), 0)] = (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
