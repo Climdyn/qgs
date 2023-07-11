@@ -23,9 +23,9 @@ atmosphere on a [beta-plane](https://en.wikipedia.org/wiki/Beta_plane), coupled 
 
 > **You can try qgs online !**  
 > Simply click on one of the following links to access an introductory tutorial:
-> [![Open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Climdyn/qgs/blob/master/notebooks/simple_run.ipynb)
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Climdyn/qgs/master?filepath=notebooks/simple_run.ipynb)
-> [<img src="https://deepnote.com/buttons/launch-in-deepnote-small.svg">](https://deepnote.com/launch?name=MyProject&url=https://github.com/Climdyn/qgs/tree/master/notebooks/simple_run.ipynb)
+> [![Open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Climdyn/qgs/blob/master/notebooks/introduction_qgs.ipynb)
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Climdyn/qgs/master?filepath=notebooks/introduction_qgs.ipynb)
+> [<img src="https://deepnote.com/buttons/launch-in-deepnote-small.svg">](https://deepnote.com/launch?name=MyProject&url=https://github.com/Climdyn/qgs/tree/master/notebooks/introduction_qgs.ipynb)
 
 
 About
