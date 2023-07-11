@@ -57,7 +57,6 @@ class QgsTensor(object):
         self.atmospheric_inner_products = atmospheric_inner_products
         self.oceanic_inner_products = oceanic_inner_products
         self.ground_inner_products = ground_inner_products
-        self.params = params
 
         self.tensor = None
         self.jacobian_tensor = None
