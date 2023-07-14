@@ -874,7 +874,8 @@ class QgParams(Params):
         'hlambda': sy.Symbol('lambda'),
 
         # Ground Parameters
-        'hk': sy.Symbol('h_k'),
+        'hk_val': sy.Symbol('h_k'),
+        'hk': None,
 
         # Ground Temperature Parameters
         'gnd_gamma': sy.Symbol('gamma_g'),
@@ -1251,12 +1252,17 @@ class QgParams(Params):
         print(s)
 
     def symbolic_insolation_array(self, Cpa=None, Cpgo=None):
-        """Set the array Cpa and Cpgo from given data, or the default symbols
+        """Set the array Cpa and Cpgo from given value, or the default symbols
         
+        It is assumed that the values given are either for Cpa, or Cpgo, there is no option to set both Cpa and Cpgo at the same time.
+
         Parameters
         ----------
-        values: List(sympy Symbol)
-            A list of the sympy symbols that will be converted to an ImmutableSparseNDimArray. 
+        Cpa: List(sympy Symbol, float)
+            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
+
+        Cpgo: List(sympy Symbol, float)
+            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
 
         """
         if Cpa is not None:
@@ -1279,9 +1285,26 @@ class QgParams(Params):
                 gnd_C_list[1] = self.symbolic_params['gnd_C_val']
                 ocn_C_list[1] = self.symbolic_params['ocn_C_val']
         
-        self.symbolic_params['atm_C'] = sy.tensor.array.ImmutableSparseNDimArray(atm_C_list)
-        self.symbolic_params['gnd_C'] = sy.tensor.array.ImmutableSparseNDimArray(gnd_C_list)
-        self.symbolic_params['ocn_C'] = sy.tensor.array.ImmutableSparseNDimArray(ocn_C_list)
+        self.symbolic_params['atm_C'] = sy.matrices.immutable.ImmutableSparseMatrix(atm_C_list)
+        self.symbolic_params['gnd_C'] = sy.matrices.immutable.ImmutableSparseMatrix(gnd_C_list)
+        self.symbolic_params['ocn_C'] = sy.matrices.immutable.ImmutableSparseMatrix(ocn_C_list)
+
+    def symbolic_orography_array(self, hk=None):
+        """Set the array hk from given value, or the defulat symbols
+        
+        Parameters
+        ----------
+        hk: List(sympy Symbol, float)
+            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
+            
+        """
+        if hk is not None:
+            oro_list = hk
+        else:
+            oro_list = [0] * self.nmod[0]
+            oro_list[1] = self.symbolic_params['hk_val']
+
+        self.symbolic_params['hk'] = sy.matrices.immutable.ImmutableSparseMatrix(oro_list)
 
     @property
     def ndim(self):

@@ -481,8 +481,8 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
                         self._z = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm, self.natm, self.natm))
-                else:
-                    self._z = self._z.to_coo()
+                    else:
+                        self._z = self._z.to_coo()
 
     @property
     def natm(self):
@@ -954,8 +954,8 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
                         self._V = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc, self.noc, self.noc))
-                else:
-                    self._V = self._V.to_coo()
+                    else:
+                        self._V = self._V.to_coo()
             
     @property
     def noc(self):

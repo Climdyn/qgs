@@ -256,6 +256,7 @@ class SymbolicTensorLinear(object):
 
             a_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[0], nvar[0], a_inv)
             a_inv = sy.matrices.Inverse(a_inv)
+            a_inv = a_inv.simplify()
 
             a_theta = dict()
             for i in range(nvar[1]):
@@ -264,6 +265,7 @@ class SymbolicTensorLinear(object):
             
             a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = sy.matrices.Inverse(a_theta)
+            a_theta = a_theta.simplify()
 
         if bips is not None:
             if ocean:
@@ -273,6 +275,7 @@ class SymbolicTensorLinear(object):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[3], nvar[3], U_inv)
                 U_inv = sy.matrices.Inverse(U_inv)
+                U_inv = U_inv.simplify()
 
                 M_psio = dict()
                 for i in range(offset, nvar[3]):
@@ -281,6 +284,7 @@ class SymbolicTensorLinear(object):
 
                 M_psio = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], M_psio)
                 M_psio = sy.matrices.Inverse(M_psio)
+                M_psio = M_psio.simplify()
 
             else:
                 U_inv = dict()
@@ -289,6 +293,7 @@ class SymbolicTensorLinear(object):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(U_inv)
+                U_inv = U_inv.simplify()
 
         ################
 
@@ -301,14 +306,14 @@ class SymbolicTensorLinear(object):
 
         if aips.stored and go:
             # psi_a part
+            a_inv_mult_c = a_inv @ aips._c[offset:, offset:]
+            a_inv_mult_g = a_inv @ aips._g[offset:, :, offset:]
             for i in range(nvar[0]):
                 for j in range(nvar[0]):
 
                     jo = j + offset  # skipping the theta 0 variable if it exists
                     #//TODO: A =- was converted to = here, I need to make sure this doesnt alter the results
-                    val = a_inv[i, :] * aips._c[offset:, jo]
-                    print(val)
-                    symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] = val * symbolic_params['beta']
+                    symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] = a_inv_mult_c[i, j] * symbolic_params['beta']
 
                     symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] -= (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
                     symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), 0)] = (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2
@@ -316,26 +321,29 @@ class SymbolicTensorLinear(object):
                     if gp is not None:
                         # convert 
                         if gp.hk is not None:
-                            #//TODO: Need to make this symbolic
+                            #//TODO: Can this be more efficient, make these slice matricies outside of the i loop?
                             if gp.orographic_basis == "atmospheric":
-                                oro = a_inv[i, :] * aips._g[offset:, jo, offset:] * symbolic_params['hk']  # not perfect
+                                _g_slice = sy.matrices.immutable.ImmutableSparseMatrix(aips._g[offset:, jo, offset:])
+                                oro = a_inv @ _g_slice @ symbolic_params['hk']  # not perfect
                             else:
-                                #//TODO: Need to make this symbolic
-                                # TODO: Can only be used with symbolic inner products here - a warning or an error should be raised if this is not the case.
-                                oro = a_inv[i, :] * aips._gh[offset:, jo, offset:] * symbolic_params['hk'] # not perfect
-                            symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] -= oro / 2
-                            symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), 0)] += oro / 2
+                                #//TODO: Can this be more efficient, make these slice matricies outside of the i loop?
 
+                                # TODO: Can only be used with symbolic inner products here - a warning or an error should be raised if this is not the case.
+                                _gh_slice = sy.matrices.immutable.ImmutableSparseMatrix(aips._gh[offset:, jo, offset:])
+                                oro = a_inv @ _gh_slice @ symbolic_params['hk'] # not perfect
+                            symbolic_array_dic[(self._psi_a(i), self._psi_a(j), 0)] = oro[i] / 2
+                            symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), 0)] += oro[i] / 2
+
+                    _b_slice = sy.matrices.immutable.ImmutableSparseMatrix(aips._b[offset:, jo, :offset])
+                    val = a_inv @ _b_slice
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] * aips._b[offset:, jo, ko]
-                        symbolic_array_dic[(self._psi_a(i), self._psi_a(j), self._psi_a(k))] = - val
-                        symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), self._theta_a(ko))] = - val
+                        symbolic_array_dic[(self._psi_a(i), self._psi_a(j), self._psi_a(k))] = - val[i, k]
+                        symbolic_array_dic[(self._psi_a(i), self._theta_a(jo), self._theta_a(ko))] = - val[i, k]
                 if ocean:
+                    a_inv_mult_d = a_inv @ aips._d[offset:, offset:]
                     for j in range(nvar[2]):
-                        jo = j + offset  # skipping the theta 0 variable if it exists
-                        val = a_inv[i, :] * aips._d[offset:, jo]
-                        symbolic_array_dic[(self._psi_a(i), self._psi_o(j), 0)] += val * symbolic_params['kd'] / 2
+                        symbolic_array_dic[(self._psi_a(i), self._psi_o(j), 0)] += a_inv_mult_d[i, j] * symbolic_params['kd'] / 2
 
             # theta_a part
             for i in range(nvar[1]):
