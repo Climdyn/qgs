@@ -255,7 +255,7 @@ class SymbolicTensorLinear(object):
                     a_inv[(i - offset, j - offset)] = aips.a(i, j)
 
             a_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[0], nvar[0], a_inv)
-            a_inv = sy.matrices.Inverse(a_inv)
+            a_inv = a_inv.inverse()
             a_inv = a_inv.simplify()
 
             a_theta = dict()
@@ -264,7 +264,7 @@ class SymbolicTensorLinear(object):
                     a_theta[(i, j)] = self.sig0 * aips.a(i, j) - aips.u(i, j)
             
             a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
-            a_theta = sy.matrices.Inverse(a_theta)
+            a_theta = a_theta.inverse()
             a_theta = a_theta.simplify()
 
         if bips is not None:
@@ -274,7 +274,7 @@ class SymbolicTensorLinear(object):
                     for j in range(nvar[3]):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[3], nvar[3], U_inv)
-                U_inv = sy.matrices.Inverse(U_inv)
+                U_inv = U_inv.inverse()
                 U_inv = U_inv.simplify()
 
                 M_psio = dict()
@@ -283,7 +283,7 @@ class SymbolicTensorLinear(object):
                         M_psio[(i - offset, j - offset)] = bips.M(i, j) + self.G * bips.U(i, j)
 
                 M_psio = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], M_psio)
-                M_psio = sy.matrices.Inverse(M_psio)
+                M_psio = M_psio.inverse()
                 M_psio = M_psio.simplify()
 
             else:
@@ -292,7 +292,7 @@ class SymbolicTensorLinear(object):
                     for j in range(nvar[2]):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
-                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(U_inv)
+                U_inv = U_inv.inverse()
                 U_inv = U_inv.simplify()
 
         ################
@@ -308,6 +308,7 @@ class SymbolicTensorLinear(object):
             # psi_a part
             a_inv_mult_c = a_inv @ aips._c[offset:, offset:]
             a_inv_mult_g = a_inv @ aips._g[offset:, :, offset:]
+            
             for i in range(nvar[0]):
                 for j in range(nvar[0]):
 
@@ -813,7 +814,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                 for j in range(nvar[1]):
                     a_theta[(i, j)] = self.sig0 * aips.a(i, j) - aips.u(i, j)
             a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
-            a_theta = sy.matrices.Inverse(a_theta)
+            a_theta = a_theta.inverse()
 
         if bips is not None:
             U_inv = dict()
@@ -822,7 +823,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for j in range(nvar[3]):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[3], nvar[3], U_inv)
-                U_inv = sy.matrices.Inverse(U_inv)
+                U_inv = U_inv.inverse()
             else:
                 for i in range(nvar[2]):
                     for j in range(nvar[2]):
@@ -925,7 +926,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                         U_inv[(i, j)] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
             
-            U_inv = sy.matrices.Inverse(U_inv)
+            U_inv = U_inv.inverse()
                 
 
         #################
@@ -1047,3 +1048,37 @@ def _kronecker_delta(i, j):
 
     else:
         return 0
+
+def _symbolic_tensordot(a, b, axes=2):
+    """
+    Compute tensor dot product along specified axes of two sympy symbolic arrays
+
+    This is based on numpy.tensordot
+
+    Parameters
+    ----------
+    a, b: sympy arrays
+        Tensors to "dot"
+
+    axes: int
+        * integer_like
+          If an int N, sum over the last N axes of `a` and the first N axes
+          of `b` in order. The sizes of the corresponding axes must match.
+
+    Returns
+    -------
+    output: sympy tensor
+        The tensor dot product of the input
+
+    """
+    as_ = a.shape
+    nda = len(as_)
+    
+    a_com = [nda+i for i in range(-axes, 0)]
+    b_com = [nda+i for i in range(axes)]
+    sum_cols = tuple(a_com + b_com)
+    
+    prod = sy.tensorproduct(a, b)
+    
+    return sy.tensorcontraction(prod, sum_cols)
+    
