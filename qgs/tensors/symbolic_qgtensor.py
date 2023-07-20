@@ -319,7 +319,6 @@ class SymbolicTensorLinear(object):
                 for j in range(nvar[0]):
 
                     jo = j + offset  # skipping the theta 0 variable if it exists
-                    #//TODO: A =- was converted to = here, I need to make sure this doesnt alter the results
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), a_inv_mult_c[i, j] * symbolic_params['beta'])
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -(symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
@@ -368,7 +367,7 @@ class SymbolicTensorLinear(object):
 
             for i in range(nvar[1]):
                 if self.Cpa is not None:
-                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), -val_Cpa[i])
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), -val_Cpa[i][0])
 
                 if symbolic_params['hd'] is not None and atp.thetas is not None:
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), -val_thetas[i][0] * symbolic_params['hd'])
@@ -387,8 +386,8 @@ class SymbolicTensorLinear(object):
                     if gp is not None:
                         if symbolic_params['hk'] is not None:
                             #//TODO: Need to make this symbolic
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -self.sig0 * oro[i, j] / 2)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), self.sig0 * oro[i, j] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -self.sig0 * oro[i, j][0] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), self.sig0 * oro[i, j][0] / 2)
 
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
@@ -719,9 +718,8 @@ class SymbolicTensorLinear(object):
 
         jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jacobian_from_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
         tensor = sy.tensor.array.ImmutableSparseNDimArray(self.simplify_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
-
-        self.jacobian_tensor = jacobian_tensor.simplify()
-        self.tensor = tensor.simplify()
+        self.jacobian_tensor = jacobian_tensor.applyfunc(sy.simplify)
+        self.tensor = tensor.applyfunc(sy.simplify)
 
     @staticmethod
     def remove_dic_zeros(dic):
@@ -754,11 +752,12 @@ class SymbolicTensorLinear(object):
     
     @staticmethod
     def simplify_dict(dic):
+        # this is not correct, I should not permute the tuple, but sort the list of them
         keys = dic.keys()
-        dic_upp = dic.copy()
+        dic_upp = dict()
 
         for key in keys:
-            new_key = tuple(sorted(key))
+            new_key = tuple([key[0]] + sorted(key[1:]))
             dic_upp = _add_to_dict(dic_upp, new_key, dic[key])
 
         return dic_upp
@@ -777,14 +776,13 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    @staticmethod
-    def print_tensor(tensor):
-        nx, ny, nz = tensor.shape
+    def print_tensor(self):
+        nx, ny, nz = self.tensor.shape
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    if tensor[i, j, k] != 0:
-                        print("("+str(i, j, k) + "): " + str(tensor[i, j, k]))
+                    if self.tensor[i, j, k] != 0:
+                        print(str((i, j, k)) + ": " + str(self.tensor[i, j, k]))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
     #//TODO: Need to work out symbolic tensor dot
