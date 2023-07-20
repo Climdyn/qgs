@@ -175,7 +175,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self.return_symbolic = return_symbolic
         if return_symbolic:
             self._p_compute = _symbolic_compute
-            self.subs = [('n', params.symbolic_params['n'])]
+            self.subs = None #[('n', params.symbolic_params['n'])]
         else:
             self._p_compute = _parallel_compute
             self.subs = [('n', self.n)]
@@ -240,8 +240,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-                
-                subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
 
                 noc = len(ocean_basis)
                 self._gh = None
@@ -499,12 +501,18 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             return res[1]
         else:
             res = _apply(args)[1]
-            return float(res.subs(subs))
+            if subs is not None:
+                return float(res.subs(subs))
+            else:
+                return res
 
     def a(self, i, j):
         """Function to compute the matrix of the eigenvalues of the Laplacian (atmospheric): :math:`a_{i, j} = (F_i, {\\nabla}^2 F_j)`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
             args = ((i, j), self.ip.ip_lap, (self._F(i), self._F(j)), subs)
             return self._integrate(subs, args)
         else:
@@ -513,7 +521,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def u(self, i, j):
         """Function to compute the matrix of inner product: :math:`u_{i, j} = (F_i, F_j)`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
             args = ((i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j)), subs)
             return self._integrate(subs, args)
         else:
@@ -522,7 +533,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def b(self, i, j, k):
         """Function to compute the tensors holding the Jacobian inner products: :math:`b_{i, j, k} = (F_i, J(F_j, \\nabla^2 F_k))`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
             args = ((i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k)), subs)
             return self._integrate(subs, args)
         else:
@@ -531,7 +545,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def c(self, i, j):
         """Function to compute the matrix of beta terms for the atmosphere: :math:`c_{i,j} = (F_i, \\partial_x F_j)`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
+            print(subs)
             args = ((i, j), self.ip.ip_diff_x, (self._F(i), self._F(j)), subs)
             return self._integrate(subs, args)
         else:
@@ -540,7 +558,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def g(self, i, j, k):
         """Function to compute tensors holding the Jacobian inner products: :math:`g_{i,j,k} = (F_i, J(F_j, F_k))`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
             args = ((i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k)), subs)
             return self._integrate(subs, args)
         else:
@@ -560,7 +581,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 else:
                     extra_subs = None
 
-                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
                 args = ((i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k)), subs)
                 return self._integrate(subs, args)
         else:
@@ -579,7 +603,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 else:
                     extra_subs = None
 
-                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
                 args = ((i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j)), subs)
                 return self._integrate(subs, args)
         else:
@@ -598,7 +625,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 else:
                     extra_subs = None
 
-                subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
+                if self.return_symbolic:
+                    subs = self.subs
+                else:
+                    subs = self.subs + self.atmospheric_basis.substitutions + extra_subs
                 args = ((i, j), self.iip.ip_lap, (self._F(i), self._phi(j)), subs)
                 return self._integrate(subs, args)
         else:
@@ -607,7 +637,11 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def z(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing for the radiation lost by atmosphere to space & ground/ocean: :math:`z_{i,j,k,l,m} = (F_i, F_j F_k F_l F_m)`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
+
             args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._F(i), self._F(j) * self._F(k) * self._F(l) * self._F(m)), subs)
             if self.quadrature:
                 res = _num_apply(args)
@@ -621,7 +655,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     def v(self, i, j, k, l, m):
         """Function to compute the :math:`T^4` temperature forcing of the ocean on the atmosphere: :math:`v_{i,j,k,l,m} = (F_i, \\phi_j \\phi_k \\phi_l \\phi_m)`."""
         if not self.stored:
-            subs = self.subs + self.atmospheric_basis.substitutions
+            if self.return_symbolic:
+                subs = self.subs
+            else:
+                subs = self.subs + self.atmospheric_basis.substitutions
             args = ((i, j, k, l, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(l) * self._phi(m)), subs)
             if self.quadrature:
                 res = _num_apply(args)
@@ -1437,7 +1474,11 @@ def _apply(ls):
 def _num_apply(ls):
     integrand = ls[1](*ls[2], integrand=True)
 
-    num_integrand = integrand[0].subs(ls[3])
+    if ls[3] is not None:
+        num_integrand = integrand[0].subs(ls[3])
+    else:
+        num_integrand = integrand[0]
+
     func = sy.lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
 
     try:
@@ -1536,7 +1577,10 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
     while True:
         try:
             res = next(results)
-            result_list.append(res[1].subs(subs))
+            if subs is not None:
+                result_list.append(res[1].subs(subs))
+            else:
+                result_list.append(res[1])
             
         except StopIteration:
             break
