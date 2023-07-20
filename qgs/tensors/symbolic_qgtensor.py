@@ -708,16 +708,83 @@ class SymbolicTensorLinear(object):
         """Routine to compute the tensor."""
 
         sy_arr_dic = self._compute_tensor_dicts()
-        sy_arr_dic = _remove_dic_zeros(sy_arr_dic)
-        return sy_arr_dic
+        sy_arr_dic = self.remove_dic_zeros(sy_arr_dic)
 
-    def _set_tensor(self, tensor):
-        if not isinstance(tensor, sp.COO):
-            tensor = tensor.to_coo()
-        self.jacobian_tensor = self.jacobian_from_tensor(tensor)
-        self.tensor = self.simplify_tensor(tensor)
+        if sy_arr_dic is not None:
+            if not(self.params.dynamic_T):
+                self._set_tensor(sy_arr_dic)
 
-    #//TODO: include other functions for altering dictionary.
+    def _set_tensor(self, dic):
+        ndim = self.params.ndim
+
+        jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jacobian_from_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
+        tensor = sy.tensor.array.ImmutableSparseNDimArray(self.simplify_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
+
+        self.jacobian_tensor = jacobian_tensor.simplify()
+        self.tensor = tensor.simplify()
+
+    @staticmethod
+    def remove_dic_zeros(dic):
+        non_zero_dic = dict()
+        for key in dic.keys():
+            if dic[key] != 0:
+                non_zero_dic[key] = dic[key]
+
+        return non_zero_dic
+    
+    @staticmethod
+    def jacobian_from_dict(dic):
+        rank = max([len(i) for i in dic.keys()])
+        n_perm = rank - 2
+        
+        orig_order = [i for i in range(rank)]
+        
+        keys = dic.keys()
+        dic_jac = dic.copy()
+        
+        for i in range(1, n_perm+1):
+            new_pos = orig_order.copy()
+            new_pos[1] = orig_order[i+1]
+            new_pos[i+1] = orig_order[1]
+            for key in keys:
+
+                dic_jac = _add_to_dict(dic_jac, tuple(key[i] for i in new_pos), dic[key])
+        
+        return dic_jac
+    
+    @staticmethod
+    def simplify_dict(dic):
+        keys = dic.keys()
+        dic_upp = dic.copy()
+
+        for key in keys:
+            new_key = tuple(sorted(key))
+            dic_upp = _add_to_dict(dic_upp, new_key, dic[key])
+
+        return dic_upp
+
+    def save_to_file(self, filename, **kwargs):
+        """Function to save the tensor object to a file with the :mod:`pickle` module.
+
+        Parameters
+        ----------
+        filename: str
+            The file name where to save the tensor object.
+        kwargs: dict
+            Keyword arguments to pass to the :mod:`pickle` module method.
+        """
+        f = open(filename, 'wb')
+        pickle.dump(self.__dict__, f, **kwargs)
+        f.close()
+
+    @staticmethod
+    def print_tensor(tensor):
+        nx, ny, nz = tensor.shape
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    if tensor[i, j, k] != 0:
+                        print("("+str(i, j, k) + "): " + str(tensor[i, j, k]))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
     #//TODO: Need to work out symbolic tensor dot
@@ -1068,14 +1135,6 @@ def _add_to_dict(dic, loc, value):
     except:
         dic[loc] = value
     return dic
-
-def _remove_dic_zeros(dic):
-    non_zero_dic = dict()
-    for key in dic.keys():
-        if dic[key] != 0:
-            non_zero_dic[key] = dic[key]
-
-    return non_zero_dic
 
 def _shift_dict_keys(dic, shift):
     """
