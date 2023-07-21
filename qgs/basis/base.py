@@ -26,7 +26,7 @@
 import sys
 
 from abc import ABC
-from sympy import symbols, lambdify, diff
+from sympy import Symbol, symbols, lambdify, diff
 
 
 class Basis(ABC):
@@ -216,7 +216,8 @@ if __name__=="__main__":
     basis = SymbolicBasis()
 
     x, y = symbols('x y')  # x and y coordinates on the model's spatial domain
-    n, al = symbols('n al')  # aspect ratio and alpha coefficients
+    al = symbols('al')  # aspect ratio and alpha coefficients
+    n = Symbol('n', positive=True)
     for i in range(1, 3):
         for j in range(1, 3):
             basis.append(2 * exp(- al * x) * sin(j * n * x / 2) * sin(i * y))

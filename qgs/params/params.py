@@ -865,6 +865,8 @@ class QgParams(Params):
         # Atmosphere Temp Parameters
         'hd': sy.Symbol('hd'),
         'theta': sy.Symbol('theta'),
+        #//TODO: Need to work out what thetas should be
+        'thetas': None,
         'atm_gamma': sy.Symbol('gamma_a'),
         'atm_C_val': sy.Symbol('C_a'),
         'atm_C': None,
