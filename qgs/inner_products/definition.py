@@ -13,9 +13,9 @@ from abc import ABC, abstractmethod
 
 # from sympy.simplify import trigsimp
 from sympy.simplify.fu import TR8, TR10
-from sympy import diff, integrate, symbols, pi, Integral
+from sympy import Symbol, diff, integrate, symbols, pi, Integral
 
-_n = symbols('n', real=True, nonnegative=True)
+_n = Symbol('n', positive=True)
 _x, _y = symbols('x y')
 
 

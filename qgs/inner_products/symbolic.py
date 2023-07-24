@@ -549,7 +549,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 subs = self.subs
             else:
                 subs = self.subs + self.atmospheric_basis.substitutions
-            print(subs)
+
             args = ((i, j), self.ip.ip_diff_x, (self._F(i), self._F(j)), subs)
             return self._integrate(subs, args)
         else:

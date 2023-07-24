@@ -7,10 +7,14 @@
 """
 from contextlib import redirect_stdout
 
+from qgs.functions.tendencies import create_tendencies
+
 import numpy as np
 import sparse as sp
 import sympy as sy
 import pickle
+
+#//TODO: Check non stored IP version of this
 
 class SymbolicTensorLinear(object):
     """Symbolic qgs tendencies tensor class.
@@ -377,7 +381,7 @@ class SymbolicTensorLinear(object):
                     jo = j + offset  # skipping the theta 0 variable if it exists
 
                     val_2 = a_theta_mult_a[i, j] * symbolic_params['kd'] * self.sig0 / 2
-                    val_3 = a_theta_mult_a[i, j] * (symbolic_params['kd'] / 2 + 2 * symbolic_params['kpd']) * self.sig0
+                    val_3 = a_theta_mult_a[i, j] * (symbolic_params['kd'] / 2 + 2 * symbolic_params['kdp']) * self.sig0
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), val_2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -val_3)
 
@@ -763,7 +767,8 @@ class SymbolicTensorLinear(object):
         return dic_upp
 
     def save_to_file(self, filename, **kwargs):
-        """Function to save the tensor object to a file with the :mod:`pickle` module.
+        """F
+        unction to save the tensor object to a file with the :mod:`pickle` module.
 
         Parameters
         ----------
@@ -776,13 +781,71 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def print_tensor(self):
-        nx, ny, nz = self.tensor.shape
+    def subs_tensor(self, tensor=None):
+        """
+        Uses sympy substitution to convert the symbolic tensor to a numerical one.
+        """
+        
+        self.params._set_symbolic_parameters()
+
+        if tensor is not None:
+            symbolic_variables = tensor.free_symbols
+        else:
+            symbolic_variables = self.tensor.free_symbols
+
+        key_list = list(self.sym_params.keys())
+        item_list = list(self.sym_params.values())
+
+        symbol_to_number_map = list()
+        for sym in symbolic_variables:
+            key = key_list[item_list.index(sym)]
+            num = self.params.symbol_to_value[key]
+            symbol_to_number_map.append(num)
+
+
+        if tensor is not None:
+            ten_out = tensor.subs(symbol_to_number_map)
+        else:
+            ten_out = self.tensor.subs(symbol_to_number_map)
+        
+        return ten_out
+        
+    def test_tensor_numerically(self, tensor=None, tol=1e-10):
+        """
+        Uses sympy substitution to convert the symbolic tensor to a numerical one.
+        This is then compared to the tensor calculated in the qgs.tensor.symbolic module.
+        
+        """
+
+        _, _, numerical_tensor = create_tendencies(self.params, return_qgtensor=True)
+
+        subbed_ten = self.subs_tensor(tensor)
+        subbed_ten = np.array(subbed_ten)
+
+        # Convert the substituted sympy array to a sparce one
+        subbed_tensor_np = np.array(subbed_ten).astype(np.float64)
+        subbed_tensor_sp = sp.COO(subbed_tensor_np)
+
+        diff_arr = subbed_tensor_sp - numerical_tensor.tensor
+        self.print_tensor(diff_arr, tol)
+
+    def print_tensor(self, tensor=None, tol=1e-10):
+        if tensor is not None:
+            temp_ten = tensor
+        else:
+            temp_ten = self.tensor
+
+        nx, ny, nz = temp_ten.shape
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    if self.tensor[i, j, k] != 0:
-                        print(str((i, j, k)) + ": " + str(self.tensor[i, j, k]))
+                    if isinstance(temp_ten[i, j, k], float):
+                        bool_test = abs(temp_ten[i, j, k]) > tol
+                    else:
+                        bool_test = temp_ten[i, j, k]
+
+                    if bool_test:
+                        print(str((i, j, k)) + ": " + str(temp_ten[i, j, k]))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
     #//TODO: Need to work out symbolic tensor dot

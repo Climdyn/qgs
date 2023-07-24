@@ -859,7 +859,7 @@ class QgParams(Params):
 
         # Atmosphere Parameters
         'kd': sy.Symbol('k_d'),
-        'kpd': sy.Symbol('k_p'),
+        'kdp': sy.Symbol('k_p'),
         'sigma': sy.Symbol('sigma'),
 
         # Atmosphere Temp Parameters
@@ -2073,3 +2073,69 @@ class QgParams(Params):
         for i in range(self.nmod[1]):
             self._ground_latex_var_string.append(r'delta T_{\rm g,' + str(i + 1) + "}")
             self._ground_var_string.append(r'delta_T_g_' + str(i + 1))
+
+    
+    def _set_symbolic_parameters(self):
+        """
+        Function to make a map between symbolic parameters and numberical values
+        """
+
+        #//TODO: THis function is a really lazy way of doing this, look into setting up the Parameter class with each symbol stored in the class
+        self.symbol_to_value = dict()
+
+        # Scale Parameters
+        if self.scale_params is not None:
+            self.symbol_to_value['L'] = (self.symbolic_params['L'], self.scale_params.L)
+            self.symbol_to_value['fo'] = (self.symbolic_params['fo'], self.scale_params.f0)
+            self.symbol_to_value['beta'] = (self.symbolic_params['beta'], self.scale_params.beta)
+            self.symbol_to_value['n'] = (self.symbolic_params['n'], self.scale_params.n)
+
+        # Atmosphere Parameters
+        if self.atmospheric_params is not None:
+            self.symbol_to_value['kd'] = (self.symbolic_params['kd'], self.atmospheric_params.kd)
+            self.symbol_to_value['kdp'] = (self.symbolic_params['kdp'], self.atmospheric_params.kdp)
+            self.symbol_to_value['sigma'] = (self.symbolic_params['sigma'], self.atmospheric_params.sigma)
+
+
+        #//TODO: Fix the bogde on the index of the insolation
+        # Atmosphere Temp Parameters
+        if self.atemperature_params is not None:
+            self.symbol_to_value['hd'] = (self.symbolic_params['hd'], self.atemperature_params.hd)
+            self.symbol_to_value['theta'] = (self.symbolic_params['theta'], self.atemperature_params.thetas)
+            self.symbol_to_value['thetas'] = (self.symbolic_params['theta'], self.atemperature_params.thetas)
+            self.symbol_to_value['atm_gamma'] = (self.symbolic_params['atm_gamma'], self.atemperature_params.gamma)
+            self.symbol_to_value['atm_C_val'] = (self.symbolic_params['atm_C_val'], self.atemperature_params.C[0])
+            self.symbol_to_value['atm_C'] = (self.symbolic_params['atm_C_val'], self.atemperature_params.C[0])
+            self.symbol_to_value['eps'] = (self.symbolic_params['eps'], self.atemperature_params.eps)
+            self.symbol_to_value['atm_T0'] = (self.symbolic_params['atm_T0'], self.atemperature_params.T0)
+            self.symbol_to_value['sc'] = (self.symbolic_params['sc'], self.atemperature_params.sc)
+            self.symbol_to_value['hlambda'] = (self.symbolic_params['hlambda'], self.atemperature_params.hlambda)
+
+        # Ground Parameters
+        if self.ground_params is not None:
+            self.symbol_to_value['hk_val'] = (self.symbolic_params['hk_val'], self.ground_params.hk)
+            self.symbol_to_value['hk'] = (self.symbolic_params['hk'], self.ground_params.hk)
+
+        #//TODO: Fix the bogde on the index of the insolation
+        # Ground Temperature Parameters
+        if self.gotemperature_params is not None:
+            self.symbol_to_value['gnd_gamma'] = (self.symbolic_params['gnd_gamma'], self.gotemperature_params.gamma)
+            self.symbol_to_value['gnd_C_val'] = (self.symbolic_params['gnd_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['gnd_C'] = (self.symbolic_params['gnd_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['gnd_T0'] = (self.symbolic_params['gnd_T0'], self.gotemperature_params.T0)
+
+        # Ocean Parameters
+        if self.oceanic_params is not None:
+            self.symbol_to_value['gp'] = (self.symbolic_params['gp'], self.oceanic_params.gp)
+            self.symbol_to_value['r'] = (self.symbolic_params['r'], self.oceanic_params.r)
+            self.symbol_to_value['h'] = (self.symbolic_params['h'], self.oceanic_params.h)
+            self.symbol_to_value['d'] = (self.symbolic_params['d'], self.oceanic_params.d)
+
+        #//TODO: Fix the bogde on the index of the insolation
+        # Ocean Temperature Parameters
+        if self.gotemperature_params is not None:
+            self.symbol_to_value['ocn_gamma'] = (self.symbolic_params['ocn_gamma'], self.gotemperature_params.gamma)
+            self.symbol_to_value['ocn_C_val'] = (self.symbolic_params['ocn_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['ocn_C'] = (self.symbolic_params['ocn_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['ocn_T0'] = (self.symbolic_params['ocn_T0'], self.gotemperature_params.T0)
+        
