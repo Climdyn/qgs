@@ -825,13 +825,16 @@ class SymbolicTensorLinear(object):
 
         _, _, numerical_tensor = create_tendencies(self.params, return_qgtensor=True)
 
+        print("subs")
         subbed_ten = self.subs_tensor(tensor)
         subbed_ten = np.array(subbed_ten)
 
+        print("numpy and spipy")
         # Convert the substituted sympy array to a sparce one
         subbed_tensor_np = np.array(subbed_ten).astype(np.float64)
         subbed_tensor_sp = sp.COO(subbed_tensor_np)
 
+        print("comparison")
         diff_arr = subbed_tensor_sp - numerical_tensor.tensor
         self.print_tensor(diff_arr.todense(), tol)
 
@@ -918,7 +921,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             go = True
 
         if aips.stored and go:
-            symbolic_array_full_dict = self._compute_stored_full_dict_2()
+            symbolic_array_full_dict = self._compute_stored_full_dict()
 
         else:
             symbolic_array_full_dict = self._compute_non_stored_full_dict()
