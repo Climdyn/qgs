@@ -164,7 +164,7 @@ class SymbolicTensorLinear(object):
     
     @property
     def Cpgo(self):
-        return self.sym_params['gnd_C'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
+        return self.sym_params['go_C'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
     
     @property
     def Lpgo(self):
@@ -452,7 +452,7 @@ class SymbolicTensorLinear(object):
                 U_inv_mult_W = _symbolic_tensordot(U_inv, bips._W, axes=1)
                 U_inv_mult_W_Cpgo = _symbolic_tensordot(U_inv_mult_W, self.Cpgo, axes=1)
 
-                U_inv_mult_O = _symbolic_tensordot(U_inv, bips._O[offset:, offset:, offset:], axes=1)
+                U_inv_mult_O = _symbolic_tensordot(U_inv, bips._O[:, offset:, offset:], axes=1)
                 
                 for i in range(nvar[3]):
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), 0, 0), U_inv_mult_W_Cpgo[i][0])

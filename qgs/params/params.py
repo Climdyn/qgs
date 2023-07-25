@@ -881,10 +881,12 @@ class QgParams(Params):
 
         # Ground Temperature Parameters
         'gnd_gamma': sy.Symbol('gamma_g'),
-        'gnd_C_val': sy.Symbol('C_g'),
-        'gnd_C': None,
         'gnd_T0': sy.Symbol('T_g0'),
-
+        
+        # Ground/ocean Parameters
+        'go_C_val': sy.Symbol('C_go'),
+        'go_C': None,
+        
         # Ocean Parameters
         'gp': sy.Symbol('g_p'),
         'r': sy.Symbol('r'),
@@ -893,8 +895,6 @@ class QgParams(Params):
 
         # Ocean Temperature Parameters
         'ocn_gamma': sy.Symbol('gamma_o'),
-        'ocn_C_val': sy.Symbol('C_o'),
-        'ocn_C': None,
         'ocn_T0': sy.Symbol('T_o0')
 
     }
@@ -1270,26 +1270,21 @@ class QgParams(Params):
         if Cpa is not None:
             atm_C_list = Cpa
         elif Cpgo is not None:
-            gnd_C_list = Cpgo
-            ocn_C_list = Cpgo
-        else:
-            atm_C_list = [0] * self.nmod[0]
-            gnd_C_list = [0] * self.nmod[0]
-            ocn_C_list = [0] * self.nmod[0]
+            go_C_list = Cpgo
 
+        else:
+            atm_C_list = [0] * self.number_of_variables[1]
+            go_C_list = [0] * self.number_of_variables[1]
 
             atm_C_list[0] = self.symbolic_params['atm_C_val']
-            gnd_C_list[0] = self.symbolic_params['gnd_C_val']
-            ocn_C_list[0] = self.symbolic_params['ocn_C_val']
+            go_C_list[0] = self.symbolic_params['go_C_val']
 
             if self.dynamic_T:
                 atm_C_list[1] = self.symbolic_params['atm_C_val']
-                gnd_C_list[1] = self.symbolic_params['gnd_C_val']
-                ocn_C_list[1] = self.symbolic_params['ocn_C_val']
+                go_C_list[1] = self.symbolic_params['go_C_val']
         
         self.symbolic_params['atm_C'] = sy.matrices.immutable.ImmutableSparseMatrix(atm_C_list)
-        self.symbolic_params['gnd_C'] = sy.matrices.immutable.ImmutableSparseMatrix(gnd_C_list)
-        self.symbolic_params['ocn_C'] = sy.matrices.immutable.ImmutableSparseMatrix(ocn_C_list)
+        self.symbolic_params['go_C'] = sy.matrices.immutable.ImmutableSparseMatrix(go_C_list)
 
     def symbolic_orography_array(self, hk=None):
         """Set the array hk from given value, or the defulat symbols
@@ -2073,7 +2068,6 @@ class QgParams(Params):
         for i in range(self.nmod[1]):
             self._ground_latex_var_string.append(r'delta T_{\rm g,' + str(i + 1) + "}")
             self._ground_var_string.append(r'delta_T_g_' + str(i + 1))
-
     
     def _set_symbolic_parameters(self):
         """
@@ -2120,9 +2114,12 @@ class QgParams(Params):
         # Ground Temperature Parameters
         if self.gotemperature_params is not None:
             self.symbol_to_value['gnd_gamma'] = (self.symbolic_params['gnd_gamma'], self.gotemperature_params.gamma)
-            self.symbol_to_value['gnd_C_val'] = (self.symbolic_params['gnd_C_val'], self.gotemperature_params.C[0])
-            self.symbol_to_value['gnd_C'] = (self.symbolic_params['gnd_C_val'], self.gotemperature_params.C[0])
             self.symbol_to_value['gnd_T0'] = (self.symbolic_params['gnd_T0'], self.gotemperature_params.T0)
+
+        # Ground/ocean Parameters
+        if self.gotemperature_params is not None:
+            self.symbol_to_value['go_C_val'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['go_C'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
 
         # Ocean Parameters
         if self.oceanic_params is not None:
@@ -2135,7 +2132,5 @@ class QgParams(Params):
         # Ocean Temperature Parameters
         if self.gotemperature_params is not None:
             self.symbol_to_value['ocn_gamma'] = (self.symbolic_params['ocn_gamma'], self.gotemperature_params.gamma)
-            self.symbol_to_value['ocn_C_val'] = (self.symbolic_params['ocn_C_val'], self.gotemperature_params.C[0])
-            self.symbol_to_value['ocn_C'] = (self.symbolic_params['ocn_C_val'], self.gotemperature_params.C[0])
             self.symbol_to_value['ocn_T0'] = (self.symbolic_params['ocn_T0'], self.gotemperature_params.T0)
         
