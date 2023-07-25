@@ -160,7 +160,7 @@ class SymbolicTensorLinear(object):
 
     @property
     def G(self):
-        return self.sym_params['L'] ** 2 / self.LR ** 2
+        return -self.sym_params['L'] ** 2 / self.LR ** 2
     
     @property
     def Cpgo(self):
@@ -323,7 +323,7 @@ class SymbolicTensorLinear(object):
                 for j in range(nvar[0]):
 
                     jo = j + offset  # skipping the theta 0 variable if it exists
-                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), a_inv_mult_c[i, j] * symbolic_params['beta'])
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -a_inv_mult_c[i, j] * symbolic_params['beta'])
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -(symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
 
@@ -385,7 +385,7 @@ class SymbolicTensorLinear(object):
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), val_2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -val_3)
 
-                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), a_theta_mult_c[i, j] * symbolic_params['beta'] * self.sig0)
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -a_theta_mult_c[i, j] * symbolic_params['beta'] * self.sig0)
 
                     if gp is not None:
                         if symbolic_params['hk'] is not None:
@@ -411,7 +411,7 @@ class SymbolicTensorLinear(object):
 
                 if ocean:
                     for j in range(nvar[2]):
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_o(j), 0), a_theta_mult_d[i, j] * self.sig0 * symbolic_params['kd'] / 2)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_o(j), 0), -a_theta_mult_d[i, j] * self.sig0 * symbolic_params['kd'] / 2)
 
                     if self.Lpa is not None:
                         for j in range(nvar[3]):
@@ -438,7 +438,7 @@ class SymbolicTensorLinear(object):
                         jo = j + offset  # skipping the theta 0 variable if it exists
 
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_a(j), 0), M_psio_mult_K[i, j] * symbolic_params['d'])
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._theta_a(jo), 0), M_psio_mult_K[i, j] * symbolic_params['d'])
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._theta_a(jo), 0), -M_psio_mult_K[i, j] * symbolic_params['d'])
 
                     for j in range(nvar[2]):
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_o(j), 0), -M_psio_mult_N[i, j] * symbolic_params['beta'])
@@ -762,13 +762,13 @@ class SymbolicTensorLinear(object):
 
         for key in keys:
             new_key = tuple([key[0]] + sorted(key[1:]))
+            
             dic_upp = _add_to_dict(dic_upp, new_key, dic[key])
 
         return dic_upp
 
     def save_to_file(self, filename, **kwargs):
-        """F
-        unction to save the tensor object to a file with the :mod:`pickle` module.
+        """Function to save the tensor object to a file with the :mod:`pickle` module.
 
         Parameters
         ----------
