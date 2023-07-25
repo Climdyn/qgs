@@ -720,8 +720,17 @@ class SymbolicTensorLinear(object):
     def _set_tensor(self, dic):
         ndim = self.params.ndim
 
-        jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jacobian_from_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
-        tensor = sy.tensor.array.ImmutableSparseNDimArray(self.simplify_dict(dic), (ndim + 1, ndim + 1, ndim + 1))
+        if self.params.dynamic_T:
+            if self.params.T4:
+                #//TODO: Make a proper error message for here
+                raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+            else:
+                dims = (ndim + 1, ndim + 1, ndim + 1, ndim + 1, ndim + 1)
+        else:
+            dims = (ndim + 1, ndim + 1, ndim + 1)
+
+        jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jacobian_from_dict(dic), dims)
+        tensor = sy.tensor.array.ImmutableSparseNDimArray(self.simplify_dict(dic), dims)
         self.jacobian_tensor = jacobian_tensor.applyfunc(sy.simplify)
         self.tensor = tensor.applyfunc(sy.simplify)
 
@@ -827,7 +836,7 @@ class SymbolicTensorLinear(object):
         subbed_tensor_sp = sp.COO(subbed_tensor_np)
 
         diff_arr = subbed_tensor_sp - numerical_tensor.tensor
-        self.print_tensor(diff_arr, tol)
+        self.print_tensor(diff_arr.todense(), tol)
 
     def print_tensor(self, tensor=None, tol=1e-10):
         if tensor is not None:
@@ -835,17 +844,16 @@ class SymbolicTensorLinear(object):
         else:
             temp_ten = self.tensor
 
-        nx, ny, nz = temp_ten.shape
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    if isinstance(temp_ten[i, j, k], float):
-                        bool_test = abs(temp_ten[i, j, k]) > tol
-                    else:
-                        bool_test = temp_ten[i, j, k]
+        val_list = np.ndenumerate(temp_ten)
 
-                    if bool_test:
-                        print(str((i, j, k)) + ": " + str(temp_ten[i, j, k]))
+        for ix, v in val_list:
+            if isinstance(v, float):
+                bool_test = (abs(v) > tol)
+            else:
+                bool_test = (v != 0)
+
+            if bool_test:
+                print(str(ix) + ": " + str(v))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
     #//TODO: Need to work out symbolic tensor dot
@@ -1169,8 +1177,10 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
     def compute_tensor(self):
         """Routine to compute the tensor."""
         # gathering
-        par = self.params
-
+        if self.params.T4:
+            #//TODO: Make a proper error message for here
+            raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+            
         symbolic_dict_linear = SymbolicTensorLinear.compute_tensor(self)
         symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
 
@@ -1179,7 +1189,8 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         if symbolic_dict_linear is not None:
             symbolic_dict_dynT = {**symbolic_dict_linear, **symbolic_dict_dynT}
         
-        return symbolic_dict_dynT
+        if symbolic_dict_dynT is not None:
+            self._set_tensor(symbolic_dict_dynT)
 
 
 def _kronecker_delta(i, j):
