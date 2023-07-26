@@ -182,19 +182,31 @@ class SymbolicTensorLinear(object):
     
     @property
     def sbpgo(self):
-        return 4 * self.params.sb * self.sym_params['gnd_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+        if self.params.gotemperature_params.T0 is None:
+            None
+        else:
+            return 4 * self.params.sb * self.sym_params['go_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
     
     @property
     def sbpa(self):
-        return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+        if self.params.atemperature_params.T0 is None:
+            return None
+        else:
+            return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
     
     @property
     def LSBpgo(self):
-        return 2 * self.sym_params['eps'] * self.params.sb * self.sym_params['gnd_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+        if self.params.gotemperature_params.T0 is None:
+            None
+        else:
+            return 2 * self.sym_params['eps'] * self.params.sb * self.sym_params['go_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
     
     @property
     def LSBpa(self):
-        return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+        if self.params.atemperature_params.T0 is None:
+            return None
+        else:
+            return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
     
     @property
     def T4sbpgo(self):
@@ -705,7 +717,7 @@ class SymbolicTensorLinear(object):
 
         return sy_arr_dic
 
-    def compute_tensor(self, ):
+    def compute_tensor(self):
         """Routine to compute the tensor."""
         sy_arr_dic = self._compute_tensor_dicts()
         sy_arr_dic = self.remove_dic_zeros(sy_arr_dic)
@@ -812,12 +824,20 @@ class SymbolicTensorLinear(object):
         if isinstance(tensor, dict):
             ten_out = dict()
             for key in tensor.keys():
-                ten_out[key] = tensor[key].subs(symbol_to_number_map)
+                val = tensor[key].subs(symbol_to_number_map)
+                try:
+                    ten_out[key] = float(val)
+                except:
+                    ten_out[key] = val
 
         elif dict_opp:
             ten_out = dict()
             for key in self.tensor_dic.keys():
-                ten_out[key] = self.tensor_dic[key].subs(symbol_to_number_map)
+                val = self.tensor_dic[key].subs(symbol_to_number_map)
+                try:
+                    ten_out[key] = float(val)
+                except:
+                    ten_out[key] = val
 
         else:
             if tensor is not None:
@@ -862,8 +882,10 @@ class SymbolicTensorLinear(object):
             subbed_tensor_sp = sp.COO.from_numpy(subbed_tensor_np)
 
         diff_arr = subbed_tensor_sp.todense() - numerical_tensor.tensor.todense()
-        self.print_tensor(diff_arr, tol)
-
+        if np.sum(np.abs(diff_arr)) > tol:
+            self.print_tensor(diff_arr, tol)
+            raise ValueError("Symbolic tensor and numerical tensor do not match at the above coordinates")
+            
     def print_tensor(self, tensor=None, dict_opp=True, tol=1e-10):
         if tensor is None:
             if dict_opp:
@@ -1028,9 +1050,9 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                         for jj in range(nvar[1]):
                             val += a_theta[i, jj] * aips._v[jj, j, k, ell, m]
                         if m == 0:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), self.T4LSBpgo * val)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), -self.T4LSBpgo * val)
                         else:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), 4 * self.T4LSBpgo * val)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), -4 * self.T4LSBpgo * val)
 
             if ground_temp:
                 if self.T4LSBpgo is not None:
@@ -1040,9 +1062,9 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                         for jj in range(nvar[1]):
                             val += a_theta[i, jj] * aips._v[jj, j, k, ell, m]
                         if m == 0:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), self.T4LSBpgo * val)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -self.T4LSBpgo * val)
                         else:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), 4 * self.T4LSBpgo * val)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -4 * self.T4LSBpgo * val)
 
         if ocean:
             #delta_T part
@@ -1060,11 +1082,11 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                 for m in range(nvar[3]):
                     val = 0
                     for jj in range(nvar[3]):
-                        val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
+                        val += U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.T4sbpgo * val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), -self.T4sbpgo * val)
                     else:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.T4sbpgo * val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), -4 * self.T4sbpgo * val)
 
         if ground_temp:
             # deltaT_g part
@@ -1082,11 +1104,11 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                 for m in range(nvar[2]):
                     val = 0 
                     for jj in range(nvar[2]):
-                        val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
+                        val += U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), self.T4sbpgo * val)    
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -self.T4sbpgo * val)    
                     else:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), 4 * self.T4sbpgo * val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -4 * self.T4sbpgo * val)
                     
         return sy_arr_dic
 

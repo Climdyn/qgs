@@ -884,6 +884,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     output = self._p_compute(pool, args_list, subs, self._Z, timeout, permute=True)
                 elif self._dynamic_T:
                     # Z inner products
+                    print("Running Z")
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.noc) for m in range(natm)]
 
@@ -983,6 +984,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     output = self._p_compute(pool, args_list, subs, self._V, timeout, permute=True)
                 elif self._dynamic_T:
                     # V inner products
+                    print("Running V")
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.noc) for m in range(self.noc)]
 
@@ -1352,6 +1354,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                                  for j in range(self.ngr) for k in range(j, self.ngr) for ell in range(k, self.ngr) for m in range(ell, self.ngr)]
 
                     output = self._p_compute(pool, args_list, subs, self._V, timeout, permute=True)
+
                 elif self._dynamic_T:
                     # V inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
@@ -1567,7 +1570,7 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
                 break
 
 def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False):
-    result_list = list()
+    result_list = dict()
 
     #//TODO: I am not sure what this timeout does, I have switched if off as it was leading to non-convergence.
     future = pool.map(_apply, args_list, timeout=None)
@@ -1578,9 +1581,22 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
         try:
             res = next(results)
             if subs is not None:
-                result_list.append(res[1].subs(subs))
+                result_list[res[0]] = res[1].subs(subs)
             else:
-                result_list.append(res[1])
+                result_list[res[0]] = res[1]
+
+            if permute:
+                while True:
+                    try:
+                        i = res[0][0]
+                        print(res[0])
+                        idx = res[0][1:]
+                        perm_idx = multiset_permutations(idx)
+                        for perm in perm_idx:
+                            idx = [i] + perm
+                            result_list[tuple(idx)] = res[1]
+                    except StopIteration:
+                        break
             
         except StopIteration:
             break
@@ -1591,13 +1607,25 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
     future = pool.map(_num_apply, num_args_list)
     results = future.result()
 
-    while True:
-        try:
-            res = next(results)
-            result_list.append(res[1])
-            
-        except StopIteration:
-            break
+    if permute:
+        while True:
+            try:
+                res = next(results)
+                i = res[0][0]
+                idx = res[0][1:]
+                perm_idx = multiset_permutations(idx)
+                for perm in perm_idx:
+                    idx = [i] + perm
+                    result_list[tuple(idx)] = res[1]
+            except StopIteration:
+                break
+    else:
+        while True:
+            try:
+                res = next(results)
+                result_list[res[0]] = res[1]
+            except StopIteration:
+                break
             
     return result_list
 

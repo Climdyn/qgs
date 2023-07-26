@@ -881,11 +881,11 @@ class QgParams(Params):
 
         # Ground Temperature Parameters
         'gnd_gamma': sy.Symbol('gamma_g'),
-        'gnd_T0': sy.Symbol('T_g0'),
         
         # Ground/ocean Parameters
         'go_C_val': sy.Symbol('C_go'),
         'go_C': None,
+        'go_T0': sy.Symbol('T_go0'),
         
         # Ocean Parameters
         'gp': sy.Symbol('g_p'),
@@ -895,7 +895,6 @@ class QgParams(Params):
 
         # Ocean Temperature Parameters
         'ocn_gamma': sy.Symbol('gamma_o'),
-        'ocn_T0': sy.Symbol('T_o0')
 
     }
 
@@ -2114,12 +2113,12 @@ class QgParams(Params):
         # Ground Temperature Parameters
         if self.gotemperature_params is not None:
             self.symbol_to_value['gnd_gamma'] = (self.symbolic_params['gnd_gamma'], self.gotemperature_params.gamma)
-            self.symbol_to_value['gnd_T0'] = (self.symbolic_params['gnd_T0'], self.gotemperature_params.T0)
 
         # Ground/ocean Parameters
         if self.gotemperature_params is not None:
             self.symbol_to_value['go_C_val'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
             self.symbol_to_value['go_C'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
+            self.symbol_to_value['go_T0'] = (self.symbolic_params['go_T0'], self.gotemperature_params.T0)
 
         # Ocean Parameters
         if self.oceanic_params is not None:
@@ -2132,5 +2131,3 @@ class QgParams(Params):
         # Ocean Temperature Parameters
         if self.gotemperature_params is not None:
             self.symbol_to_value['ocn_gamma'] = (self.symbolic_params['ocn_gamma'], self.gotemperature_params.gamma)
-            self.symbol_to_value['ocn_T0'] = (self.symbolic_params['ocn_T0'], self.gotemperature_params.T0)
-        
