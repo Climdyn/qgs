@@ -705,7 +705,7 @@ class SymbolicTensorLinear(object):
 
         return sy_arr_dic
 
-    def compute_tensor(self):
+    def compute_tensor(self, ):
         """Routine to compute the tensor."""
         sy_arr_dic = self._compute_tensor_dicts()
         sy_arr_dic = self.remove_dic_zeros(sy_arr_dic)
@@ -713,7 +713,14 @@ class SymbolicTensorLinear(object):
         if sy_arr_dic is not None:
             self._set_tensor(sy_arr_dic)
 
-    def _set_tensor(self, dic):
+    def _set_tensor(self, dic, set_symbolic=False):
+        self.jac_dic = self.remove_dic_zeros(self.jacobian_from_dict(dic))
+        self.tensor_dic = self.remove_dic_zeros(self.simplify_dict(dic))
+        
+        if set_symbolic:
+            self._set_symbolic_tensor()
+    
+    def _set_symbolic_tensor(self):
         ndim = self.params.ndim
 
         if self.params.dynamic_T:
@@ -725,8 +732,9 @@ class SymbolicTensorLinear(object):
         else:
             dims = (ndim + 1, ndim + 1, ndim + 1)
 
-        jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jacobian_from_dict(dic), dims)
-        tensor = sy.tensor.array.ImmutableSparseNDimArray(self.simplify_dict(dic), dims)
+        #//TODO: I needed to make copies here, but I am not sure why. If I tried to input the dict without the copy it messed up the keys
+        jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jac_dic.copy(), dims)
+        tensor = sy.tensor.array.ImmutableSparseNDimArray(self.tensor_dic.copy(), dims)
 
         self.jacobian_tensor = jacobian_tensor.applyfunc(sy.simplify)
         self.tensor = tensor.applyfunc(sy.simplify)
@@ -768,7 +776,6 @@ class SymbolicTensorLinear(object):
 
         for key in keys:
             new_key = tuple([key[0]] + sorted(key[1:]))
-            
             dic_upp = _add_to_dict(dic_upp, new_key, dic[key])
 
         return dic_upp
@@ -787,64 +794,89 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def subs_tensor(self, tensor=None):
+    def subs_tensor(self, tensor=None, dict_opp=True):
         """
-        Uses sympy substitution to convert the symbolic tensor to a numerical one.
+        Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
         """
         
         self.params._set_symbolic_parameters()
 
-        if tensor is not None:
-            symbolic_variables = tensor.free_symbols
-        else:
-            symbolic_variables = self.tensor.free_symbols
-
-        key_list = list(self.sym_params.keys())
-        item_list = list(self.sym_params.values())
-
         symbol_to_number_map = list()
-        for sym in symbolic_variables:
-            key = key_list[item_list.index(sym)]
-            num = self.params.symbol_to_value[key]
-            symbol_to_number_map.append(num)
 
+        for key in self.sym_params.keys():
+            try:
+                symbol_to_number_map.append(self.params.symbol_to_value[key])
+            except:
+                pass
+        
+        if isinstance(tensor, dict):
+            ten_out = dict()
+            for key in tensor.keys():
+                ten_out[key] = tensor[key].subs(symbol_to_number_map)
 
-        if tensor is not None:
-            ten_out = tensor.subs(symbol_to_number_map)
+        elif dict_opp:
+            ten_out = dict()
+            for key in self.tensor_dic.keys():
+                ten_out[key] = self.tensor_dic[key].subs(symbol_to_number_map)
+
         else:
-            ten_out = self.tensor.subs(symbol_to_number_map)
+            if tensor is not None:
+                ten_out = tensor.subs(symbol_to_number_map)
+            else:
+                ten_out = self.tensor.subs(symbol_to_number_map)
         
         return ten_out
         
-    def test_tensor_numerically(self, tensor=None, tol=1e-10):
+    def test_tensor_numerically(self, tensor=None, dict_opp=True, tol=1e-10):
         """
-        Uses sympy substitution to convert the symbolic tensor to a numerical one.
+        Uses sympy substitution to convert the symbolic tensor, or symbolic dictionary, to a numerical one.
         This is then compared to the tensor calculated in the qgs.tensor.symbolic module.
         
         """
+        ndim = self.params.ndim
+
+        if self.params.dynamic_T:
+            if self.params.T4:
+                #//TODO: Make a proper error message for here
+                raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+            else:
+                dims = (ndim + 1, ndim + 1, ndim + 1, ndim + 1, ndim + 1)
+        else:
+            dims = (ndim + 1, ndim + 1, ndim + 1)
 
         _, _, numerical_tensor = create_tendencies(self.params, return_qgtensor=True)
 
-        print("subs")
+        if tensor is None:
+            if dict_opp:
+                tensor = self.tensor_dic
+            else:
+                tensor = self.tensor
+
         subbed_ten = self.subs_tensor(tensor)
-        subbed_ten = np.array(subbed_ten)
-
-        print("numpy and spipy")
-        # Convert the substituted sympy array to a sparce one
-        subbed_tensor_np = np.array(subbed_ten).astype(np.float64)
-        subbed_tensor_sp = sp.COO(subbed_tensor_np)
-
-        print("comparison")
-        diff_arr = subbed_tensor_sp - numerical_tensor.tensor
-        self.print_tensor(diff_arr.todense(), tol)
-
-    def print_tensor(self, tensor=None, tol=1e-10):
-        if tensor is not None:
-            temp_ten = tensor
+        #//TODO: Clean up this messy COO
+        if isinstance(subbed_ten, dict):
+            subbed_tensor_sp = sp.COO(np.array([list(k) for k in subbed_ten.keys()]).T, np.array(list(subbed_ten.values()), dtype=float), shape=dims)
         else:
-            temp_ten = self.tensor
+            subbed_ten = np.array(subbed_ten)
+            subbed_tensor_np = np.array(subbed_ten).astype(np.float64)
+            subbed_tensor_sp = sp.COO.from_numpy(subbed_tensor_np)
 
-        val_list = np.ndenumerate(temp_ten)
+        diff_arr = subbed_tensor_sp.todense() - numerical_tensor.tensor.todense()
+        self.print_tensor(diff_arr, tol)
+
+    def print_tensor(self, tensor=None, dict_opp=True, tol=1e-10):
+        if tensor is None:
+            if dict_opp:
+                temp_ten = self.tensor_dic
+            else:
+                temp_ten = self.tensor
+        else:
+            temp_ten = tensor
+
+        if isinstance(temp_ten, dict):
+            val_list = [(key, temp_ten[key]) for key in temp_ten.keys()] 
+        else:
+            val_list = np.ndenumerate(temp_ten)
 
         for ix, v in val_list:
             if isinstance(v, float):
@@ -1021,7 +1053,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for jj in range(nvar[3]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                    # val = self.T4sbpa * U_inv_mult_Z[i, j, k, ell, m]
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.T4sbpa * val)
                     else:
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.T4sbpa * val)
@@ -1044,7 +1075,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for jj in range(nvar[2]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                    # val = self.T4sbpa * U_inv_mult_Z[i, j, k, ell, m] 
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.T4sbpa * val)
                     else:
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.T4sbpa * val)
@@ -1114,7 +1144,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         sy_arr_dic = dict()
         # theta_a part
         for i in range(nvar[1]):
-            # t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
             if self.T4LSBpa is not None:
                 j = k = ell = 0
@@ -1156,8 +1185,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             # deltaT_o part
             for i in range(nvar[3]):
 
-                # t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
-
                 j = k = ell = 0
                 for m in range(nvar[1]):
                     val = 0
@@ -1180,8 +1207,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         # deltaT_g part
         if ground_temp:
             for i in range(nvar[2]):
-
-                # t_full = sp.zeros((ndim + 1, ndim + 1, ndim + 1, ndim + 1), dtype=np.float64, format='dok')
 
                 j = k = ell = 0
                 for m in range(nvar[1]):
