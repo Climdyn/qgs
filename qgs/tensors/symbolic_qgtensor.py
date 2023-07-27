@@ -8,6 +8,7 @@
 from contextlib import redirect_stdout
 
 from qgs.functions.tendencies import create_tendencies
+from qgs.functions.symbolic_mul import _symbolic_tensordot
 
 import numpy as np
 import sparse as sp
@@ -830,7 +831,7 @@ class SymbolicTensorLinear(object):
                 except:
                     ten_out[key] = val
 
-        elif dict_opp:
+        elif dict_opp and self.tensor_dic is not None:
             ten_out = dict()
             for key in self.tensor_dic.keys():
                 val = self.tensor_dic[key].subs(symbol_to_number_map)
@@ -907,7 +908,11 @@ class SymbolicTensorLinear(object):
                 bool_test = (v != 0)
 
             if bool_test:
-                print(str(ix) + ": " + str(v))
+                try:
+                    output_val = float(v)
+                except:
+                    output_val = v
+                print(str(ix) + ": " + str(output_val))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
     #//TODO: Need to work out symbolic tensor dot
@@ -1302,39 +1307,6 @@ def _shift_dict_keys(dic, shift):
         shifted_dic[new_key] = dic[key]
     
     return shifted_dic 
-
-def _symbolic_tensordot(a, b, axes=2):
-    """
-    Compute tensor dot product along specified axes of two sympy symbolic arrays
-
-    This is based on numpy.tensordot
-
-    Parameters
-    ----------
-    a, b: sympy arrays
-        Tensors to "dot"
-
-    axes: int
-        * integer_like
-          If an int N, sum over the last N axes of `a` and the first N axes
-          of `b` in order. The sizes of the corresponding axes must match.
-
-    Returns
-    -------
-    output: sympy tensor
-        The tensor dot product of the input
-
-    """
-    as_ = a.shape
-    nda = len(as_)
-    
-    a_com = [nda+i for i in range(-axes, 0)]
-    b_com = [nda+i for i in range(axes)]
-    sum_cols = tuple(a_com + b_com)
-    
-    prod = sy.tensorproduct(a, b)
-    
-    return sy.tensorcontraction(prod, sum_cols)
     
 if __name__ == "__main__":
     dic = dict()
