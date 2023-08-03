@@ -1,5 +1,11 @@
 import sympy as sy
 
+def _add_to_dict(dic, loc, value):
+    try:
+        dic[loc] += value
+    except:
+        dic[loc] = value
+    return dic
 
 def _symbolic_tensordot(a, b, axes=2):
     """
@@ -34,42 +40,46 @@ def _symbolic_tensordot(a, b, axes=2):
     
     return sy.tensorcontraction(prod, sum_cols)
 
-def symbolic_sparse_mult2(dict, vec_a):
+def symbolic_sparse_mult2(dic, vec_a):
     #//TODO: Complete documentation
-    res = sy.zeros((len(vec_a), len(vec_a)))
+    res = dict()
 
-    for key in dict.keys():
+    for key in dic.keys():
         coo1, coo2, coo3 = key
-        res[coo1, coo2] += vec_a[coo3] * dict[key]
+        val = vec_a[coo3] * dic[key]
+        res = _add_to_dict(res, (coo1, coo2), val)
 
     return res
 
-def symbolic_sparse_mult3(dict, vec_a, vec_b):
+def symbolic_sparse_mult3(dic, vec_a, vec_b):
     #//TODO: Complete documentation
-    res = sy.zeros(len(vec_a))
+    res = dict()
 
-    for key in dict.keys():
+    for key in dic.keys():
         coo1, coo2, coo3 = key
-        res[coo1] += vec_a[coo2] * vec_b[coo3] * dict[key]
+        val = vec_a[coo2] * vec_b[coo3] * dic[key]
+        res = _add_to_dict(res, coo1, val)
 
     return res
 
-def symbolic_sparse_mult4(dict, vec_a, vec_b, vec_c):
+def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
     #//TODO: Complete documentation
-    res = sy.zeros((len(vec_a), len(vec_a)))
+    res = dict()
 
-    for key in dict.keys():
+    for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
-        res[coo1, coo2] += vec_a[coo3] * vec_b[coo4] * vec_c[coo5] * dict[key]
+        val = vec_a[coo3] * vec_b[coo4] * vec_c[coo5] * dic[key]
+        res = _add_to_dict(res, (coo1, coo2), val)
 
     return res
 
-def symbolic_sparse_mult5(dict, vec_a, vec_b, vec_c, vec_d):
+def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
     #//TODO: Complete documentation
-    res = sy.zeros(len(vec_a))
+    res = dict()
 
-    for key in dict.keys():
+    for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
-        res[coo1] += vec_a[coo2] * vec_b[coo3] * vec_c[coo4] * vec_d[coo5] * dict[key]
+        val = vec_a[coo2] * vec_b[coo3] * vec_c[coo4] * vec_d[coo5] * dic[key]
+        res = _add_to_dict(res, coo1, val)
 
     return res

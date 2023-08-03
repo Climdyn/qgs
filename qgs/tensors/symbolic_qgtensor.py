@@ -8,7 +8,7 @@
 from contextlib import redirect_stdout
 
 from qgs.functions.tendencies import create_tendencies
-from qgs.functions.symbolic_mul import _symbolic_tensordot
+from qgs.functions.symbolic_mul import _add_to_dict, _symbolic_tensordot
 
 import numpy as np
 import sparse as sp
@@ -71,7 +71,8 @@ class SymbolicTensorLinear(object):
         self.params.symbolic_insolation_array()
         self.params.symbolic_orography_array()
 
-        # self.compute_tensor()
+        if not(self.params.dynamic_T):
+            self.compute_tensor()
 
     def _psi_a(self, i):
         """Transform the :math:`\\psi_{\\mathrm a}` :math:`i`-th coefficient into the effective model's variable.
@@ -883,9 +884,12 @@ class SymbolicTensorLinear(object):
             subbed_tensor_sp = sp.COO.from_numpy(subbed_tensor_np)
 
         diff_arr = subbed_tensor_sp.todense() - numerical_tensor.tensor.todense()
-        if np.sum(np.abs(diff_arr)) > tol:
+
+        total_error = np.sum(np.abs(diff_arr))
+        if total_error > tol:
             self.print_tensor(diff_arr, tol)
-            raise ValueError("Symbolic tensor and numerical tensor do not match at the above coordinates")
+            
+            raise ValueError("Symbolic tensor and numerical tensor do not match at the above coordinates, with a total error of: " + str(total_error))
             
     def print_tensor(self, tensor=None, dict_opp=True, tol=1e-10):
         if tensor is None:
@@ -955,6 +959,9 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
     def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
         SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
+        
+        if params.dynamic_T:
+            self.compute_tensor()
 
     def _compute_tensor_dicts(self):
 
@@ -1028,7 +1035,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for j in range(nvar[2]):
                         U_inv[i, j] = bips.U(i, j)
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
-                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(U_inv)
+                U_inv = U_inv.inverse()
 
         #################
 
@@ -1089,9 +1096,9 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                     for jj in range(nvar[3]):
                         val += U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), -self.T4sbpgo * val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), - self.T4sbpgo * val)
                     else:
-                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), -4 * self.T4sbpgo * val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), -4 * self.T4sbpgo * val)
 
         if ground_temp:
             # deltaT_g part
@@ -1282,13 +1289,6 @@ def _kronecker_delta(i, j):
 
     else:
         return 0
-    
-def _add_to_dict(dic, loc, value):
-    try:
-        dic[loc] += value
-    except:
-        dic[loc] = value
-    return dic
 
 def _shift_dict_keys(dic, shift):
     """
