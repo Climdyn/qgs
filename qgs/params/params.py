@@ -2074,6 +2074,7 @@ class QgParams(Params):
         """
 
         #//TODO: THis function is a really lazy way of doing this, look into setting up the Parameter class with each symbol stored in the class
+        #//TODO: Need a better way to trigger this function, it cannot happen before the symbolic_qgtensor class is initiated I think? 
         self.symbol_to_value = dict()
 
         # Scale Parameters

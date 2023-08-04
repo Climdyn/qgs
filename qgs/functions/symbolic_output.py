@@ -25,7 +25,7 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, return_inner_products=False, return_jacobian=False, return_symbolic_dict=False, return_symbolic_qgtensor=False):
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, simplify=False, return_inner_products=False, return_jacobian=False, return_symbolic_dict=False, return_symbolic_qgtensor=False):
     """
     Function to output the raw symbolic functions of the qgs model.
     """
@@ -67,7 +67,6 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, ret
         agotensor = SymbolicTensorLinear(params, aip, oip, gip)
 
     xx = list()
-    # xx.append(sy.Symbol('1'))
     xx.append(1)
 
     for i in range(1, params.ndim+1):
@@ -87,12 +86,17 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, ret
     Deq_simplified = dict()
     
     #//TODO: This section using .simplify() is super slow.
-    for i in range(1, params.ndim+1):
-        eq_simplified[i] = eq[i].simplify()
+    if simplify:
+        for i in range(1, params.ndim+1):
+            eq_simplified[i] = eq[i].simplify()
+            if return_jacobian:
+                for j in range(1, params.ndim+1):
+                    if (i, j) in Deq:
+                        Deq_simplified[(i, j)] = Deq[(i, j)].simplify()
+    else:
+        eq_simplified = eq
         if return_jacobian:
-            for j in range(1, params.ndim+1):
-                if (i, j) in Deq:
-                    Deq_simplified[(i, j)] = Deq[(i, j)].simplify()
+            Deq_simplified = Deq
     
     ret = list()
     ret.append(eq_simplified)
@@ -106,27 +110,178 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, ret
         ret.append(agotensor.tensor)
     return ret
 
-def translate_equations(equations, params, language='python'):
+def translate_equations(equations, language='python'):
     '''
-        Function to output the model equations as a string in the specified language. The following languages that this is set up for is:
+        Function to output the model equations as a string in the specified language. The languages that are availible to the user are:
         - Python
         - Fortran
         - Julia
         - Mathematica
     '''
 
-    #//TODO: Finish this function
-    _base_file_path = ''
     if language == 'python':
-        file_ext = '.py'
-        base_file = _base_file_path + file_ext
+        translator = python_lang_translation
 
-        # translate mathematical operations
+    if language == 'julia':
+        translator = julia_lang_translation
+
+    # translate mathematical operations
+    if isinstance(equations, dict):
         str_eq = dict()
-        for i in range(1, params.ndim):
-            temp_str = str(equations[i])
+        for key in equations.keys():
+            temp_str = str(equations[key])
             #//TODO: This only works for single array, not jacobian
-            for k in python_lang_translation.keys():
-                temp_str = temp_str.replace(k, python_lang_translation[k])
-            str_eq[i] = temp_str
+            for k in translator.keys():
+                temp_str = temp_str.replace(k, translator[k])
+            str_eq[key] = temp_str
+    else:
+        temp_str = str(equations)
+        for k in translator.keys():
+            temp_str = temp_str.replace(k, translator[k])
+        str_eq = temp_str
+
     return str_eq
+
+def print_equations(equations, params, save_loc=None, language='python', subs=None, return_equations=False):
+    '''
+        Function prints the equations as strings, in the programming language specified, and saves the equations to the specified location.
+        The variables in the equation are substituted if the model variable is input.
+
+        Parameters
+        ----------
+        equations: dictionary of symbolic expressions
+
+        params: qgs model params
+
+        save_loc: String, location to save the outputs as a .txt file
+
+        language: String, programming language to output the strings as
+
+        subs: String, sympy.Symbol, or list of Strings, or Bool
+        
+        substitutes the variable with the corrisponding value in the qgs model parameters
+
+        if subs is True, all variables are substituted
+
+    '''
+    if equations is not None:
+        equation_dict = dict()
+        if subs is not None:
+            # make a dictionary of variables to substitute
+            sub_vals = dict()
+            if subs == True:
+                for v in params.symbol_to_value.values():
+                    sub_vals[v[0]] = v[1]
+            else:
+                
+                if isinstance(subs, list):
+                    for s in subs:
+                        if isinstance(s, str):
+                            temp_sym, val = params.symbol_to_value[s]
+                        elif isinstance(s, sy.Symbol):
+                            temp_sym = s
+                            val = params.symbol_to_value[temp_sym]
+                        else:
+                            raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(s)))
+                        sub_vals[temp_sym] = val
+                else:
+                    # assuming s is a sympy.Symbol or string
+                    if isinstance(subs, str):
+                        sub_vals[subs] = params.symbol_to_value[subs][1]
+                    elif isinstance(subs, sy.Symbol):
+                        val = params.symbol_to_value[subs]
+                        sub_vals[subs] = val
+                    else:
+                        raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(subs)))
+            
+
+        for k in equations.keys():
+            eq = equations[k]
+            if subs is not None:
+                eq = eq.subs(sub_vals)
+                eq = eq.evalf()
+
+            if (language is not None) and not(return_equations):
+                eq = translate_equations(eq, language)
+            
+            if save_loc is None:
+                equation_dict[k] = eq
+            else:
+                equation_dict[k] = str(eq)
+        
+        if return_equations:
+            return equation_dict
+        else:
+            if save_loc is None:
+                for eq in equation_dict.values():
+                    if save_loc is None:
+                        print(eq)
+                else:
+                    with open(save_loc, 'w') as f:
+                        for eq in equation_dict.values():
+                            f.write("%s\n" % eq)
+                    print("Equations written")
+
+def equation_as_function(equations, params, string_output=False, language='python', subs=None):
+    
+    vector_subs = dict()
+    if language == 'python':
+        for i in range(1, params.ndim+1):
+            vector_subs['U_'+str(i)] = sy.Symbol('U['+str(i-1)+']')
+    
+    if language == 'fortran':
+        for i in range(1, params.ndim+1):
+            vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
+
+    if language == 'julia':
+        for i in range(1, params.ndim+1):
+            vector_subs['U_'+str(i)] = sy.Symbol('U['+str(i)+']')
+
+    if language == 'mathematica':
+        for i in range(1, params.ndim+1):
+            vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
+        
+
+    subed_eq = dict()
+    for k in equations.keys():
+        subed_eq[k] = equations[k].subs(vector_subs)
+
+    # determin which variables are still present in the equations
+    # vars = subed_eq.free_variables
+
+    eq_list = print_equations(subed_eq, params, language=language, subs=subs, return_equations=True)
+    
+    if language == 'python':
+        if string_output:
+            # eq_list = translate_equations(eq_list, language='python')
+
+            f_output = list()
+            f_output.append('def f(t, U, **kwargs):')
+            f_output.append('\t#Tendency function of the qgs model')
+            f_output.append('\tU_out = np.empty_like(U)')
+            for n, eq in enumerate(eq_list.values()):
+                f_output.append('\tU_out['+str(n)+'] = ' + str(eq))
+            
+            f_output.append('\treturn U_out')
+        else:
+            # Return a lamdafied function
+            vec = [sy.Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
+            f_output = sy.lambdify([vec], eq_list)
+
+    if language == 'julia':
+        eq_list = translate_equations(eq_list, language='julia')
+
+        f_output = list()
+        f_output.append('function f(t, U, kwargs...)')
+        f_output.append('\t#Tendency function of the qgs model')
+        f_output.append('\tU_out = similar(U)')
+        for n, eq in enumerate(eq_list.values()):
+            f_output.append('\tU_out['+str(n+1)+'] = ' + str(eq))
+        
+        f_output.append('\treturn U_out')
+        f_output.append('end')
+
+    #//TODO: Add statement for Fortran
+    #//TODO: Add statement for mathematica
+
+    return f_output

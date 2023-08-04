@@ -724,6 +724,8 @@ class SymbolicTensorLinear(object):
         sy_arr_dic = self._compute_tensor_dicts()
         sy_arr_dic = self.remove_dic_zeros(sy_arr_dic)
 
+        self.params._set_symbolic_parameters()
+
         if sy_arr_dic is not None:
             self._set_tensor(sy_arr_dic)
 
@@ -812,8 +814,6 @@ class SymbolicTensorLinear(object):
         """
         Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
         """
-        
-        self.params._set_symbolic_parameters()
 
         symbol_to_number_map = list()
 
