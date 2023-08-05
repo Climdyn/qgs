@@ -1281,6 +1281,235 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         if symbolic_dict_dynT is not None:
             self._set_tensor(symbolic_dict_dynT)
 
+class SymbolicTensorT4(SymbolicTensorLinear):
+    #//TODO: Need to work out symbolic tensor dot
+
+    """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
+
+    Parameters
+    ----------
+    params: None or QgParams, optional
+        The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
+    atmospheric_inner_products: None or AtmosphericInnerProducts, optional
+        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
+        If None, disable the atmospheric tendencies. Default to `None`.
+    oceanic_inner_products: None or OceanicInnerProducts, optional
+        The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
+        If None, disable the oceanic tendencies. Default to `None`.
+    ground_inner_products: None or GroundInnerProducts, optional
+        The inner products of the ground basis functions on which the model's PDE ground equations are projected.
+        If None, disable the ground tendencies. Default to `None`.
+
+    Attributes
+    ----------
+    params: None or QgParams
+        The models parameters used to configure the tensor. `None` for an empty tensor.
+    atmospheric_inner_products: None or AtmosphericInnerProducts
+        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
+        If None, disable the atmospheric tendencies. Default to `None`.
+    oceanic_inner_products: None or OceanicInnerProducts
+        The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
+        If None, disable the oceanic tendencies. Default to `None`.
+    ground_inner_products: None or GroundInnerProducts
+        The inner products of the ground basis functions on which the model's PDE ground equations are projected.
+        If None, disable the ground tendencies. Default to `None`.
+    tensor: sparse.COO(float)
+        The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
+    jacobian_tensor: sparse.COO(float)
+        The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
+    """
+
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
+
+        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
+        
+        if params.dynamic_T:
+            self.compute_tensor()
+
+    def _compute_tensor_dicts(self):
+
+        if self.params is None:
+            return None
+
+        if self.atmospheric_inner_products is None and self.oceanic_inner_products is None \
+                and self.ground_inner_products is None:
+            return None
+
+        aips = self.atmospheric_inner_products
+
+        bips = None
+        if self.oceanic_inner_products is not None:
+            bips = self.oceanic_inner_products
+
+        elif self.ground_inner_products is not None:
+            bips = self.ground_inner_products
+
+        if bips is not None:
+            go = bips.stored
+        else:
+            go = True
+
+        symbolic_array_full_dict = self._compute_non_stored_full_dict()
+
+        return symbolic_array_full_dict
+
+    def _compute_non_stored_full_dict(self):
+        par = self.params
+        nvar = par.number_of_variables
+        aips = self.atmospheric_inner_products
+
+        bips = None
+        if self.oceanic_inner_products is not None:
+            bips = self.oceanic_inner_products
+            ocean = True
+        else:
+            ocean = False
+
+        if self.ground_inner_products is not None:
+            bips = self.ground_inner_products
+            ground_temp = True
+        else:
+            ground_temp = False
+
+        # constructing some derived matrices
+        if aips is not None:
+            a_theta = dict()
+            a_theta = np.zeros((nvar[1], nvar[1]))
+            for i in range(nvar[1]):
+                for j in range(nvar[1]):
+                    a_theta[(i, j)] = self.sig0 * aips.a(i, j) - aips.u(i, j)
+
+            a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
+            a_theta = a_theta.inverse()
+            a_theta = a_theta.simplify()
+
+        if bips is not None:
+            if ocean:
+                U_inv = dict()
+                for i in range(nvar[3]):
+                    for j in range(nvar[3]):
+                        U_inv[i, j] = bips.U(i, j)
+                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[3], nvar[3], U_inv)
+
+            else:
+                U_inv = dict()
+                for i in range(nvar[2]):
+                    for j in range(nvar[2]):
+                        U_inv[(i, j)] = bips.U(i, j)
+                U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
+            
+            U_inv = U_inv.inverse()
+            U_inv = U_inv.simplify()
+                
+
+        #################
+
+        sy_arr_dic = dict()
+        # theta_a part
+        for i in range(nvar[1]):
+
+            if self.T4LSBpa is not None:
+                for j in range(nvar[1]):
+                    for k in range(nvar[1]):
+                        for ell in range(nvar[1]):
+                            for m in range(nvar[1]):
+                                val = 0
+                                for jj in range(nvar[1]):
+                                    val += a_theta[i, jj] * aips.z(jj, j, k, ell, m)
+                                
+                                sy_arr_dic[(self._theta_a(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.T4LSBpa * val
+                    
+            if ocean:
+                if self.T4LSBpgo is not None:
+                    for j in range(nvar[3]):
+                        for k in range(nvar[3]):
+                            for ell in range(nvar[3]):
+                                for m in range(nvar[3]):
+                                    val = 0
+                                    for jj in range(nvar[1]):
+                                        val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
+                                    
+                                    sy_arr_dic[(self._theta_a(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = self.T4LSBpgo * val
+
+            if ground_temp:
+                if self.T4LSBpgo is not None:
+                    for j in range(nvar[2]):
+                        for k in range(nvar[2]):
+                            for ell in range(nvar[2]):
+                                for m in range(nvar[2]):
+                                    val = 0
+                                    for jj in range(nvar[1]):
+                                            val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
+                        
+                                    sy_arr_dic[(self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.T4LSBpgo * val
+                        
+        if ocean:
+
+            # deltaT_o part
+            for i in range(nvar[3]):
+                for j in range(nvar[1]):
+                    for k in range(nvar[1]):
+                        for ell in range(nvar[1]):
+                            for m in range(nvar[1]):
+                                val = 0
+                                for jj in range(nvar[3]):
+                                    val += U_inv[i, jj] * bips.Z(jj, j, k, ell, m)
+                                
+                                sy_arr_dic[(self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.T4sbpa * val
+                
+                for j in range(nvar[3]):
+                    for k in range(nvar[3]):
+                        for ell in range(nvar[3]):
+                            for m in range(nvar[3]):
+                                val = 0
+                                for jj in range(nvar[3]):
+                                    val -= U_inv[i, jj] * bips.V(jj, j, k, ell, m)
+
+                                sy_arr_dic[(self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = self.T4sbpgo * val
+
+        # deltaT_g part
+        if ground_temp:
+            for i in range(nvar[2]):
+                for j in range(nvar[1]):
+                    for k in range(nvar[1]):
+                        for ell in range(nvar[1]):
+                            for m in range(nvar[1]):
+                                val = 0
+                                for jj in range(nvar[2]):
+                                    val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
+                                
+                                sy_arr_dic[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.T4sbpa * val
+                
+                for j in range(nvar[2]):
+                    for k in range(nvar[2]):
+                        for ell in range(nvar[2]):    
+                            for m in range(nvar[2]):
+                                val = 0
+                                for jj in range(nvar[2]):
+                                    val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
+
+                                sy_arr_dic[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.T4sbpgo * val
+                   
+        return sy_arr_dic
+
+    def compute_tensor(self):
+        """Routine to compute the tensor."""
+        # gathering
+        if self.params.T4:
+            #//TODO: Make a proper error message for here
+            raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+
+        symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)
+        symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
+
+        symbolic_dict_dynT = self._compute_tensor_dicts()
+
+        if symbolic_dict_linear is not None:
+            symbolic_dict_dynT = {**symbolic_dict_linear, **symbolic_dict_dynT}
+        
+        if symbolic_dict_dynT is not None:
+            self._set_tensor(symbolic_dict_dynT)
+
 
 def _kronecker_delta(i, j):
 
