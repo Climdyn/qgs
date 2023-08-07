@@ -5,7 +5,7 @@ from qgs.functions.symbolic_mul import _symbolic_tensordot, symbolic_sparse_mult
 
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
 
-from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT
+from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4
 
 python_lang_translation = {
     'sqrt': 'math.sqrt',
@@ -60,7 +60,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
             aip.connect_to_ground(gip)
 
     if params.T4:
-        raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+        agotensor = SymbolicTensorT4(params, aip, oip, gip)
     elif params.dynamic_T:
         agotensor = SymbolicTensorDynamicT(params, aip, oip, gip)
     else:

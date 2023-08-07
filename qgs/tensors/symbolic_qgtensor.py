@@ -401,7 +401,7 @@ class SymbolicTensorLinear(object):
 
                     if gp is not None:
                         if symbolic_params['hk'] is not None:
-                            #//TODO: Need to make this symbolic
+
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -self.sig0 * oro[i, j][0] / 2)
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), self.sig0 * oro[i, j][0] / 2)
 
@@ -515,7 +515,6 @@ class SymbolicTensorLinear(object):
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), - (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), (symbolic_params['kd'] * _kronecker_delta(i, j)) / 2)
 
-                    #//TODO: what is gp.hk parameter???
                     if gp is not None:
                         if symbolic_params['hk'] is not None:
                             oro = 0
@@ -919,7 +918,6 @@ class SymbolicTensorLinear(object):
                 print(str(ix) + ": " + str(output_val))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
-    #//TODO: Need to work out symbolic tensor dot
 
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
@@ -1145,14 +1143,12 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         # constructing some derived matrices
         if aips is not None:
             a_theta = dict()
-            a_theta = np.zeros((nvar[1], nvar[1]))
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
                     a_theta[(i, j)] = self.sig0 * aips.a(i, j) - aips.u(i, j)
 
             a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = a_theta.inverse()
-            a_theta = a_theta.simplify()
 
         if bips is not None:
             if ocean:
@@ -1170,7 +1166,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
             
             U_inv = U_inv.inverse()
-            U_inv = U_inv.simplify()
                 
 
         #################
@@ -1268,7 +1263,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         # gathering
         if self.params.T4:
             #//TODO: Make a proper error message for here
-            raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+            raise ValueError("Parameters are set for T4 version, set dynamic_T=True")
 
         symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)
         symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
@@ -1282,7 +1277,6 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             self._set_tensor(symbolic_dict_dynT)
 
 class SymbolicTensorT4(SymbolicTensorLinear):
-    #//TODO: Need to work out symbolic tensor dot
 
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
@@ -1323,35 +1317,8 @@ class SymbolicTensorT4(SymbolicTensorLinear):
 
         SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
         
-        if params.dynamic_T:
+        if params.T4:
             self.compute_tensor()
-
-    def _compute_tensor_dicts(self):
-
-        if self.params is None:
-            return None
-
-        if self.atmospheric_inner_products is None and self.oceanic_inner_products is None \
-                and self.ground_inner_products is None:
-            return None
-
-        aips = self.atmospheric_inner_products
-
-        bips = None
-        if self.oceanic_inner_products is not None:
-            bips = self.oceanic_inner_products
-
-        elif self.ground_inner_products is not None:
-            bips = self.ground_inner_products
-
-        if bips is not None:
-            go = bips.stored
-        else:
-            go = True
-
-        symbolic_array_full_dict = self._compute_non_stored_full_dict()
-
-        return symbolic_array_full_dict
 
     def _compute_non_stored_full_dict(self):
         par = self.params
@@ -1374,14 +1341,12 @@ class SymbolicTensorT4(SymbolicTensorLinear):
         # constructing some derived matrices
         if aips is not None:
             a_theta = dict()
-            a_theta = np.zeros((nvar[1], nvar[1]))
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
                     a_theta[(i, j)] = self.sig0 * aips.a(i, j) - aips.u(i, j)
 
             a_theta = sy.matrices.immutable.ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = a_theta.inverse()
-            a_theta = a_theta.simplify()
 
         if bips is not None:
             if ocean:
@@ -1399,7 +1364,6 @@ class SymbolicTensorT4(SymbolicTensorLinear):
                 U_inv = sy.matrices.immutable.ImmutableSparseMatrix(nvar[2], nvar[2], U_inv)
             
             U_inv = U_inv.inverse()
-            U_inv = U_inv.simplify()
                 
 
         #################
@@ -1440,7 +1404,7 @@ class SymbolicTensorT4(SymbolicTensorLinear):
                                     val = 0
                                     for jj in range(nvar[1]):
                                             val -= a_theta[i, jj] * aips.v(jj, j, k, ell, m)
-                        
+
                                     sy_arr_dic[(self._theta_a(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.T4LSBpgo * val
                         
         if ocean:
@@ -1495,20 +1459,20 @@ class SymbolicTensorT4(SymbolicTensorLinear):
     def compute_tensor(self):
         """Routine to compute the tensor."""
         # gathering
-        if self.params.T4:
+        if not(self.params.T4):
             #//TODO: Make a proper error message for here
-            raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
+            raise ValueError("Parameters are not set for T4 version")
 
         symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)
         symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
 
-        symbolic_dict_dynT = self._compute_tensor_dicts()
+        symbolic_dict_T4 = self._compute_non_stored_full_dict()
 
         if symbolic_dict_linear is not None:
-            symbolic_dict_dynT = {**symbolic_dict_linear, **symbolic_dict_dynT}
+            symbolic_dict_T4 = {**symbolic_dict_linear, **symbolic_dict_T4}
         
-        if symbolic_dict_dynT is not None:
-            self._set_tensor(symbolic_dict_dynT)
+        if symbolic_dict_T4 is not None:
+            self._set_tensor(symbolic_dict_T4)
 
 
 def _kronecker_delta(i, j):

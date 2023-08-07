@@ -496,6 +496,10 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     # !-----------------------------------------------------!
 
     def _integrate(self, subs, args):
+        if self.return_symbolic:
+            res = _apply(args)
+            return res[1]
+        
         if self.quadrature:
             res = _num_apply(args)
             return res[1]
@@ -1004,6 +1008,10 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
     # !-----------------------------------------------------!
 
     def _integrate(self, subs, args):
+        if self.return_symbolic:
+            res = _apply(args)
+            return res[1]
+        
         if self.quadrature:
             res = _num_apply(args)
             return res[1]
@@ -1376,6 +1384,10 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
     # !-----------------------------------------------------!
 
     def _integrate(self, subs, args):
+        if self.return_symbolic:
+            res = _apply(args)
+            return res[1]
+        
         if self.quadrature:
             res = _num_apply(args)
             return res[1]
@@ -1480,6 +1492,7 @@ def _num_apply(ls):
     else:
         num_integrand = integrand[0]
 
+    # TODO: sy.integrate.ddquad says that the function needs to be f(y, x), not f(x, y)?
     func = sy.lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
 
     try:
@@ -1569,11 +1582,9 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
 
 def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False):
     result_list = dict()
-
-    #//TODO: I am not sure what this timeout does, I have switched if off as it was leading to non-convergence.
+    #//TODO:  This function needs checking, I have stripped alot of the funcitionality out of _parallell_compute
     future = pool.map(_apply, args_list, timeout=None)
     results = future.result()
-    num_args_list = list()
     i = 0
     while True:
         try:
@@ -1595,32 +1606,7 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
                         result_list[tuple(idx)] = res[1]
             
         except StopIteration:
-            break
-        except TimeoutError:
-            num_args_list.append(args_list[i])
-        i += 1
-
-    future = pool.map(_num_apply, num_args_list)
-    results = future.result()
-
-    
-    while True:
-        try:
-            res = next(results)
-            result_list[res[0]] = res[1]
-            
-            if permute:
-                res = next(results)
-                i = res[0][0]
-                idx = res[0][1:]
-                perm_idx = multiset_permutations(idx)
-                for perm in perm_idx:
-                    idx = [i] + perm
-                    result_list[tuple(idx)] = res[1]
-        
-        except StopIteration:
-            break
-            
+            break    
     return result_list
 
 if __name__ == '__main__':
