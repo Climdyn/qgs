@@ -930,7 +930,10 @@ class SymbolicTensorLinear(object):
                 try:
                     output_val = float(v)
                 except:
-                    output_val = v
+                    try:
+                        output_val = v.simplify().evalf()
+                    except:
+                        output_val = v
                 print(str(ix) + ": " + str(output_val))
 
 class SymbolicTensorDynamicT(SymbolicTensorLinear):
