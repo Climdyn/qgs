@@ -1589,10 +1589,11 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
     while True:
         try:
             res = next(results)
+            expr = res[1].simplify()
             if subs is not None:
-                result_list[res[0]] = res[1].subs(subs)
+                result_list[res[0]] = expr.subs(subs)
             else:
-                result_list[res[0]] = res[1]
+                result_list[res[0]] = expr
 
             if permute:
                 i = res[0][0]
@@ -1601,9 +1602,9 @@ def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False
                 for perm in perm_idx:
                     idx = [i] + perm
                     if subs is not None:
-                        result_list[tuple(idx)] = res[1].subs(subs)
+                        result_list[tuple(idx)] = expr.subs(subs)
                     else:
-                        result_list[tuple(idx)] = res[1]
+                        result_list[tuple(idx)] = expr
             
         except StopIteration:
             break    

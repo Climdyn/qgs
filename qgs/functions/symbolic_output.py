@@ -25,7 +25,7 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, simplify=False, return_inner_products=False, return_jacobian=False, return_symbolic_dict=False, return_symbolic_qgtensor=False):
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, simplify=False, return_inner_products=False, return_jacobian=False, return_symbolic_dict=False, return_symbolic_qgtensor=False, numerically_test_tensor=True):
     """
     Function to output the raw symbolic functions of the qgs model.
     """
@@ -60,11 +60,11 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
             aip.connect_to_ground(gip)
 
     if params.T4:
-        agotensor = SymbolicTensorT4(params, aip, oip, gip)
+        agotensor = SymbolicTensorT4(params, aip, oip, gip, numerically_test_tensor)
     elif params.dynamic_T:
-        agotensor = SymbolicTensorDynamicT(params, aip, oip, gip)
+        agotensor = SymbolicTensorDynamicT(params, aip, oip, gip, numerically_test_tensor)
     else:
-        agotensor = SymbolicTensorLinear(params, aip, oip, gip)
+        agotensor = SymbolicTensorLinear(params, aip, oip, gip, numerically_test_tensor)
 
     xx = list()
     xx.append(1)
@@ -85,8 +85,9 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
     eq_simplified = dict()
     Deq_simplified = dict()
     
-    #//TODO: This section using .simplify() is super slow.
     if simplify:
+        # Simplifying at this step is slow
+        # This only needs to be used if no substitutions are being made
         for i in range(1, params.ndim+1):
             eq_simplified[i] = eq[i].simplify()
             if return_jacobian:
