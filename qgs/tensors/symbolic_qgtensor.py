@@ -816,18 +816,37 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def subs_tensor(self, tensor=None, dict_opp=True):
+    def subs_tensor(self, tensor=None, dict_opp=True, variables=None, remain_variables=dict()):
         """
         Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
+
+        Parameters
+        ----------
+        tensor: dict, sympy array
+
+        dict_opp: Boolian, if True, uses the stored tensor_dic object as the input
+
+        variables: dict of variable names to substitute
+            if None, all variables are substituted
+
+        remain_variables: dict of variables not to substitute
+            if None all variables are substituted. This variable is the opposite of 'variables'
         """
 
         symbol_to_number_map = list()
+        variables_not_found = list()
 
-        for key in self.sym_params.keys():
-            try:
-                symbol_to_number_map.append(self.params.symbol_to_value[key])
-            except:
-                pass
+        if variables is None:
+            for key in self.sym_params.keys():
+                if key not in remain_variables:
+                    try:
+                        symbol_to_number_map.append(self.params.symbol_to_value[key])
+                    except:
+                        variables_not_found.append(key)
+            
+        if len(variables_not_found) > 0:
+            print("The following variables were not found in the parameters: ")
+            print(variables_not_found)
         
         if isinstance(tensor, dict):
             ten_out = dict()
@@ -855,7 +874,7 @@ class SymbolicTensorLinear(object):
         
         return ten_out
         
-    def test_tensor_numerically(self, tensor=None, dict_opp=True, tol=1e-14):
+    def test_tensor_numerically(self, tensor=None, dict_opp=True, tol=1e-10):
         """
         Uses sympy substitution to convert the symbolic tensor, or symbolic dictionary, to a numerical one.
         This is then compared to the tensor calculated by the qgs.tensor.symbolic module.

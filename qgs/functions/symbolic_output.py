@@ -143,7 +143,7 @@ def translate_equations(equations, language='python'):
 
     return str_eq
 
-def print_equations(equations, params, save_loc=None, language='python', subs=None, return_equations=False):
+def print_equations(equations, params, save_loc=None, language='python', variables=True, remain_variables=dict(), return_equations=False):
     '''
         Function prints the equations as strings, in the programming language specified, and saves the equations to the specified location.
         The variables in the equation are substituted if the model variable is input.
@@ -158,25 +158,31 @@ def print_equations(equations, params, save_loc=None, language='python', subs=No
 
         language: String, programming language to output the strings as
 
-        subs: String, sympy.Symbol, or list of Strings, or Bool
-        
-        substitutes the variable with the corrisponding value in the qgs model parameters
+        variables: Set or list of Strings, dict of sympy.Symbol with corrisponding values, or Bool
+            
+            If a set or list of strings is input, the corrisponding value in the parameters is found
 
-        if subs is True, all variables are substituted
+            if a dict of sympy.Symbols is input, this is used to substitute the tensor
+
+            if True is passed, the parameters are used to substitute all variables
+        
+        remain_variables: Set or list of strings
+            A list or set of variables not to substitute. Only is used when variables is set to True.
+        
 
     '''
     if equations is not None:
         equation_dict = dict()
-        if subs is not None:
-            # make a dictionary of variables to substitute
+        if variables is not None:
+            # make a dictionary of variables to substitute from parameters
             sub_vals = dict()
-            if subs == True:
-                for v in params.symbol_to_value.values():
-                    sub_vals[v[0]] = v[1]
+            if variables == True:
+                for key in params.symbol_to_value.keys():
+                    if key not in remain_variables:
+                        sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
             else:
-                
-                if isinstance(subs, list):
-                    for s in subs:
+                if isinstance(variables, (set, list, dict)):
+                    for s in variables:
                         if isinstance(s, str):
                             temp_sym, val = params.symbol_to_value[s]
                         elif isinstance(s, sy.Symbol):
@@ -186,19 +192,12 @@ def print_equations(equations, params, save_loc=None, language='python', subs=No
                             raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(s)))
                         sub_vals[temp_sym] = val
                 else:
-                    # assuming s is a sympy.Symbol or string
-                    if isinstance(subs, str):
-                        sub_vals[subs] = params.symbol_to_value[subs][1]
-                    elif isinstance(subs, sy.Symbol):
-                        val = params.symbol_to_value[subs]
-                        sub_vals[subs] = val
-                    else:
-                        raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(subs)))
+                    raise ValueError("Incorrect type for substitution, needs to be list, set, or dictionary, not: " + str(type(variables)))
             
 
         for k in equations.keys():
             eq = equations[k]
-            if subs is not None:
+            if sub_vals is not None:
                 eq = eq.subs(sub_vals)
                 eq = eq.evalf()
 
@@ -223,7 +222,7 @@ def print_equations(equations, params, save_loc=None, language='python', subs=No
                             f.write("%s\n" % eq)
                     print("Equations written")
 
-def equation_as_function(equations, params, string_output=False, language='python', subs=None):
+def equation_as_function(equations, params, string_output=False, language='python', variables=True, remain_variables=dict()):
     
     vector_subs = dict()
     if language == 'python':
@@ -247,19 +246,25 @@ def equation_as_function(equations, params, string_output=False, language='pytho
     for k in equations.keys():
         subed_eq[k] = equations[k].subs(vector_subs)
 
-    # determin which variables are still present in the equations
-    # vars = subed_eq.free_variables
-
-    eq_list = print_equations(subed_eq, params, language=language, subs=subs, return_equations=True)
+    eq_list = print_equations(subed_eq, params, language=language, variables=variables, remain_variables=remain_variables, return_equations=True)
     
+    # Calculate the free variables
+    free_vars = set()
+    for func in eq_list.values():
+        for vars in func.free_symbols:
+            if vars not in vector_subs.values():
+                free_vars.add(vars)
+
     if language == 'python':
         if string_output:
-            # eq_list = translate_equations(eq_list, language='python')
 
             f_output = list()
             f_output.append('def f(t, U, **kwargs):')
             f_output.append('\t#Tendency function of the qgs model')
             f_output.append('\tU_out = np.empty_like(U)')
+            for v in free_vars:
+                f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
+
             for n, eq in enumerate(eq_list.values()):
                 f_output.append('\tU_out['+str(n)+'] = ' + str(eq))
             
