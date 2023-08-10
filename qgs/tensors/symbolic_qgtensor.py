@@ -857,7 +857,7 @@ class SymbolicTensorLinear(object):
                 except:
                     ten_out[key] = val
 
-        elif dict_opp and self.tensor_dic is not None:
+        elif dict_opp:
             ten_out = dict()
             for key in self.tensor_dic.keys():
                 val = self.tensor_dic[key].subs(symbol_to_number_map)
