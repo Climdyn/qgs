@@ -273,7 +273,7 @@ def equation_as_function(equations, params, string_output=False, language='pytho
             # Return a lamdafied function
             vec = [sy.Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
             array_eqs = np.array(list(eq_list.values()))
-            inputs = [vec]
+            inputs = ['t', vec]
             for v in free_vars:
                 inputs.append(v)
             f_output = sy.lambdify(inputs, array_eqs)
