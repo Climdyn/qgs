@@ -334,7 +334,9 @@ class SymbolicTensorLinear(object):
                 oro = _symbolic_tensordot(a_inv_mult_gh, symbolic_params['hk'], axes=1)
 
             a_inv_mult_b = _symbolic_tensordot(a_inv, aips._b[offset:, offset:, offset:], axes=1)
-            a_inv_mult_d = a_inv @ aips._d[offset:, offset:]
+            
+            if ocean:
+                a_inv_mult_d = a_inv @ aips._d[offset:, offset:]
 
 
             for i in range(nvar[0]):
@@ -349,7 +351,7 @@ class SymbolicTensorLinear(object):
                         # convert 
                         if symbolic_params['hk'] is not None:
 
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), oro[i, j][0] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -oro[i, j][0] / 2)
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), oro[i, j][0] / 2)
 
                     for k in range(nvar[0]):
@@ -360,6 +362,7 @@ class SymbolicTensorLinear(object):
                 if ocean:
                     for j in range(nvar[2]):
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_o(j), 0), a_inv_mult_d[i, j] * symbolic_params['kd'] / 2)
+            
             # theta_a part
             a_theta_mult_u = _symbolic_tensordot(a_theta, aips._u, axes=1)
             if self.Cpa is not None:
@@ -382,10 +385,13 @@ class SymbolicTensorLinear(object):
 
             a_theta_mult_b = _symbolic_tensordot(a_theta, aips._b[:, offset:, offset:], axes=1)
 
-            if ocean or ground_temp:
+            if ocean:
                 a_theta_mult_d = _symbolic_tensordot(a_theta, aips._d[:, offset:], axes=1)
                 a_theta_mult_s = _symbolic_tensordot(a_theta, aips._s, axes=1)
 
+            if ground_temp:
+                a_theta_mult_s = _symbolic_tensordot(a_theta, aips._s, axes=1)
+                
             for i in range(nvar[1]):
                 if self.Cpa is not None:
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), -val_Cpa[i][0])
@@ -494,7 +500,7 @@ class SymbolicTensorLinear(object):
                 U_inv_mult_W = _symbolic_tensordot(U_inv, bips._W, axes=1)
                 U_inv_mult_W_Cpgo = _symbolic_tensordot(U_inv_mult_W, self.Cpgo, axes=1)
                 for i in range(nvar[2]):
-                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), 0, 0), U_inv_mult_W_Cpgo[i])  # not perfect
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), 0, 0), U_inv_mult_W_Cpgo[i][0])  # not perfect
 
                     for j in range(nvar[1]):
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), 0), U_inv_mult_W[i, j] * 2 * symbolic_params['sc'] * self.Lpgo)

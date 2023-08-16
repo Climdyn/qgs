@@ -2108,7 +2108,8 @@ class QgParams(Params):
         # Ground Parameters
         if self.ground_params is not None:
             self.symbol_to_value['hk_val'] = (self.symbolic_params['hk_val'], self.ground_params.hk)
-            self.symbol_to_value['hk'] = (self.symbolic_params['hk'], self.ground_params.hk)
+            #TODO The index here should not be hard coded
+            self.symbol_to_value['hk'] = (self.symbolic_params['hk_val'], self.ground_params.hk[1])
 
         #//TODO: Fix the bogde on the index of the insolation
         # Ground Temperature Parameters
@@ -2117,7 +2118,10 @@ class QgParams(Params):
 
         # Ground/ocean Parameters
         if self.gotemperature_params is not None:
+            #TODO The index here should not be hard coded
             self.symbol_to_value['go_C_val'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
+
+            #TODO The index here should not be hard coded
             self.symbol_to_value['go_C'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
             self.symbol_to_value['go_T0'] = (self.symbolic_params['go_T0'], self.gotemperature_params.T0)
 

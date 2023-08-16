@@ -14,6 +14,7 @@ python_lang_translation = {
 
 fortran_lang_translation = {
     '**': '^'
+    #TODO: Is there a reason that sqrt is replaced with sq2 in auto? For computational speedup?
 }
 
 julia_lang_translation = {
@@ -126,6 +127,9 @@ def translate_equations(equations, language='python'):
     if language == 'julia':
         translator = julia_lang_translation
 
+    if language == 'fortran':
+        translator = fortran_lang_translation
+
     # translate mathematical operations
     if isinstance(equations, dict):
         str_eq = dict()
@@ -143,9 +147,9 @@ def translate_equations(equations, language='python'):
 
     return str_eq
 
-def print_equations(equations, params, save_loc=None, language='python', variables=True, remain_variables=dict(), return_equations=False):
+def format_equations(equations, params, save_loc=None, language='python', variables=True, remain_variables=dict(), print_equations=False):
     '''
-        Function prints the equations as strings, in the programming language specified, and saves the equations to the specified location.
+        Function formats the equations, in the programming language specified, and saves the equations to the specified location.
         The variables in the equation are substituted if the model variable is input.
 
         Parameters
@@ -171,59 +175,31 @@ def print_equations(equations, params, save_loc=None, language='python', variabl
         
 
     '''
-    if equations is not None:
-        equation_dict = dict()
-        if variables is not None:
-            # make a dictionary of variables to substitute from parameters
-            sub_vals = dict()
-            if variables == True:
-                for key in params.symbol_to_value.keys():
-                    if key not in remain_variables:
-                        sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-            else:
-                if isinstance(variables, (set, list, dict)):
-                    for s in variables:
-                        if isinstance(s, str):
-                            temp_sym, val = params.symbol_to_value[s]
-                        elif isinstance(s, sy.Symbol):
-                            temp_sym = s
-                            val = params.symbol_to_value[temp_sym]
-                        else:
-                            raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(s)))
-                        sub_vals[temp_sym] = val
-                else:
-                    raise ValueError("Incorrect type for substitution, needs to be list, set, or dictionary, not: " + str(type(variables)))
-            
-
-        for k in equations.keys():
-            eq = equations[k]
-            if sub_vals is not None:
-                eq = eq.subs(sub_vals)
-                eq = eq.evalf()
-
-            if (language is not None) and not(return_equations):
-                eq = translate_equations(eq, language)
-            
-            if save_loc is None:
-                equation_dict[k] = eq
-            else:
-                equation_dict[k] = str(eq)
-        
-        if return_equations:
-            return equation_dict
+    # Substitute variables
+    equation_dict = dict()
+    sub_vals = None
+    if variables is not None:
+        # make a dictionary of variables to substitute from parameters
+        sub_vals = dict()
+        if variables == True:
+            for key in params.symbol_to_value.keys():
+                if key not in remain_variables:
+                    sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
         else:
-            if save_loc is None:
-                for eq in equation_dict.values():
-                    if save_loc is None:
-                        print(eq)
-                else:
-                    with open(save_loc, 'w') as f:
-                        for eq in equation_dict.values():
-                            f.write("%s\n" % eq)
-                    print("Equations written")
-
-def equation_as_function(equations, params, string_output=False, language='python', variables=True, remain_variables=dict()):
+            if isinstance(variables, (set, list, dict)):
+                for s in variables:
+                    if isinstance(s, str):
+                        temp_sym, val = params.symbol_to_value[s]
+                    elif isinstance(s, sy.Symbol):
+                        temp_sym = s
+                        val = params.symbol_to_value[temp_sym]
+                    else:
+                        raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(s)))
+                    sub_vals[temp_sym] = val
+            else:
+                raise ValueError("Incorrect type for substitution, needs to be list, set, or dictionary, not: " + str(type(variables)))
     
+    # Substitute variable symbols
     vector_subs = dict()
     if language == 'python':
         for i in range(1, params.ndim+1):
@@ -240,20 +216,42 @@ def equation_as_function(equations, params, string_output=False, language='pytho
     if language == 'mathematica':
         for i in range(1, params.ndim+1):
             vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
-        
 
-    subed_eq = dict()
-    for k in equations.keys():
-        subed_eq[k] = equations[k].subs(vector_subs)
-
-    eq_list = print_equations(subed_eq, params, language=language, variables=variables, remain_variables=remain_variables, return_equations=True)
-    
-    # Calculate the free variables
     free_vars = set()
-    for func in eq_list.values():
-        for vars in func.free_symbols:
+    for k in equations.keys():
+        eq = equations[k].subs(vector_subs)
+
+        #substitute syntax
+        if sub_vals is not None:
+            eq = eq.subs(sub_vals)
+            eq = eq.evalf()
+        else:
+            eq = eq.simplify()
+        for vars in eq.free_symbols:
             if vars not in vector_subs.values():
                 free_vars.add(vars)
+
+        if (language is not None) and print_equations:
+            eq = translate_equations(eq, language)
+
+        equation_dict[k] = eq
+        
+    if print_equations:
+        if save_loc is None:
+            for eq in equation_dict.values():
+                if save_loc is None:
+                    print(eq)
+            else:
+                with open(save_loc, 'w') as f:
+                    for eq in equation_dict.values():
+                        f.write("%s\n" % eq)
+                print("Equations written")
+    else:
+        return equation_dict, free_vars
+
+def equation_as_function(equations, params, string_output=False, language='python', variables=True, remain_variables=dict()):
+
+    eq_dict, free_vars = format_equations(equations, params, language=language, variables=variables, remain_variables=remain_variables)
 
     if language == 'python':
         if string_output:
@@ -261,37 +259,62 @@ def equation_as_function(equations, params, string_output=False, language='pytho
             f_output = list()
             f_output.append('def f(t, U, **kwargs):')
             f_output.append('\t#Tendency function of the qgs model')
-            f_output.append('\tU_out = np.empty_like(U)')
+            f_output.append('\tF = np.empty_like(U)')
             for v in free_vars:
                 f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
 
-            for n, eq in enumerate(eq_list.values()):
-                f_output.append('\tU_out['+str(n)+'] = ' + str(eq))
+            for n, eq in enumerate(eq_dict.values()):
+                f_output.append('\tF['+str(n)+'] = ' + str(eq))
             
-            f_output.append('\treturn U_out')
+            f_output.append('\treturn F')
         else:
             # Return a lamdafied function
             vec = [sy.Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
-            array_eqs = np.array(list(eq_list.values()))
+            array_eqs = np.array(list(eq_dict.values()))
             inputs = ['t', vec]
+
             for v in free_vars:
                 inputs.append(v)
+
             f_output = sy.lambdify(inputs, array_eqs)
 
     if language == 'julia':
-        eq_list = translate_equations(eq_list, language='julia')
+        eq_dict = translate_equations(eq_dict, language='julia')
 
         f_output = list()
         f_output.append('function f(t, U, kwargs...)')
         f_output.append('\t#Tendency function of the qgs model')
         f_output.append('\tU_out = similar(U)')
-        for n, eq in enumerate(eq_list.values()):
-            f_output.append('\tU_out['+str(n+1)+'] = ' + str(eq))
+        for n, eq in enumerate(eq_dict.values()):
+            f_output.append('\tF['+str(n+1)+'] = ' + str(eq))
         
-        f_output.append('\treturn U_out')
+        f_output.append('\treturn F')
         f_output.append('end')
 
     #//TODO: Add statement for Fortran
     #//TODO: Add statement for mathematica
 
     return f_output
+
+def equation_to_auto(equations, params, remain_variables=dict()):
+    # User passes the equations, with the variables to leave as variables.
+    # The existing model parameters are used to populate the auto file
+    # The variables given as `remain_variables` remain in the equations.
+    # There is a limit of 1-10 remian variables
+
+    if (len(remain_variables) < 1) or (len(remain_variables) > 10):
+        ValueError("Too many variables for auto file")
+
+    str_equations, free_variables = format_equations(equations=equations, params=params, language='fortran', variables=True)
+
+    natm, nog = params.nmod
+    dim = params.ndim
+    offset = 1 if params.dynamic_T else 0
+
+    # make list of free variables
+    var_list = list()
+    for i, fv in enumerate(free_variables):
+        temp_str = "PAR(" + str(i) + ") = " + str(fv)
+        var_list.append(temp_str)
+    
+    
