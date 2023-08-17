@@ -171,7 +171,7 @@ class SymbolicTensorLinear(object):
     
     @property
     def Cpgo(self):
-        return self.sym_params['go_C'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
+        return self.sym_params['go_C'] / (self.sym_params['gnd_gamma'] * self.sym_params['fo']) * self.sym_params['rr'] / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2)
     
     @property
     def Lpgo(self):
@@ -179,7 +179,7 @@ class SymbolicTensorLinear(object):
     
     @property
     def Cpa(self):
-        return self.sym_params['atm_C'] / (self.sym_params['atm_gamma'] * self.sym_params['fo']) * self.params.rr / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2) / 2
+        return self.sym_params['atm_C'] / (self.sym_params['atm_gamma'] * self.sym_params['fo']) * self.sym_params['rr'] / (self.sym_params['fo'] ** 2 * self.sym_params['L'] ** 2) / 2
     
     @property
     def Lpa(self):
@@ -192,44 +192,44 @@ class SymbolicTensorLinear(object):
         if self.params.gotemperature_params.T0 is None:
             None
         else:
-            return 4 * self.params.sb * self.sym_params['go_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+            return 4 * self.sym_params['sb'] * self.sym_params['go_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
     
     @property
     def sbpa(self):
         if self.params.atemperature_params.T0 is None:
             return None
         else:
-            return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
+            return 8 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['atm_T0'] ** 3 / (self.sym_params['gnd_gamma'] * self.sym_params['fo'])
     
     @property
     def LSBpgo(self):
         if self.params.gotemperature_params.T0 is None:
             None
         else:
-            return 2 * self.sym_params['eps'] * self.params.sb * self.sym_params['go_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+            return 2 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['go_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
     
     @property
     def LSBpa(self):
         if self.params.atemperature_params.T0 is None:
             return None
         else:
-            return 8 * self.sym_params['eps'] * self.params.sb * self.sym_params['atm_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
+            return 8 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['atm_T0'] ** 3 / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
     
     @property
     def T4sbpgo(self):
-        return self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.params.rr ** 3)
+        return self.sym_params['sb'] * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.sym_params['rr'] ** 3)
     
     @property
     def T4sbpa(self):
-        return 16 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.params.rr ** 3)
+        return 16 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['gnd_gamma'] * self.sym_params['rr'] ** 3)
     
     @property
     def T4LSBpgo(self):
-        return 0.5 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.params.rr ** 3)
+        return 0.5 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.sym_params['rr'] ** 3)
     
     @property
     def T4LSBpa(self):
-        return 16 * self.sym_params['eps'] * self.params.sb * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.params.rr ** 3)
+        return 16 * self.sym_params['eps'] * self.sym_params['sb'] * self.sym_params['L'] ** 6 * self.sym_params['fo'] ** 5 / (self.sym_params['atm_gamma'] * self.sym_params['rr'] ** 3)
     
     #//TODO: Do i need the scaling parameters?
     

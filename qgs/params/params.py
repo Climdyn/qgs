@@ -856,6 +856,8 @@ class QgParams(Params):
         'fo': sy.Symbol('f0'),
         'beta': sy.Symbol('beta'),
         'n': sy.Symbol('n', positive=True),
+        'rr': sy.Symbol('R'),
+        'sb': sy.Symbol('sigma_b'),
 
         # Atmosphere Parameters
         'kd': sy.Symbol('k_d'),
@@ -2083,7 +2085,9 @@ class QgParams(Params):
             self.symbol_to_value['fo'] = (self.symbolic_params['fo'], self.scale_params.f0)
             self.symbol_to_value['beta'] = (self.symbolic_params['beta'], self.scale_params.beta)
             self.symbol_to_value['n'] = (self.symbolic_params['n'], self.scale_params.n)
-
+            self.symbol_to_value['rr'] = (self.symbolic_params['rr'], self.rr)
+            self.symbol_to_value['sb'] = (self.symbolic_params['sb'], self.sb)
+            
         # Atmosphere Parameters
         if self.atmospheric_params is not None:
             self.symbol_to_value['kd'] = (self.symbolic_params['kd'], self.atmospheric_params.kd)

@@ -316,5 +316,6 @@ def equation_to_auto(equations, params, remain_variables=dict()):
     for i, fv in enumerate(free_variables):
         temp_str = "PAR(" + str(i) + ") = " + str(fv)
         var_list.append(temp_str)
+
     
     
