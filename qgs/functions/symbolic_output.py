@@ -1,7 +1,8 @@
 import numpy as np
 import sympy as sy
 
-from qgs.functions.symbolic_mul import _symbolic_tensordot, symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
+import warnings
+from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
 
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
 
@@ -26,20 +27,26 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, simplify=False, return_inner_products=False, return_jacobian=False, return_symbolic_dict=False, return_symbolic_qgtensor=False, numerically_test_tensor=True):
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables={}, language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """
     Function to output the raw symbolic functions of the qgs model.
     """
+    if 'n' in continuation_variables:
+        make_ip_subs = False
+        warnings.warn("Calculating innerproducts symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
+    else:
+        make_ip_subs = True
+
     if params.atmospheric_basis is not None:
         if atm_ip is None:
-            aip = AtmosphericSymbolicInnerProducts(params, return_symbolic=True)
+            aip = AtmosphericSymbolicInnerProducts(params, return_symbolic=True, make_substitution=make_ip_subs)
         else: aip = atm_ip
     else:
         aip = None
 
     if params.oceanic_basis is not None:
         if ocn_ip is None:
-            oip = OceanicSymbolicInnerProducts(params, return_symbolic=True)
+            oip = OceanicSymbolicInnerProducts(params, return_symbolic=True, make_substitution=make_ip_subs)
         else:
             oip = ocn_ip
     else:
@@ -47,7 +54,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
 
     if params.ground_basis is not None:
         if gnd_ip is None:
-            gip = GroundSymbolicInnerProducts(params, return_symbolic=True)
+            gip = GroundSymbolicInnerProducts(params, return_symbolic=True, make_substitution=make_ip_subs)
         else:
             gip = gnd_ip
     else:
@@ -61,11 +68,11 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
             aip.connect_to_ground(gip)
 
     if params.T4:
-        agotensor = SymbolicTensorT4(params, aip, oip, gip, numerically_test_tensor)
+        agotensor = SymbolicTensorT4(params, aip, oip, gip)
     elif params.dynamic_T:
-        agotensor = SymbolicTensorDynamicT(params, aip, oip, gip, numerically_test_tensor)
+        agotensor = SymbolicTensorDynamicT(params, aip, oip, gip)
     else:
-        agotensor = SymbolicTensorLinear(params, aip, oip, gip, numerically_test_tensor)
+        agotensor = SymbolicTensorLinear(params, aip, oip, gip)
 
     xx = list()
     xx.append(1)
@@ -86,7 +93,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
     eq_simplified = dict()
     Deq_simplified = dict()
     
-    if simplify:
+    if continuation_variables is None:
         # Simplifying at this step is slow
         # This only needs to be used if no substitutions are being made
         for i in range(1, params.ndim+1):
@@ -95,21 +102,24 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, sim
                 for j in range(1, params.ndim+1):
                     if (i, j) in Deq:
                         Deq_simplified[(i, j)] = Deq[(i, j)].simplify()
+
     else:
         eq_simplified = eq
         if return_jacobian:
             Deq_simplified = Deq
-    
+
+    funcs = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True, remain_variables=continuation_variables)
+
     ret = list()
-    ret.append(eq_simplified)
+    ret.append('\n'.join(funcs))
     if return_jacobian:
         ret.append(Deq_simplified)
     if return_inner_products:
         ret.append((aip, oip, gip))
-    if return_symbolic_dict:
-        ret.append(agotensor.tensor_dic)
+    if return_symbolic_eqs:
+        ret.append(eq_simplified)
     if return_symbolic_qgtensor:
-        ret.append(agotensor.tensor)
+        ret.append(agotensor.tensor_dic)
     return ret
 
 def translate_equations(equations, language='python'):
@@ -147,7 +157,7 @@ def translate_equations(equations, language='python'):
 
     return str_eq
 
-def format_equations(equations, params, save_loc=None, language='python', variables=True, remain_variables=dict(), print_equations=False):
+def format_equations(equations, params, save_loc=None, language='python', remain_variables={}, print_equations=False):
     '''
         Function formats the equations, in the programming language specified, and saves the equations to the specified location.
         The variables in the equation are substituted if the model variable is input.
@@ -177,27 +187,21 @@ def format_equations(equations, params, save_loc=None, language='python', variab
     '''
     # Substitute variables
     equation_dict = dict()
-    sub_vals = None
-    if variables is not None:
+    if isinstance(remain_variables, (set, list, dict)):
         # make a dictionary of variables to substitute from parameters
         sub_vals = dict()
-        if variables == True:
-            for key in params.symbol_to_value.keys():
+        for key in params.symbol_to_value.keys():
+            if len(remain_variables) == 0:
+                sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
+            else:
                 if key not in remain_variables:
                     sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-        else:
-            if isinstance(variables, (set, list, dict)):
-                for s in variables:
-                    if isinstance(s, str):
-                        temp_sym, val = params.symbol_to_value[s]
-                    elif isinstance(s, sy.Symbol):
-                        temp_sym = s
-                        val = params.symbol_to_value[temp_sym]
-                    else:
-                        raise ValueError("Incorrect type for substitution, needs to be string or sympy.Symbol, not: " + str(type(s)))
-                    sub_vals[temp_sym] = val
-            else:
-                raise ValueError("Incorrect type for substitution, needs to be list, set, or dictionary, not: " + str(type(variables)))
+
+    elif remain_variables is None:
+        sub_vals = None
+
+    else:
+        raise ValueError("Incorrect type for substitution, needs to be set, list, or dict of strings, not: " + str(type(remain_variables)))
     
     # Substitute variable symbols
     vector_subs = dict()
@@ -249,9 +253,9 @@ def format_equations(equations, params, save_loc=None, language='python', variab
     else:
         return equation_dict, free_vars
 
-def equation_as_function(equations, params, string_output=False, language='python', variables=True, remain_variables=dict()):
+def equation_as_function(equations, params, string_output=False, language='python', remain_variables={}):
 
-    eq_dict, free_vars = format_equations(equations, params, language=language, variables=variables, remain_variables=remain_variables)
+    eq_dict, free_vars = format_equations(equations, params, language=language, remain_variables=remain_variables)
 
     if language == 'python':
         if string_output:

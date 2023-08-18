@@ -5,15 +5,11 @@
     This module computes and holds the symbolic representation of the tensors representing the tendencies of the model's equations.
 
 """
-from contextlib import redirect_stdout
-
-from qgs.functions.tendencies import create_tendencies
 from qgs.functions.symbolic_mul import _add_to_dict, _symbolic_tensordot
 
 import numpy as np
 import sparse as sp
 import sympy as sy
-import warnings
 import pickle
 
 #//TODO: Check non stored IP version of this
@@ -57,7 +53,7 @@ class SymbolicTensorLinear(object):
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
-    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None, numerically_test_tensor=True):
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None, ):
 
         self.atmospheric_inner_products = atmospheric_inner_products
         self.oceanic_inner_products = oceanic_inner_products
@@ -68,8 +64,6 @@ class SymbolicTensorLinear(object):
 
         self.tensor = None
         self.jacobian_tensor = None
-
-        self.test_tensor = numerically_test_tensor
 
         self.params.symbolic_insolation_array()
         self.params.symbolic_orography_array()
@@ -743,10 +737,6 @@ class SymbolicTensorLinear(object):
         
         if set_symbolic:
             self._set_symbolic_tensor()
-
-        if self.test_tensor:
-            print("Testing Tensor Numerically")
-            self.test_tensor_numerically(self.tensor_dic)
             
     def _set_symbolic_tensor(self):
         ndim = self.params.ndim
@@ -879,57 +869,6 @@ class SymbolicTensorLinear(object):
                 ten_out = self.tensor.subs(symbol_to_number_map)
         
         return ten_out
-        
-    def test_tensor_numerically(self, tensor=None, dict_opp=True, tol=1e-10):
-        """
-        Uses sympy substitution to convert the symbolic tensor, or symbolic dictionary, to a numerical one.
-        This is then compared to the tensor calculated by the qgs.tensor.symbolic module.
-        
-        """
-        ndim = self.params.ndim
-
-        if self.params.dynamic_T:
-            if self.params.T4:
-                #//TODO: Make a proper error message for here
-                raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
-            else:
-                dims = (ndim + 1, ndim + 1, ndim + 1, ndim + 1, ndim + 1)
-        else:
-            dims = (ndim + 1, ndim + 1, ndim + 1)
-
-        _, _, numerical_tensor = create_tendencies(self.params, return_qgtensor=True)
-
-        if tensor is None:
-            if dict_opp:
-                tensor = self.tensor_dic
-            else:
-                tensor = self.tensor
-
-        subbed_ten = self.subs_tensor(tensor)
-        if isinstance(subbed_ten, dict):
-            coords = np.array([list(k) for k in subbed_ten.keys()]).T
-            data = np.array(list(subbed_ten.values()), dtype=float)
-            subbed_tensor_sp = sp.COO(coords, data, shape=dims)
-        else:
-            subbed_ten = np.array(subbed_ten)
-            subbed_tensor_np = np.array(subbed_ten).astype(np.float64)
-            subbed_tensor_sp = sp.COO.from_numpy(subbed_tensor_np)
-
-        diff_arr = subbed_tensor_sp.todense() - numerical_tensor.tensor.todense()
-
-        #TODO: Is there a better way to do error/pass messages?
-        total_error = np.sum(np.abs(diff_arr))
-        max_error = np.max(np.abs(diff_arr))
-
-        if max_error > tol:
-            self.print_tensor(diff_arr, tol=tol)
-            
-            raise ValueError("Symbolic tensor and numerical tensor do not match at the above coordinates, with a total error of: " + str(total_error))
-        
-        elif total_error > tol:
-            warnings.warn("Symbolic tensor and numerical tensor have a combined error of: " + str(total_error))
-        else:
-            print("Tensor passes numerical test with a combined error of less than: " + str(tol))
             
     def print_tensor(self, tensor=None, dict_opp=True, tol=1e-10):
         if tensor is None:
@@ -998,9 +937,9 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
-    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None, numerically_test_tensor=True):
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
-        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products, numerically_test_tensor)
+        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
         
         if params.dynamic_T:
             self.compute_tensor()
@@ -1357,9 +1296,9 @@ class SymbolicTensorT4(SymbolicTensorLinear):
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
-    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None, numerically_test_tensor=True):
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
-        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products, numerically_test_tensor)
+        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
         
         if params.T4:
             self.compute_tensor()
