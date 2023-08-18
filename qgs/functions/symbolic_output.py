@@ -119,7 +119,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     if return_symbolic_eqs:
         ret.append(eq_simplified)
     if return_symbolic_qgtensor:
-        ret.append(agotensor.tensor_dic)
+        ret.append(agotensor)
     return ret
 
 def translate_equations(equations, language='python'):

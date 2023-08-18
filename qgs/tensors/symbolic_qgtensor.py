@@ -53,7 +53,7 @@ class SymbolicTensorLinear(object):
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
-    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None, ):
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
         self.atmospheric_inner_products = atmospheric_inner_products
         self.oceanic_inner_products = oceanic_inner_products
@@ -812,7 +812,7 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def subs_tensor(self, tensor=None, dict_opp=True, variables=None, remain_variables=dict()):
+    def sub_tensor(self, tensor=None, dict_opp=True, remain_variables=dict()):
         """
         Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
 
@@ -822,9 +822,6 @@ class SymbolicTensorLinear(object):
 
         dict_opp: Boolian, if True, uses the stored tensor_dic object as the input
 
-        variables: dict of variable names to substitute
-            if None, all variables are substituted
-
         remain_variables: dict of variables not to substitute
             if None all variables are substituted. This variable is the opposite of 'variables'
         """
@@ -832,17 +829,12 @@ class SymbolicTensorLinear(object):
         symbol_to_number_map = list()
         variables_not_found = list()
 
-        if variables is None:
-            for key in self.sym_params.keys():
-                if key not in remain_variables:
-                    try:
-                        symbol_to_number_map.append(self.params.symbol_to_value[key])
-                    except:
-                        variables_not_found.append(key)
-            
-        if len(variables_not_found) > 0:
-            print("The following variables were not found in the parameters: ")
-            print(variables_not_found)
+        for key in self.sym_params.keys():
+            if key not in remain_variables:
+                try:
+                    symbol_to_number_map.append(self.params.symbol_to_value[key])
+                except:
+                    variables_not_found.append(key)
         
         if isinstance(tensor, dict):
             ten_out = dict()
