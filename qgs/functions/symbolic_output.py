@@ -32,7 +32,45 @@ mathematica_lang_translation = {
 def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables={}, language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """
     Function to output the raw symbolic functions of the qgs model.
+
+    Parameters
+    ----------
+    params: QGParams
+        The parameters fully specifying the model configuration.
+    atm_ip: SymbolicAtmosphericInnerProducts, optional
+        Allows for stored inner products to be input
+    ocn_ip: SymbolicOceanInnerProducts, optional
+        Allows for stored inner products to be input
+    gnd_ip: SymbolicGroundInnerProducts, optional
+        Allows for stored inner products to be input
+    continuation_variables: Set or List or None
+        The variables to not substitute and to leave in the equations, if None no variables are substituted
+    language: String
+        Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'
+    return_inner_products: bool
+        If True, return the inner products of the model. Default to False.
+    return_jacobian: bool
+        If True, return the Jacobian of the model. Default to False.
+    return_symbolic_eqs: bool
+        If True, return the substituted symbolic equations
+    return_symbolic_qgtensor: bool
+        If True, return the symbolic tendencies tensor of the model. Default to False.
+
+    Returns
+    -------
+    funcs: string
+        The substituted functions in the language syntax specified, as a string
+    Deq_simplified: symbolic equations
+        Dict of the substituted Jacobian matrix
+    inner_products: (SymbolicAtmosphericInnerProducts, SymbolicOceanicInnerProducts, SymbolicGroundInnerProducts)
+        If `return_inner_products` is True, the inner products of the system.
+    eq_simplified: Symbolic equations
+        If `return_symbolic_eqs` is True, Dict of the model tendencies symbolic functions
+    agotensor: SymbolicQgsTensor
+        If `return_symbolic_qgtensor` is True, the symbolic tendencies tensor of the system.
+
     """
+
     if 'n' in continuation_variables:
         make_ip_subs = False
         warnings.warn("Calculating innerproducts symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
@@ -126,7 +164,13 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
 
 def translate_equations(equations, language='python'):
     '''
-        Function to output the model equations as a string in the specified language. The languages that are availible to the user are:
+    Function to output the model equations as a string in the specified language syntax.
+
+    Parameters
+    ----------
+    equations: dict
+        Symbolic      
+    
         - Python
         - Fortran
         - Julia
@@ -316,8 +360,8 @@ def equation_as_function(equations, params, string_output=False, language='pytho
 
         f_output = list()
         eq_dict = _split_equations(eq_dict, f_output)
-        f_output = create_auto_file(eq_dict, params, free_vars)
-
+        create_auto_file(eq_dict, params, free_vars)
+        
     if language == 'mathematica':
         #TODO: This function needs testing before release
         eq_dict = translate_equations(eq_dict, language='mathematica')
@@ -334,12 +378,16 @@ def equation_as_function(equations, params, string_output=False, language='pytho
     return f_output
 
 def create_auto_file(equations, params, free_variables, remain_variables={}):
+
+    #TODO: Find out best way to save these files
+
     # User passes the equations, with the variables to leave as variables.
     # The existing model parameters are used to populate the auto file
     # The variables given as `remain_variables` remain in the equations.
     # There is a limit of 1-10 remian variables
     base_path = os.path.dirname(__file__)
     base_file = '.modelproto'
+    base_config = '.cproto'
 
     if (len(remain_variables) < 1) or (len(remain_variables) > 10):
         ValueError("Too many variables for auto file")
@@ -362,6 +410,8 @@ def create_auto_file(equations, params, free_variables, remain_variables={}):
 
         var_list.append(temp_str)
         var_ini.append(initial_value)
+
+    ###### Writing model file ################
 
     # Open base file and input strings
     f_base = open(base_path + '/' + base_file, 'r')
@@ -386,8 +436,31 @@ def create_auto_file(equations, params, free_variables, remain_variables={}):
         else:
             auto_file.append(ln.replace('\n', ''))
 
-    return auto_file
+    print('\n'.join(auto_file))
+    
+    ###### Writing config file ################
 
+    c_base = open(base_path + '/' + base_config, 'r')
+    lines = c_base.readlines()
+    c_base.close()
+
+    auto_config = list()
+    for ln in lines:
+        if '! PARAMETERS' in ln:
+            auto_config.append('parnames = ' + str({i+1: v for i, v in enumerate(free_variables)}))
+
+        elif '! VARIABLES' in ln:
+            auto_config.append('unames = ' + str(_variable_names(params)))
+
+        elif '! CONTINUATION ORDER' in ln:
+            auto_config.append('ICP = ' + str(list(free_variables)))
+
+        else:
+            auto_config.append(ln.replace('\n', ''))
+
+    print('\n'.join(auto_config))
+
+    return equations
 
 def _sub_values(params, remain_variables):
     # Substitute variables
