@@ -8,6 +8,8 @@ from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, Oceani
 
 from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4
 
+import os
+
 python_lang_translation = {
     'sqrt': 'math.sqrt',
     'pi': 'math.pi'
@@ -15,7 +17,7 @@ python_lang_translation = {
 
 fortran_lang_translation = {
     '**': '^'
-    #TODO: Is there a reason that sqrt is replaced with sq2 in auto? For computational speedup?
+    #TODO: may need to add variable for pi
 }
 
 julia_lang_translation = {
@@ -182,34 +184,19 @@ def format_equations(equations, params, save_loc=None, language='python', remain
         
         remain_variables: Set or list of strings
             A list or set of variables not to substitute. Only is used when variables is set to True.
-        
 
     '''
-    # Substitute variables
     equation_dict = dict()
-    if isinstance(remain_variables, (set, list, dict)):
-        # make a dictionary of variables to substitute from parameters
-        sub_vals = dict()
-        for key in params.symbol_to_value.keys():
-            if len(remain_variables) == 0:
-                sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-            else:
-                if key not in remain_variables:
-                    sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
 
-    elif remain_variables is None:
-        sub_vals = None
+    sub_vals = _sub_values(params, remain_variables)
 
-    else:
-        raise ValueError("Incorrect type for substitution, needs to be set, list, or dict of strings, not: " + str(type(remain_variables)))
-    
     # Substitute variable symbols
     vector_subs = dict()
     if language == 'python':
         for i in range(1, params.ndim+1):
             vector_subs['U_'+str(i)] = sy.Symbol('U['+str(i-1)+']')
     
-    if language == 'fortran':
+    if language == 'fortran' or language == 'auto':
         for i in range(1, params.ndim+1):
             vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
 
@@ -289,37 +276,183 @@ def equation_as_function(equations, params, string_output=False, language='pytho
         f_output.append('function f(t, U, kwargs...)')
         f_output.append('\t#Tendency function of the qgs model')
         f_output.append('\tU_out = similar(U)')
+        for v in free_vars:
+            f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
+
         for n, eq in enumerate(eq_dict.values()):
             f_output.append('\tF['+str(n+1)+'] = ' + str(eq))
         
         f_output.append('\treturn F')
         f_output.append('end')
 
-    #//TODO: Add statement for Fortran
-    #//TODO: Add statement for mathematica
+    if language == 'fortran':
+        eq_dict = translate_equations(eq_dict, language='fortran')
+
+        f_output = list()
+        f_var = ''
+        if len(free_vars) > 0:
+            for fv in free_vars:
+                f_var += str(fv) + ', '
+            f_output.append('SUBROUTINE FUNC(NDIM, t, U, F, ' + f_var[:-2] + ')')
+        else:
+            f_output.append('SUBROUTINE FUNC(NDIM, t, U, F)')
+
+        f_output.append('\t!Tendency function of the qgs model')
+        f_output.append('\tINTEGER, INTENT(IN) :: NDIM')
+        f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)')
+        f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: F(NDIM)')
+
+        for v in free_vars:
+            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v))
+
+        f_output.append('')
+
+        f_output = _split_equations(eq_dict, f_output)
+        
+        f_output.append('END SUBROUTINE')
+
+    if language == 'auto':
+        eq_dict = translate_equations(eq_dict, language='fortran')
+
+        f_output = list()
+        eq_dict = _split_equations(eq_dict, f_output)
+        f_output = create_auto_file(eq_dict, params, free_vars)
+
+    if language == 'mathematica':
+        #TODO: This function needs testing before release
+        eq_dict = translate_equations(eq_dict, language='mathematica')
+
+        f_output = list()
+        f_output.append('F = Array[' + str(len(eq_dict)) + ']')
+
+        for n, eq in enumerate(eq_dict.values()):
+            f_output.append('F['+str(n+1)+'] = ' + str(eq))
+
+        #TODO !!!! Killing output as I have no confidence in the above code !!!!
+        f_output = None
 
     return f_output
 
-def equation_to_auto(equations, params, remain_variables=dict()):
+def create_auto_file(equations, params, free_variables, remain_variables={}):
     # User passes the equations, with the variables to leave as variables.
     # The existing model parameters are used to populate the auto file
     # The variables given as `remain_variables` remain in the equations.
     # There is a limit of 1-10 remian variables
+    base_path = os.path.dirname(__file__)
+    base_file = '.modelproto'
 
     if (len(remain_variables) < 1) or (len(remain_variables) > 10):
         ValueError("Too many variables for auto file")
 
-    str_equations, free_variables = format_equations(equations=equations, params=params, language='fortran', variables=True)
+    # Declare variables
+    declare_var = list()    
+    for i in free_variables:
+        declare_var.append('DOUBLE PRECISION ' + str(i))
 
-    natm, nog = params.nmod
-    dim = params.ndim
-    offset = 1 if params.dynamic_T else 0
-
-    # make list of free variables
+    # make list of parameters
     var_list = list()
+    var_ini = list()
+
+    sub_vals = _sub_values(params, remain_variables)
+
     for i, fv in enumerate(free_variables):
         temp_str = "PAR(" + str(i) + ") = " + str(fv)
-        var_list.append(temp_str)
 
+        initial_value = "PAR(" + str(i) + ") = " + str(sub_vals[fv]) + "   Variable: " + str(fv)
+
+        var_list.append(temp_str)
+        var_ini.append(initial_value)
+
+    # Open base file and input strings
+    f_base = open(base_path + '/' + base_file, 'r')
+    lines = f_base.readlines()
+    f_base.close()
+
+    auto_file = list()
+    #TODO: Tabs not working here correctly
+    for ln in lines:
+        if 'PARAMETER DECLERATION' in ln:
+            for dv in declare_var:
+                auto_file.append('\t' + dv)
+        elif 'CONTINUATION PARAMETERS' in ln:
+            for v in var_list:
+                auto_file.append('\t' + v)
+        elif 'EVOLUTION EQUATIONS' in ln:
+            for e in equations:
+                auto_file.append('\t' + e)
+        elif 'INITIALISE PARAMETERS' in ln:
+            for iv in var_ini:
+                auto_file.append('\t' + iv)
+        else:
+            auto_file.append(ln.replace('\n', ''))
+
+    return auto_file
+
+
+def _sub_values(params, remain_variables):
+    # Substitute variables
+    if isinstance(remain_variables, (set, list, dict)):
+        # make a dictionary of variables to substitute from parameters
+        sub_vals = dict()
+        for key in params.symbol_to_value.keys():
+            if len(remain_variables) == 0:
+                sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
+            else:
+                if key not in remain_variables:
+                    sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
+
+    elif remain_variables is None:
+        sub_vals = None
+
+    else:
+        raise ValueError("Incorrect type for substitution, needs to be set, list, or dict of strings, not: " + str(type(remain_variables)))
     
+    return sub_vals
+
+def _split_equations(eq_dict, f_output, line_len=80):
+    '''
+        Function to split FORTRAN equaitons to a set length when producing functions
+    '''
+    for n, eq in enumerate(eq_dict.values()):
+        # split equaitons to be a maximum of `line_len`
+        
+        #split remainder of equation into chunkcs of length `line_length`
+        eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
+        f_output.append('F('+str(n+1)+') =\t ' + eq_chunks[0] + "&")
+        for ln in eq_chunks[1:-1]:
+            f_output.append("\t&" + ln + "&")
+        
+        f_output.append("\t&" + eq_chunks[-1])
+        f_output.append('')
+    return f_output
+
+def _variable_names(params):
+    # Function to make the variable names for auto
+    num_v = params.number_of_variables
+    offset = 1 if params.number_of_variables else 0
+
+    var_list = list()
+    if params.atmospheric_basis is not None:
+        for i in range(num_v[0]):
+            var_list.append('psi' + str(i))
+        
+        for i in range(offset, num_v[1]+offset):
+            var_list.append('theta' + str(i))
     
+    if params.ground_basis is not None:
+        for i in range(offset, num_v[2] + offset):
+            var_list.append('gT' + str(i))
+    
+    if params.oceanic_basis is not None:
+        for i in range(num_v[2]):
+            var_list.append('A' + str(i))
+
+        for i in range(offset, num_v[3] + offset):
+            var_list.append('T' + str(i))
+    
+    print(var_list)
+    output = dict()
+    for i, v in enumerate(var_list):
+        output[i+1] = v
+    
+    return output
