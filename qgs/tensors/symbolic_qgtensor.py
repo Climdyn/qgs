@@ -750,7 +750,6 @@ class SymbolicTensorLinear(object):
         else:
             dims = (ndim + 1, ndim + 1, ndim + 1)
 
-        #//TODO: I needed to make copies here, but I am not sure why. If I tried to input the dict without the copy it messed up the keys
         jacobian_tensor = sy.tensor.array.ImmutableSparseNDimArray(self.jac_dic.copy(), dims)
         tensor = sy.tensor.array.ImmutableSparseNDimArray(self.tensor_dic.copy(), dims)
 
@@ -788,7 +787,6 @@ class SymbolicTensorLinear(object):
     
     @staticmethod
     def simplify_dict(dic):
-        # this is not correct, I should not permute the tuple, but sort the list of them
         keys = dic.keys()
         dic_upp = dict()
 
@@ -824,6 +822,11 @@ class SymbolicTensorLinear(object):
 
         remain_variables: dict of variables not to substitute
             if None all variables are substituted. This variable is the opposite of 'variables'
+
+        Returns
+        -------
+        ten_out: dict
+            Dictionary of the substituted tensor of the model tendencies, with coordinates and value
         """
 
         symbol_to_number_map = list()
@@ -863,6 +866,14 @@ class SymbolicTensorLinear(object):
         return ten_out
             
     def print_tensor(self, tensor=None, dict_opp=True, tol=1e-10):
+        '''
+        Print the non-zero coordinates of values of the tensor of the model tendencies
+
+        Parameters
+        ----------
+        tensor: dict or Sympy ImmutableSparseNDimArray
+            Tensor of model tendencies, either as a dictionary with keys of non-zero coordinates, and values of Sympy Symbols or floats, or as a ImmutableSparseNDimArray.
+        '''
         if tensor is None:
             if dict_opp:
                 temp_ten = self.tensor_dic

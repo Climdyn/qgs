@@ -880,7 +880,6 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 num_threads = cpu_count()
 
             with Pool(max_workers=num_threads) as pool:
-                #//TODO: Check if this needs to be edited for symbolic ip
                 if self.mk_subs:
                     subs = self.subs + self.oceanic_basis.substitutions + self.atmospheric_basis.substitutions
                 else:
@@ -1601,7 +1600,6 @@ def _num_apply(ls):
     else:
         num_integrand = integrand[0]
 
-    # TODO: sy.integrate.ddquad says that the function needs to be f(y, x), not f(x, y)?
     func = sy.lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
 
     try:
@@ -1707,36 +1705,6 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
 
     if return_dict:
         return destination
-
-def _symbolic_compute(pool, args_list, subs, destination, timeout, permute=False):
-    result_list = dict()
-    #//TODO:  This function needs checking, I have stripped alot of the funcitionality out of _parallell_compute
-    future = pool.map(_apply, args_list, timeout=None)
-    results = future.result()
-    i = 0
-    while True:
-        try:
-            res = next(results)
-            expr = res[1].simplify()
-            if subs is not None:
-                result_list[res[0]] = expr.subs(subs)
-            else:
-                result_list[res[0]] = expr
-
-            if permute:
-                i = res[0][0]
-                idx = res[0][1:]
-                perm_idx = multiset_permutations(idx)
-                for perm in perm_idx:
-                    idx = [i] + perm
-                    if subs is not None:
-                        result_list[tuple(idx)] = expr.subs(subs)
-                    else:
-                        result_list[tuple(idx)] = expr
-            
-        except StopIteration:
-            break    
-    return result_list
 
 if __name__ == '__main__':
     from qgs.params.params import QgParams
