@@ -78,7 +78,6 @@ class TestBaseSymbolic(unittest.TestCase):
 
         v1 = float(s1p[1])
         v2 = float(s2p[1])
-        print(v1, v2, eps)
 
         return abs(v1 - v2) < eps
 

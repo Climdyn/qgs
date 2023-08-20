@@ -179,8 +179,6 @@ class SymbolicTensorLinear(object):
     def Lpa(self):
         return self.sym_params['hlambda'] / (self.sym_params['atm_gamma'] * self.sym_params['fo'])
     
-    #//TODO: Do we want to keep everthing symbolic? Including the Stefan Bolzmann const?
-    
     @property
     def sbpgo(self):
         if self.params.gotemperature_params.T0 is None:
@@ -743,7 +741,6 @@ class SymbolicTensorLinear(object):
 
         if self.params.dynamic_T:
             if self.params.T4:
-                #//TODO: Make a proper error message for here
                 raise ValueError("Symbolic tensor output not configured for T4 version, use Dynamic T version")
             else:
                 dims = (ndim + 1, ndim + 1, ndim + 1, ndim + 1, ndim + 1)
@@ -1263,7 +1260,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             self._set_tensor(symbolic_dict_dynT)
 
 class SymbolicTensorT4(SymbolicTensorLinear):
-    # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs.
+    # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
@@ -1446,7 +1443,6 @@ class SymbolicTensorT4(SymbolicTensorLinear):
         """Routine to compute the tensor."""
         # gathering
         if not(self.params.T4):
-            #//TODO: Make a proper error message for here
             raise ValueError("Parameters are not set for T4 version")
 
         symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)

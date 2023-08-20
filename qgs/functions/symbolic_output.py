@@ -429,6 +429,7 @@ def create_auto_file(equations, params, free_variables):
     '''
 
     #TODO: Find out best way to save these files
+    #TODO: There is some weird double tab spacings in the output, and I am not sure why
 
     # User passes the equations, with the variables to leave as variables.
     # The existing model parameters are used to populate the auto file
@@ -501,9 +502,14 @@ def create_auto_file(equations, params, free_variables):
         elif '! VARIABLES' in ln:
             auto_config.append('unames = ' + str(_variable_names(params)))
 
+        elif '! DIMENSION' in ln:
+            auto_config.append('NDIM = ' + str(params.ndim))
+
         elif '! CONTINUATION ORDER' in ln:
             auto_config.append('ICP = ' + str(list(free_variables)))
-
+        
+        #TODO: Need to include bounds on continuation parameters
+        
         else:
             auto_config.append(ln.replace('\n', ''))
 
@@ -529,7 +535,8 @@ def _sub_values(params, free_variables):
     else:
         raise ValueError("Incorrect type for substitution, needs to be set, list, or dict of strings, not: " + str(type(free_variables)))
     
-
+    return sub_vals
+    
 def _split_equations(eq_dict, f_output, line_len=80):
     '''
         Function to split FORTRAN equaitons to a set length when producing functions
@@ -571,7 +578,6 @@ def _variable_names(params):
         for i in range(offset, num_v[3] + offset):
             var_list.append('T' + str(i))
     
-    print(var_list)
     output = dict()
     for i, v in enumerate(var_list):
         output[i+1] = v

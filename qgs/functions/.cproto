@@ -2,23 +2,16 @@
 
 #Parameters name
 # ! PARAMETERS
-parnames = {1:'n',2:'epsa',3:'lambda',4:'coup',5:'d',6:'k',7:'kp',8:'Co',9:'Ca',11:'T',12,'theta',14:'t'}
-
 #Variables name
 # ! VARIABLES
-unames = {1:'psi1',2:'psi2',3:'psi3',4:'psi4',5:'psi5',6:'psi6',7:'psi7',8:'psi8',9:'psi9',10:'psi10',11:'theta0',12:'theta1',13:'theta2',14:'theta3',15:'theta4',16:'theta5',17:'theta6',18:'theta7',19:'theta8',20:'theta9',21:'theta10',22:'A1',23:'A2',24:'A3',25:'A4',26:'A5',27:'A6',28:'A7',29:'A8',30:'T0',31:'T1',32:'T2',33:'T3',34:'T4',35:'T5',36:'T6',37:'T7',38:'T8'}
-
 #Dimension of the system
 # ! DIMENSION
-NDIM=   38
-
 #Problem type (1 for FP, 2 for PO, -2 for time integration)
 IPS =   1
 #Start solution label
 IRS =   0
 #Continuation parameters (in order of use)
 # ! CONTINUATION ORDER
-ICP =  ['coup','epsa']
 #Number of mesh intervals
 NTST=   100
 #Print and restart every NPR steps (0 to disable)

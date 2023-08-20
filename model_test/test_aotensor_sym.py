@@ -31,10 +31,10 @@ class TestSymbolicAOTensor(TestBaseSymbolic):
     filename = 'test_aotensor.ref'
 
     def test_sym_against_ref(self):
-        self.check_lists()
+        self.check_lists_flt()
     
     def test_sym_against_num(self):
-        self.check_numerical_lists()
+        self.check_numerical_lists_flt()
 
     def symbolic_outputs(self, output_func=None):
 
