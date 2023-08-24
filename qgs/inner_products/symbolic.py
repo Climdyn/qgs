@@ -246,7 +246,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
                 else:
                     subs = self.subs
-                print(subs)
+
                 noc = len(ocean_basis)
                 if self.return_symbolic:
                     self._gh = None
