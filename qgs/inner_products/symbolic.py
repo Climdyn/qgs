@@ -36,9 +36,6 @@ import sympy as sy
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 
-# _n = sy.Symbol('n', positive=True)
-
-
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """Class which contains all the atmospheric inner products coefficients needed for the tendencies
     tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
@@ -177,13 +174,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
             self.mk_subs = make_substitution
             # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [('n', self.n)]
+                self.subs = [(params.symbolic_params['n'], self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
             # _parallel_compute = _parallel_compute
-            self.subs = [('n', self.n)]
+            self.subs = [(params.symbolic_params['n'], self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -249,7 +246,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     subs = self.subs + self.atmospheric_basis.substitutions + self.oceanic_basis.substitutions
                 else:
                     subs = self.subs
-
+                print(subs)
                 noc = len(ocean_basis)
                 if self.return_symbolic:
                     self._gh = None
@@ -820,13 +817,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
             self.mk_subs = make_substitution
             # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [('n', self.n)]
+                self.subs = [(params.symbolic_params['n'], self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
             # _parallel_compute = _parallel_compute
-            self.subs = [('n', self.n)]
+            self.subs = [(params.symbolic_params['n'], self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -1305,13 +1302,13 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
             self.mk_subs = make_substitution
             # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [('n', self.n)]
+                self.subs = [(params.symbolic_params['n'], self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
             # _parallel_compute = _parallel_compute
-            self.subs = [('n', self.n)]
+            self.subs = [(params.symbolic_params['n'], self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()

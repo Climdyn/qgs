@@ -832,7 +832,9 @@ class SymbolicTensorLinear(object):
         for key in self.sym_params.keys():
             if key not in remain_variables:
                 try:
-                    symbol_to_number_map.append(self.params.symbol_to_value[key])
+                    # Sympy 1.12 cannot have subs contain None
+                    if self.params.symbol_to_value[key][1] is not None:
+                        symbol_to_number_map.append(self.params.symbol_to_value[key])
                 except:
                     variables_not_found.append(key)
         

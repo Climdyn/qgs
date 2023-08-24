@@ -521,13 +521,17 @@ def _sub_values(params, free_variables):
     # Substitute variables
     if isinstance(free_variables, (set, list, dict)):
         # make a dictionary of variables to substitute from parameters
+
         sub_vals = dict()
         for key in params.symbol_to_value.keys():
-            if len(free_variables) == 0:
-                sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-            else:
-                if key not in free_variables:
+
+            # Sympy 1.12 cannot have subs contain None
+            if params.symbol_to_value[key][1] is not None:
+                if len(free_variables) == 0:
                     sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
+                else:
+                    if key not in free_variables:
+                        sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
 
     elif free_variables is None:
         sub_vals = None
