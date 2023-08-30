@@ -105,9 +105,7 @@ class Parameter(float):
             else:
                 evalue = value
 
-        scale_diff = input_dimensional ^ return_dimensional
-
-        if no_scale and scale_diff:
+        if no_scale:
             warnings.warn("Parameter configured to perform dimensional conversion " +
                           "but without specifying a ScaleParams object: Conversion disabled!")
 
