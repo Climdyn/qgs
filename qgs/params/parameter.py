@@ -62,6 +62,8 @@ class Parameter(float):
         `None` by default. If `None`, cannot transform between dimensional and nondimentional value.
     description: str, optional
         String describing the parameter.
+    symbol: sympy.core.symbol.Symbol, optional
+        A `Sympy`_ symbol to represent the parameter in symbolic expressions.
     return_dimensional: bool, optional
         Defined if the value returned by the parameter is dimensional or not. Default to `False`.
 
@@ -74,10 +76,11 @@ class Parameter(float):
     --------
     If no scale_object argument is provided, cannot transform between the dimensional and nondimentional value !
 
+    .. _Sympy: https://www.sympy.org/
     """
 
     def __new__(cls, value, input_dimensional=True, units="", scale_object=None, description="",
-                return_dimensional=False):
+                symbol=None, return_dimensional=False):
 
         no_scale = False
 
@@ -102,7 +105,9 @@ class Parameter(float):
             else:
                 evalue = value
 
-        if no_scale:
+        scale_diff = input_dimensional ^ return_dimensional
+
+        if no_scale and scale_diff:
             warnings.warn("Parameter configured to perform dimensional conversion " +
                           "but without specifying a ScaleParams object: Conversion disabled!")
 
@@ -112,6 +117,7 @@ class Parameter(float):
         f._units = units
         f._scale_object = scale_object
         f._description = description
+        f._symbol = symbol
 
         return f
 
@@ -130,6 +136,11 @@ class Parameter(float):
             return self * self._nondimensionalization
         else:
             return self
+
+    @property
+    def symbol(self):
+        """sympy.core.symbol.Symbol: Returns the symbol of the parameter."""
+        return self._symbol
 
     @property
     def input_dimensional(self):
