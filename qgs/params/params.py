@@ -46,7 +46,7 @@ import pickle
 import warnings
 from abc import ABC
 
-from qgs.params.parameter import Parameter, ScalingParameter
+from qgs.params.parameter import Parameter, ScalingParameter, ArrayParameters
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
@@ -155,54 +155,6 @@ class Params(ABC):
         """Print the parameters contained in the container."""
         print(self._list_params())
 
-    @staticmethod
-    def create_params_array(values, input_dimensional=None, units=None, scale_object=None, description=None,
-                            return_dimensional=None, symbol=None):
-
-        if hasattr(values, "__iter__"):
-            ls = len(values)
-            if not isinstance(input_dimensional, list):
-                if input_dimensional is None:
-                    input_dimensional = True
-                idx = ls * [input_dimensional]
-            else:
-                idx = input_dimensional
-            if not isinstance(units, list):
-                if units is None:
-                    units = ""
-                u = ls * [units]
-            else:
-                u = units
-            if not isinstance(description, list):
-                if description is None:
-                    description = ""
-                d = ls * [description]
-            else:
-                d = description
-            if not isinstance(scale_object, list):
-                s = ls * [scale_object]
-            else:
-                s = scale_object
-            if not isinstance(symbol, list):
-                sy = ls * [symbol]
-            else:
-                sy = symbol
-            if not isinstance(return_dimensional, list):
-                if return_dimensional is None:
-                    return_dimensional = False
-                rd = ls * [return_dimensional]
-            else:
-                rd = return_dimensional
-            arr = list()
-            for i, val in enumerate(values):
-                arr.append(Parameter(val, input_dimensional=idx[i], units=u[i], scale_object=s[i], description=d[i],
-                                     return_dimensional=rd[i], symbol=sy))
-        else:
-            arr = values * [Parameter(0.e0, input_dimensional=input_dimensional, units=units, scale_object=scale_object,
-                                      description=description, return_dimensional=return_dimensional)]
-
-        return np.array(arr, dtype=object)
-
     def __repr__(self):
         s = super(Params, self).__repr__()+"\n"+self._list_params()
         return s
@@ -291,28 +243,28 @@ class ScaleParams(Params):
     @property
     def L(self):
         """Parameter: Typical length scale :math:`L`  of the model, in meters [:math:`m`]."""
-        return Parameter(self.scale / np.pi, units=self.scale.units, description='Typical length scale L',
-                         return_dimensional=True)
+        return ScalingParameter(self.scale / np.pi, units=self.scale.units, description='Typical length scale L',
+                                dimensional=True)
 
     @property
     def L_y(self):
         """Parameter: The meridional extent :math:`L_y = \\pi \\, L` of the model's domain, in meters [:math:`m`]."""
-        return Parameter(self.scale, units=self.scale.units, description='The meridional extent of the model domain',
-                         return_dimensional=True)
+        return ScalingParameter(self.scale, units=self.scale.units, description='The meridional extent of the model domain',
+                                dimensional=True)
 
     @property
     def L_x(self):
         """Parameter: The zonal extent :math:`L_x = 2 \\pi \\, L / n` of the model's domain, in meters [:math:`m`]."""
-        return Parameter(2 * self.scale / self.n, units=self.scale.units,
-                         description='The zonal extent of the model domain',
-                         return_dimensional=True)
+        return ScalingParameter(2 * self.scale / self.n, units=self.scale.units,
+                                description='The zonal extent of the model domain',
+                                dimensional=True)
 
     @property
     def phi0(self):
         """Parameter: The reference latitude :math:`\\phi_0` at the center of the domain, expressed in radians [:math:`rad`]."""
-        return Parameter(self.phi0_npi * np.pi, units='[rad]',
-                         description="The reference latitude of the center of the domain",
-                         return_dimensional=True)
+        return ScalingParameter(self.phi0_npi * np.pi, units='[rad]',
+                                description="The reference latitude of the center of the domain",
+                                dimensional=True)
 
     @property
     def beta(self):
@@ -461,8 +413,8 @@ class AtmosphericTemperatureParams(Params):
 
         d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
 
-        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                          description=d, return_dimensional=True)
+        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                 description=d, return_dimensional=True)
 
     def set_thetas(self, value, pos=None):
         """Function to define the spectral decomposition of the Newtonian cooling
@@ -500,8 +452,8 @@ class AtmosphericTemperatureParams(Params):
 
         d = ["spectral component "+str(pos+1)+" of the temperature profile" for pos in range(dim)]
 
-        self.thetas = self.create_params_array(values, scale_object=self._scale_params,
-                                               description=d, return_dimensional=False, input_dimensional=False)
+        self.thetas = ArrayParameters(values, scale_object=self._scale_params,
+                                      description=d, return_dimensional=False, input_dimensional=False)
 
 
 class OceanicParams(Params):
@@ -618,8 +570,8 @@ class OceanicTemperatureParams(Params):
 
         d = ["spectral component "+str(pos)+" of the short-wave radiation of the ocean" for pos in range(dim)]
 
-        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                          description=d, return_dimensional=True)
+        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                 description=d, return_dimensional=True)
 
 
 class GroundParams(Params):
@@ -697,8 +649,8 @@ class GroundParams(Params):
 
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
 
-        self.hk = self.create_params_array(values, scale_object=self._scale_params,
-                                           description=d, return_dimensional=False, input_dimensional=False)
+        self.hk = ArrayParameters(values, scale_object=self._scale_params,
+                                  description=d, return_dimensional=False, input_dimensional=False)
 
 
 class GroundTemperatureParams(Params):
@@ -776,8 +728,8 @@ class GroundTemperatureParams(Params):
 
         d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the ground" for pos in range(dim)]
 
-        self.C = self.create_params_array(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                          description=d, return_dimensional=True)
+        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+                                 description=d, return_dimensional=True)
 
 
 class QgParams(Params):
