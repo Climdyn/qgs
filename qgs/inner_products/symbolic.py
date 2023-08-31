@@ -1703,6 +1703,7 @@ def _parallel_compute(pool, args_list, subs, destination, timeout, permute=False
     if return_dict:
         return destination
 
+
 if __name__ == '__main__':
     from qgs.params.params import QgParams
     pars = QgParams(dynamic_T=True)  # , T4=True)

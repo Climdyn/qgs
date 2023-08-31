@@ -44,6 +44,63 @@
 import warnings
 
 
+class ScalingParameter(float):
+    """Class of model's dimension parameter.
+
+    Parameters
+    ----------
+    value: float
+        Value of the parameter.
+    units: str, optional
+        The units of the provided value. Used to compute the conversion between dimensional and nondimensional
+        value. Should be specified by joining atoms like `'[unit^power]'`, e.g '`[m^2][s^-2][Pa^-2]'`.
+        Empty by default.
+    description: str, optional
+        String describing the parameter.
+    symbol: sympy.core.symbol.Symbol, optional
+        A `Sympy`_ symbol to represent the parameter in symbolic expressions.
+    dimensional: bool, optional
+        Indicate if the value of the parameter is dimensional or not. Default to `True`.
+
+    Notes
+    -----
+    Parameter is immutable. Once instantiated, it cannot be altered. To create a new parameter, one must
+    re-instantiate it.
+
+    .. _Sympy: https://www.sympy.org/
+    """
+
+    def __new__(cls, value, units="", description="", symbol=None, dimensional=False):
+
+        f = float.__new__(cls, value)
+        f._dimensional = dimensional
+        f._units = units
+        f._description = description
+        f._symbol = symbol
+
+        return f
+
+    @property
+    def symbol(self):
+        """sympy.core.symbol.Symbol: Returns the symbol of the parameter."""
+        return self._symbol
+
+    @property
+    def dimensional(self):
+        """bool: Indicate if the returned value is dimensional or not."""
+        return self._dimensional
+
+    @property
+    def units(self):
+        """str: The units of the dimensional value."""
+        return self._units
+
+    @property
+    def description(self):
+        """str: Description of the parameter."""
+        return self._description
+
+
 class Parameter(float):
     """Base class of model's parameter.
 
@@ -108,6 +165,12 @@ class Parameter(float):
         if no_scale:
             warnings.warn("Parameter configured to perform dimensional conversion " +
                           "but without specifying a ScaleParams object: Conversion disabled!")
+            print(input_dimensional)
+            print(return_dimensional)
+            print(no_scale)
+            print(description)
+            print(value)
+            raise Exception
 
         f = float.__new__(cls, evalue)
         f._input_dimensional = input_dimensional

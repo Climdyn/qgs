@@ -46,14 +46,14 @@ import pickle
 import warnings
 from abc import ABC
 
-from qgs.params.parameter import Parameter
+from qgs.params.parameter import Parameter, ScalingParameter
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
 import sympy as sy
 
 # TODO: - store model version in a variable somewhere
-#       - force the user to define the aspect ratio n at parameter object instantiation
+#       - force or warn the user to define the aspect ratio n at parameter object instantiation
 
 
 class Params(ABC):
@@ -89,11 +89,23 @@ class Params(ABC):
                             self.__dict__[key] = val
                         else:
                             d = self.__dict__[key].__dict__
-                            self.__dict__[key] = Parameter(val, input_dimensional=d['_input_dimensional'],
+                            self.__dict__[key] = Parameter(val,
+                                                           input_dimensional=d['_input_dimensional'],
                                                            units=d['_units'],
                                                            description=d['_description'],
                                                            scale_object=d['_scale_object'],
+                                                           symbol=d['_symbol'],
                                                            return_dimensional=d['_return_dimensional'])
+                    elif isinstance(self.__dict__[key], ScalingParameter):
+                        if isinstance(val, ScalingParameter):
+                            self.__dict__[key] = val
+                        else:
+                            d = self.__dict__[key].__dict__
+                            self.__dict__[key] = ScalingParameter(val,
+                                                                  units=d['_units'],
+                                                                  description=d['_description'],
+                                                                  symbol=d['_symbol'],
+                                                                  dimensional=d['_dimensional'])
                     else:
                         self.__dict__[key] = val
 
@@ -114,6 +126,12 @@ class Params(ABC):
                         else:
                             units = "[nondim]"
                     s += "'" + key + "': " + str(efval) + "  " + units + "  (" + val.description + "),\n"
+                elif isinstance(val, ScalingParameter):
+                    if val.dimensional:
+                        units = val.units
+                    else:
+                        units = "[nondim]"
+                    s += "'" + key + "': " + str(val) + "  " + units + "  (" + val.description + "),\n"
                 elif isinstance(val, (np.ndarray, list, tuple)) and isinstance(val[0], Parameter):
                     for i, v in enumerate(val):
                         if v.input_dimensional:
@@ -139,7 +157,7 @@ class Params(ABC):
 
     @staticmethod
     def create_params_array(values, input_dimensional=None, units=None, scale_object=None, description=None,
-                            return_dimensional=None):
+                            return_dimensional=None, symbol=None):
 
         if hasattr(values, "__iter__"):
             ls = len(values)
@@ -165,6 +183,10 @@ class Params(ABC):
                 s = ls * [scale_object]
             else:
                 s = scale_object
+            if not isinstance(symbol, list):
+                sy = ls * [symbol]
+            else:
+                sy = symbol
             if not isinstance(return_dimensional, list):
                 if return_dimensional is None:
                     return_dimensional = False
@@ -174,7 +196,7 @@ class Params(ABC):
             arr = list()
             for i, val in enumerate(values):
                 arr.append(Parameter(val, input_dimensional=idx[i], units=u[i], scale_object=s[i], description=d[i],
-                                     return_dimensional=rd[i]))
+                                     return_dimensional=rd[i], symbol=sy))
         else:
             arr = values * [Parameter(0.e0, input_dimensional=input_dimensional, units=units, scale_object=scale_object,
                                       description=description, return_dimensional=return_dimensional)]
@@ -250,17 +272,16 @@ class ScaleParams(Params):
         # Scale parameters for the ocean and the atmosphere
         # -----------------------------------------------------------
 
-        self.scale = Parameter(5.e6, units='[m]', description="characteristic space scale (L*pi)",
-                               return_dimensional=True)
-        self.f0 = Parameter(1.032e-4, units='[s^-1]', description="Coriolis parameter at the middle of the domain",
-                            return_dimensional=True)
-        self.n = Parameter(1.3e0, input_dimensional=False, description="aspect ratio (n = 2 L_y / L_x)")
-        self.rra = Parameter(6370.e3, units='[m]', description="earth radius", return_dimensional=True)
-        self.phi0_npi = Parameter(0.25e0, input_dimensional=False, description="latitude expressed in fraction of pi")
-        self.deltap = Parameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
-                                return_dimensional=True)
-        self.Ha = Parameter(8500., units='[m]', description="Average height of the 500 hPa pressure level at midlatitude",
-                            return_dimensional=True)
+        self.scale = ScalingParameter(5.e6, units='[m]', description="characteristic space scale (L*pi)", dimensional=True)
+        self.f0 = ScalingParameter(1.032e-4, units='[s^-1]', description="Coriolis parameter at the middle of the domain",
+                                   dimensional=True)
+        self.n = ScalingParameter(1.3e0, dimensional=False, description="aspect ratio (n = 2 L_y / L_x)")
+        self.rra = ScalingParameter(6370.e3, units='[m]', description="earth radius", dimensional=True)
+        self.phi0_npi = ScalingParameter(0.25e0, dimensional=False, description="latitude expressed in fraction of pi")
+        self.deltap = ScalingParameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
+                                       dimensional=True)
+        self.Ha = ScalingParameter(8500., units='[m]', description="Average height of the 500 hPa pressure level at midlatitude",
+                                   dimensional=True)
         self.set_params(dic)
 
     # ----------------------------------------
