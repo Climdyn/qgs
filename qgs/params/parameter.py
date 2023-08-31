@@ -48,6 +48,11 @@
     >>> s.dimensional_values
     array([[1.0320000000000001e-05, 2.0640000000000002e-05],
            [3.096e-05, 4.1280000000000005e-05]], dtype=object)
+    >>> # you can also ask for the dimensional value of one particular value of the array
+    >>> s[0,0]
+    0.1
+    >>> s[0,0].dimensional_value
+    1.0320000000000001e-05
 
     Main class
     ----------
@@ -277,10 +282,10 @@ class ArrayParameters(np.ndarray):
         A scale parameters object to compute the conversion between dimensional and nondimensional value.
         `None` by default. If `None`, cannot transform between dimensional and nondimentional value.
     description: str or list(str) or array(str), optional
-        String or an iterable of string, describing the parameters.
+        String or an iterable of strings, describing the parameters.
         If an iterable, should have the same length or shape as `values`.
     symbol: ~sympy.core.symbol.Symbol or list(~sympy.core.symbol.Symbol) or ~numpy.ndarray(~sympy.core.symbol.Symbol), optional
-        A `Sympy`_ symbol or an iterable of, to represent the parameters in symbolic expressions.
+        A `Sympy`_ symbol or an iterable of symbols, to represent the parameters in symbolic expressions.
         If an iterable, should have the same length or shape as `values`.
     return_dimensional: bool, optional
         Defined if the value returned by the parameter is dimensional or not. Default to `False`.
