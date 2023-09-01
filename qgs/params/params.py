@@ -50,7 +50,7 @@ from qgs.params.parameter import Parameter, ScalingParameter, ArrayParameters
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
-import sympy as sy
+from sympy import Symbol, simplify, ImmutableSparseMatrix
 
 # TODO: - store model version in a variable somewhere
 #       - force or warn the user to define the aspect ratio n at parameter object instantiation
@@ -226,8 +226,8 @@ class ScaleParams(Params):
 
         self.scale = ScalingParameter(5.e6, units='[m]', description="characteristic space scale (L*pi)", dimensional=True)
         self.f0 = ScalingParameter(1.032e-4, units='[s^-1]', description="Coriolis parameter at the middle of the domain",
-                                   dimensional=True)
-        self.n = ScalingParameter(1.3e0, dimensional=False, description="aspect ratio (n = 2 L_y / L_x)")
+                                   dimensional=True, symbol=Symbol('f0'))
+        self.n = ScalingParameter(1.3e0, dimensional=False, description="aspect ratio (n = 2 L_y / L_x)", symbol=Symbol('n', positive=True))
         self.rra = ScalingParameter(6370.e3, units='[m]', description="earth radius", dimensional=True)
         self.phi0_npi = ScalingParameter(0.25e0, dimensional=False, description="latitude expressed in fraction of pi")
         self.deltap = ScalingParameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
@@ -244,7 +244,7 @@ class ScaleParams(Params):
     def L(self):
         """Parameter: Typical length scale :math:`L`  of the model, in meters [:math:`m`]."""
         return ScalingParameter(self.scale / np.pi, units=self.scale.units, description='Typical length scale L',
-                                dimensional=True)
+                                symbol=Symbol('L'), dimensional=True)
 
     @property
     def L_y(self):
@@ -264,14 +264,14 @@ class ScaleParams(Params):
         """Parameter: The reference latitude :math:`\\phi_0` at the center of the domain, expressed in radians [:math:`rad`]."""
         return ScalingParameter(self.phi0_npi * np.pi, units='[rad]',
                                 description="The reference latitude of the center of the domain",
-                                dimensional=True)
+                                dimensional=True, symbol=Symbol('phi0'))
 
     @property
     def beta(self):
         """Parameter: The meridional gradient of the Coriolis parameter at :math:`\\phi_0`, expressed in [:math:`m^{-1} s^{-1}`]. """
         return Parameter(self.L / self.rra * np.cos(self.phi0) / np.sin(self.phi0), input_dimensional=False,
                          units='[m^-1][s^-1]', scale_object=self,
-                         description="Meridional gradient of the Coriolis parameter at phi_0")
+                         description="Meridional gradient of the Coriolis parameter at phi_0", symbol=Symbol('beta'))
 
 
 class AtmosphericParams(Params):
@@ -304,11 +304,11 @@ class AtmosphericParams(Params):
 
         # Parameters for the atmosphere
         self.kd = Parameter(0.1, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
-                            description="atmosphere bottom friction coefficient")
+                            description="atmosphere bottom friction coefficient", symbol=Symbol('k_d'))
         self.kdp = Parameter(0.01, input_dimensional=False, scale_object=scale_params, units='[s^-1]',
-                             description="atmosphere internal friction coefficient")
+                             description="atmosphere internal friction coefficient", symbol=Symbol('k_p'))
         self.sigma = Parameter(0.2e0, input_dimensional=False, scale_object=scale_params, units='[m^2][s^-2][Pa^-2]',
-                               description="static stability of the atmosphere")
+                               description="static stability of the atmosphere", symbol=Symbol('sigma'))
 
         self.set_params(dic)
 
@@ -365,7 +365,7 @@ class AtmosphericTemperatureParams(Params):
         self._scale_params = scale_params
 
         self.hd = Parameter(0.045, input_dimensional=False, units='[s]', scale_object=scale_params,
-                            description="Newtonian cooling coefficient")
+                            description="Newtonian cooling coefficient", symbol=Symbol('hd'))
         self.thetas = None  # Radiative equilibrium mean temperature decomposition on the model's modes
 
         self.gamma = None
@@ -377,7 +377,7 @@ class AtmosphericTemperatureParams(Params):
 
         self.set_params(dic)
 
-    def set_insolation(self, value, pos=None):
+    def set_insolation(self, value, pos=None, dynamic_T=False):
         """Function to define the spectral decomposition of the constant short-wave radiation of the atmosphere (insolation)
         :math:`C_{{\\rm a}, i}` (:attr:`~.AtmosphericTemperatureParams.C`).
 
@@ -388,22 +388,27 @@ class AtmosphericTemperatureParams(Params):
             If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
         pos: int, optional
             Indicate in which component to set the `value`.
+        dynamic_T: bool, optional
+            Whether or not the dynamic temperature scheme is activated.
         """
 
         # TODO: - check for the dimensionality of the arguments
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
+            offset = 1
+            if dynamic_T:
+                offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
-                                    description="spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere",
-                                    return_dimensional=True)
+                                    description="spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere",
+                                    return_dimensional=True, symbol=Symbol('C_a'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
-            self._create_insolation(value)
+            self._create_insolation(value, dynamic_T)
         else:
             warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
                           'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
                           'Please specify it or give a vector as `value`.')
 
-    def _create_insolation(self, values):
+    def _create_insolation(self, values, dynamic_T=False):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
@@ -411,10 +416,14 @@ class AtmosphericTemperatureParams(Params):
             dim = values
             values = dim * [0.]
 
-        d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
+        offset = 1
+        if dynamic_T:
+            offset = 0
+        d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
+        sy = [Symbol('C_a'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True)
+                                 description=d, return_dimensional=True, symbol=sy)
 
     def set_thetas(self, value, pos=None):
         """Function to define the spectral decomposition of the Newtonian cooling
@@ -434,7 +443,7 @@ class AtmosphericTemperatureParams(Params):
         if isinstance(value, (float, int)) and pos is not None and self.thetas is not None:
             self.thetas[pos] = Parameter(value, scale_object=self._scale_params,
                                          description="spectral components "+str(pos+1)+" of the temperature profile",
-                                         return_dimensional=False, input_dimensional=False)
+                                         return_dimensional=False, input_dimensional=False, symbol=Symbol('thetas_'+str(pos+1)))
         elif hasattr(value, "__iter__"):
             self._create_thetas(value)
         else:
@@ -451,9 +460,10 @@ class AtmosphericTemperatureParams(Params):
             values = dim * [0.]
 
         d = ["spectral component "+str(pos+1)+" of the temperature profile" for pos in range(dim)]
+        sy = [Symbol('thetas_'+str(pos+1)) for pos in range(dim)]
 
         self.thetas = ArrayParameters(values, scale_object=self._scale_params,
-                                      description=d, return_dimensional=False, input_dimensional=False)
+                                      description=d, return_dimensional=False, input_dimensional=False, symbol=sy)
 
 
 class OceanicParams(Params):
@@ -486,13 +496,13 @@ class OceanicParams(Params):
         self._scale_params = scale_params
 
         self.gp = Parameter(3.1e-2, units='[m][s^-2]', return_dimensional=True, scale_object=scale_params,
-                            description='reduced gravity')
+                            description='reduced gravity', symbol=Symbol('g_p'))
         self.r = Parameter(1.e-8, units='[s^-1]', scale_object=scale_params,
-                           description="frictional coefficient at the bottom of the ocean")
+                           description="frictional coefficient at the bottom of the ocean", symbol=Symbol('r'))
         self.h = Parameter(5.e2, units='[m]', return_dimensional=True, scale_object=scale_params,
-                           description="depth of the water layer of the ocean")
+                           description="depth of the water layer of the ocean", symbol=Symbol('h'))
         self.d = Parameter(1.e-8, units='[s^-1]', scale_object=scale_params,
-                           description="strength of the ocean-atmosphere mechanical coupling")
+                           description="strength of the ocean-atmosphere mechanical coupling", symbol=Symbol('d'))
 
         self.set_params(dic)
 
@@ -529,14 +539,14 @@ class OceanicTemperatureParams(Params):
         self._scale_params = scale_params
 
         self.gamma = Parameter(2.e8, units='[J][m^-2][K^-1]', scale_object=scale_params, return_dimensional=True,
-                               description='specific heat capacity of the ocean')
+                               description='specific heat capacity of the ocean', symbol=Symbol('gamma_o'))
         self.C = None
 
         self.T0 = None
 
         self.set_params(dic)
 
-    def set_insolation(self, value, pos=None):
+    def set_insolation(self, value, pos=None, dynamic_T=False):
         """Function to define the spectral decomposition of the constant short-wave radiation of the ocean (insolation)
         :math:`C_{{\\rm o}, i}` (:attr:`~.OceanicTemperatureParams.C`).
 
@@ -547,20 +557,25 @@ class OceanicTemperatureParams(Params):
             If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
         pos: int, optional
             Indicate in which component to set the `value`.
+        dynamic_T: bool, optional
+            Whether or not the dynamic temperature scheme is activated.
         """
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
+            offset = 1
+            if dynamic_T:
+                offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
-                                    description="spectral component "+str(pos)+" of the short-wave radiation of the ocean",
-                                    return_dimensional=True)
+                                    description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean",
+                                    return_dimensional=True, symbol=Symbol('C_go'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
-            self._create_insolation(value)
+            self._create_insolation(value, dynamic_T)
         else:
             warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
                           'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
                           'Please specify it or give a vector as `value`.')
 
-    def _create_insolation(self, values):
+    def _create_insolation(self, values, dynamic_T=False):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
@@ -568,10 +583,14 @@ class OceanicTemperatureParams(Params):
             dim = values
             values = dim * [0.]
 
-        d = ["spectral component "+str(pos)+" of the short-wave radiation of the ocean" for pos in range(dim)]
+        offset = 1
+        if dynamic_T:
+            offset = 0
+        d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean" for pos in range(dim)]
+        sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True)
+                                 description=d, return_dimensional=True, symbol=sy)
 
 
 class GroundParams(Params):
@@ -631,7 +650,7 @@ class GroundParams(Params):
         if isinstance(value, (float, int)) and pos is not None and self.hk is not None:
             self.hk[pos] = Parameter(value, scale_object=self._scale_params,
                                      description="spectral components "+str(pos+1)+" of the orography",
-                                     return_dimensional=False, input_dimensional=False)
+                                     return_dimensional=False, input_dimensional=False, symbol=Symbol('hk'))
         elif hasattr(value, "__iter__"):
             self._create_orography(value)
         else:
@@ -685,14 +704,14 @@ class GroundTemperatureParams(Params):
         self._scale_params = scale_params
 
         self.gamma = Parameter(2.e8, units='[J][m^-2][K^-1]', scale_object=scale_params, return_dimensional=True,
-                               description='specific heat capacity of the ground')
+                               description='specific heat capacity of the ground', symbol=Symbol('gamma_g'))
         self.C = None
 
         self.T0 = None
 
         self.set_params(dic)
 
-    def set_insolation(self, value, pos=None):
+    def set_insolation(self, value, pos=None, dynamic_T=False):
         """Function to define the decomposition of the constant short-wave radiation of the ground (insolation)
         :math:`C_{{\\rm g}, i}` (:attr:`~.GroundTemperatureParams.C`).
 
@@ -703,22 +722,27 @@ class GroundTemperatureParams(Params):
             If an iterable is provided, create a vector of spectral decomposition parameters corresponding to it.
         pos: int, optional
             Indicate in which component to set the `value`.
+        dynamic_T: bool, optional
+            Whether or not the dynamic temperature scheme is activated.
         """
 
         # TODO: - check for the dimensionality of the arguments
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
+            offset = 1
+            if dynamic_T:
+                offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
-                                    description="spectral component "+str(pos+1)+" of the short-wave radiation of the ground",
-                                    return_dimensional=True)
+                                    description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ground",
+                                    return_dimensional=True, symbol=Symbol('C_go'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
-            self._create_insolation(value)
+            self._create_insolation(value, dynamic_T)
         else:
             warnings.warn('A scalar value was provided, but without the `pos` argument indicating in which ' +
                           'component of the spectral decomposition to put it: Spectral decomposition unchanged !' +
                           'Please specify it or give a vector as `value`.')
 
-    def _create_insolation(self, values):
+    def _create_insolation(self, values, dynamic_T=False):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
@@ -726,10 +750,14 @@ class GroundTemperatureParams(Params):
             dim = values
             values = dim * [0.]
 
-        d = ["spectral component "+str(pos+1)+" of the short-wave radiation of the ground" for pos in range(dim)]
+        offset = 1
+        if dynamic_T:
+            offset = 0
+        d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ground" for pos in range(dim)]
+        sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True)
+                                 description=d, return_dimensional=True, symbol=sy)
 
 
 class QgParams(Params):
@@ -825,51 +853,51 @@ class QgParams(Params):
     #//TODO: Should this dictionary be separated into three separate for atm, ocn, gnd?   
     symbolic_params = {
         # Scale Parameters
-        'L': sy.Symbol('L'),
-        'fo': sy.Symbol('f0'),
-        'beta': sy.Symbol('beta'),
-        'n': sy.Symbol('n', positive=True),
-        'rr': sy.Symbol('R'),
-        'sb': sy.Symbol('sigma_b'),
+        'L': Symbol('L'),
+        'fo': Symbol('f0'),
+        'beta': Symbol('beta'),
+        'n': Symbol('n', positive=True),
+        'rr': Symbol('R'),
+        'sb': Symbol('sigma_b'),
 
         # Atmosphere Parameters
-        'kd': sy.Symbol('k_d'),
-        'kdp': sy.Symbol('k_p'),
-        'sigma': sy.Symbol('sigma'),
+        'kd': Symbol('k_d'),
+        'kdp': Symbol('k_p'),
+        'sigma': Symbol('sigma'),
 
         # Atmosphere Temp Parameters
-        'hd': sy.Symbol('hd'),
-        'theta': sy.Symbol('theta'),
+        'hd': Symbol('hd'),
+        'theta': Symbol('theta'),
         #//TODO: Need to work out what thetas should be
         'thetas': None,
-        'atm_gamma': sy.Symbol('gamma_a'),
-        'atm_C_val': sy.Symbol('C_a'),
+        'atm_gamma': Symbol('gamma_a'),
+        'atm_C_val': Symbol('C_a'),
         'atm_C': None,
-        'eps': sy.Symbol('epsilon'),
-        'atm_T0': sy.Symbol('T_a0'),
-        'sc': sy.Symbol('sc'),
-        'hlambda': sy.Symbol('lambda'),
+        'eps': Symbol('epsilon'),
+        'atm_T0': Symbol('T_a0'),
+        'sc': Symbol('sc'),
+        'hlambda': Symbol('lambda'),
 
         # Ground Parameters
-        'hk_val': sy.Symbol('h_k'),
+        'hk_val': Symbol('h_k'),
         'hk': None,
 
         # Ground Temperature Parameters
-        'gnd_gamma': sy.Symbol('gamma_g'),
+        'gnd_gamma': Symbol('gamma_g'),
         
         # Ground/ocean Parameters
-        'go_C_val': sy.Symbol('C_go'),
+        'go_C_val': Symbol('C_go'),
         'go_C': None,
-        'go_T0': sy.Symbol('T_go0'),
+        'go_T0': Symbol('T_go0'),
         
         # Ocean Parameters
-        'gp': sy.Symbol('g_p'),
-        'r': sy.Symbol('r'),
-        'h': sy.Symbol('h'),
-        'd': sy.Symbol('d'),
+        'gp': Symbol('g_p'),
+        'r': Symbol('r'),
+        'h': Symbol('h'),
+        'd': Symbol('d'),
 
         # Ocean Temperature Parameters
-        'ocn_gamma': sy.Symbol('gamma_o'),
+        'ocn_gamma': Symbol('gamma_o'),
 
     }
 
@@ -948,9 +976,9 @@ class QgParams(Params):
         # Physical constants
 
         self.rr = Parameter(287.058e0, return_dimensional=True, units='[J][kg^-1][K^-1]',
-                            scale_object=self.scale_params, description="gas constant of dry air")
+                            scale_object=self.scale_params, description="gas constant of dry air", symbol=Symbol('R'))
         self.sb = Parameter(5.67e-8, return_dimensional=True, units='[J][m^-2][s^-1][K^-4]',
-                            scale_object=self.scale_params, description="Stefan-Boltzmann constant")
+                            scale_object=self.scale_params, description="Stefan-Boltzmann constant", symbol=Symbol('sigma_b'))
 
         self.set_params(dic)
 
@@ -1257,8 +1285,8 @@ class QgParams(Params):
                 atm_C_list[1] = self.symbolic_params['atm_C_val']
                 go_C_list[1] = self.symbolic_params['go_C_val']
         
-        self.symbolic_params['atm_C'] = sy.matrices.immutable.ImmutableSparseMatrix(atm_C_list)
-        self.symbolic_params['go_C'] = sy.matrices.immutable.ImmutableSparseMatrix(go_C_list)
+        self.symbolic_params['atm_C'] = ImmutableSparseMatrix(atm_C_list)
+        self.symbolic_params['go_C'] = ImmutableSparseMatrix(go_C_list)
 
     def symbolic_orography_array(self, hk=None):
         """Set the array hk from given value, or the defulat symbols
@@ -1275,7 +1303,7 @@ class QgParams(Params):
             oro_list = [0] * self.nmod[0]
             oro_list[1] = self.symbolic_params['hk_val']
 
-        self.symbolic_params['hk'] = sy.matrices.immutable.ImmutableSparseMatrix(oro_list)
+        self.symbolic_params['hk'] = ImmutableSparseMatrix(oro_list)
 
     @property
     def ndim(self):
@@ -1398,7 +1426,7 @@ class QgParams(Params):
         self._atmospheric_basis = basis
         self._number_of_atmospheric_modes = len(basis.functions)
         if self.dynamic_T:
-            self._atmospheric_basis.functions.insert(0, sy.simplify("1"))
+            self._atmospheric_basis.functions.insert(0, simplify("1"))
 
         if self.ground_params is not None and self.ground_params.orographic_basis == "atmospheric":
             self.ground_params.set_orography(self._number_of_atmospheric_modes * [0.e0])
@@ -1421,7 +1449,7 @@ class QgParams(Params):
         self._number_of_ground_modes = 0
         self._number_of_oceanic_modes = len(basis)
         if self.dynamic_T:
-            self._oceanic_basis.functions.insert(0, sy.simplify("1"))
+            self._oceanic_basis.functions.insert(0, simplify("1"))
 
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
@@ -1430,35 +1458,40 @@ class QgParams(Params):
 
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
-                                                       return_dimensional=True)
+                                                       return_dimensional=True, symbol=Symbol('gamma_a'))
             if self.dynamic_T:
-                self.atemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0])
-                self.atemperature_params.set_insolation(100.0, 0)
-                self.atemperature_params.set_insolation(100.0, 1)
+                self.atemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0], None, True)
+                self.atemperature_params.set_insolation(100.0, 0, True)
+                self.atemperature_params.set_insolation(100.0, 1, True)
             else:
                 self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.atemperature_params.set_insolation(100.0, 0)
                 self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                         return_dimensional=True,
-                                                        description="stationary solution for the 0-th order atmospheric temperature")
+                                                        description="stationary solution for the 0-th order atmospheric temperature",
+                                                        symbol=Symbol('T_a0'))
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
-                                                     description="emissivity coefficient for the grey-body atmosphere")
+                                                     description="emissivity coefficient for the grey-body atmosphere",
+                                                     symbol=Symbol('epsilon'))
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
-                                                    description="ratio of surface to atmosphere temperature")
+                                                    description="ratio of surface to atmosphere temperature",
+                                                    symbol=Symbol('sc'))
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
+                                                         symbol=Symbol('lambda'))
 
         if self.gotemperature_params is not None:
             if self.dynamic_T:
-                self.gotemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0])
-                self.gotemperature_params.set_insolation(350.0, 0)
-                self.gotemperature_params.set_insolation(350.0, 1)
+                self.gotemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0], None, True)
+                self.gotemperature_params.set_insolation(350.0, 0, True)
+                self.gotemperature_params.set_insolation(350.0, 1, True)
             else:
                 self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.gotemperature_params.set_insolation(350.0, 0)
                 self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
-                                                         description="stationary solution for the 0-th order oceanic temperature")
+                                                         description="stationary solution for the 0-th order oceanic temperature",
+                                                         symbol=Symbol('T_go0'))
             # if setting an ocean, then disable the orography
             if self.ground_params is not None:
                 self.ground_params.hk = None
@@ -1478,7 +1511,7 @@ class QgParams(Params):
         self._number_of_ground_modes = len(basis)
         self._number_of_oceanic_modes = 0
         if self.dynamic_T:
-            self._ground_basis.functions.insert(0, sy.simplify("1"))
+            self._ground_basis.functions.insert(0, simplify("1"))
 
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
@@ -1487,24 +1520,28 @@ class QgParams(Params):
 
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
-                                                       return_dimensional=True)
+                                                       return_dimensional=True, symbol=Symbol('gamma_g'))
             if self.dynamic_T:
-                self.atemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0])
-                self.atemperature_params.set_insolation(100.0, 0)
-                self.atemperature_params.set_insolation(100.0, 1)
+                self.atemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0], None, True)
+                self.atemperature_params.set_insolation(100.0, 0, True)
+                self.atemperature_params.set_insolation(100.0, 1, True)
             else:
                 self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.atemperature_params.set_insolation(100.0, 0)
                 self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                         return_dimensional=True,
-                                                        description="stationary solution for the 0-th order atmospheric temperature")
+                                                        description="stationary solution for the 0-th order atmospheric temperature",
+                                                        symbol=Symbol('T_a0'))
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
-                                                     description="emissivity coefficient for the grey-body atmosphere")
+                                                     description="emissivity coefficient for the grey-body atmosphere",
+                                                     symbol=Symbol('epsilon'))
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
-                                                    description="ratio of surface to atmosphere temperature")
+                                                    description="ratio of surface to atmosphere temperature",
+                                                    symbol=Symbol('sc'))
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
+                                                         symbol=Symbol('lambda'))
 
         if self.gotemperature_params is not None:
             # if orography is disabled, enable it!
@@ -1516,14 +1553,15 @@ class QgParams(Params):
                         self.ground_params.set_orography(self._number_of_ground_modes * [0.e0])
                     self.ground_params.set_orography(0.1, 1)
             if self.dynamic_T:
-                self.gotemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0])
-                self.gotemperature_params.set_insolation(350.0, 0)
-                self.gotemperature_params.set_insolation(350.0, 1)
+                self.gotemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0], None, True)
+                self.gotemperature_params.set_insolation(350.0, 0, True)
+                self.gotemperature_params.set_insolation(350.0, 1, True)
             else:
                 self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
                 self.gotemperature_params.set_insolation(350.0, 0)
                 self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
-                                                         description="stationary solution for the 0-th order oceanic temperature")
+                                                         description="stationary solution for the 0-th order oceanic temperature",
+                                                         symbol=Symbol('T_go0'))
 
     def set_atmospheric_modes(self, basis, auto=False):
         """Function to configure the atmospheric modes (basis functions) used to project the PDEs onto.
@@ -1863,19 +1901,24 @@ class QgParams(Params):
 
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
-                                                       return_dimensional=True)
+                                                       return_dimensional=True,
+                                                       symbol=Symbol('gamma_a'))
             self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.atemperature_params.set_insolation(100.0, 0)
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
-                                                     description="emissivity coefficient for the grey-body atmosphere")
+                                                     description="emissivity coefficient for the grey-body atmosphere",
+                                                     symbol=Symbol('epsilon'))
             self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                     return_dimensional=True,
-                                                    description="stationary solution for the 0-th order atmospheric temperature")
+                                                    description="stationary solution for the 0-th order atmospheric temperature",
+                                                    symbol=Symbol('T_a0'))
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
-                                                    description="ratio of surface to atmosphere temperature")
+                                                    description="ratio of surface to atmosphere temperature",
+                                                    symbol=Symbol('sc'))
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
+                                                         symbol=Symbol('lambda'))
 
         if self.gotemperature_params is not None:
             self._number_of_ground_modes = 0
@@ -1883,7 +1926,8 @@ class QgParams(Params):
             self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.gotemperature_params.set_insolation(350.0, 0)
             self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
-                                                     description="stationary solution for the 0-th order oceanic temperature")
+                                                     description="stationary solution for the 0-th order oceanic temperature",
+                                                     symbol=Symbol('T_go0'))
             # if setting an ocean, then disable the orography
             if self.ground_params is not None:
                 self.ground_params.hk = None
@@ -1910,20 +1954,25 @@ class QgParams(Params):
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]',
                                                        scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
-                                                       return_dimensional=True)
+                                                       return_dimensional=True,
+                                                       symbol=Symbol('gamma_g'))
             self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.atemperature_params.set_insolation(100.0, 0)
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
-                                                     description="emissivity coefficient for the grey-body atmosphere")
+                                                     description="emissivity coefficient for the grey-body atmosphere",
+                                                     symbol=Symbol('epsilon'))
             self.atemperature_params.T0 = Parameter(270.0, units='[K]', scale_object=self.scale_params,
                                                     return_dimensional=True,
-                                                    description="stationary solution for the 0-th order atmospheric temperature")
+                                                    description="stationary solution for the 0-th order atmospheric temperature",
+                                                    symbol=Symbol('T_a0'))
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
-                                                    description="ratio of surface to atmosphere temperature")
+                                                    description="ratio of surface to atmosphere temperature",
+                                                    symbol=Symbol('sc'))
             self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]',
                                                          scale_object=self.scale_params,
                                                          return_dimensional=True,
-                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere")
+                                                         description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
+                                                         symbol=Symbol('lambda'))
 
         if self.gotemperature_params is not None:
             gmod = 0
@@ -1943,7 +1992,8 @@ class QgParams(Params):
             self.gotemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.gotemperature_params.set_insolation(350.0, 0)
             self.gotemperature_params.T0 = Parameter(285.0, units='[K]', scale_object=self.scale_params, return_dimensional=True,
-                                                     description="stationary solution for the 0-th order oceanic temperature")
+                                                     description="stationary solution for the 0-th order oceanic temperature",
+                                                     symbol=Symbol('T_go0'))
 
     def _set_atmospheric_analytic_fourier_modes(self, nxmax, nymax, auto=False):
 
