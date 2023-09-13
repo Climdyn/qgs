@@ -9,7 +9,7 @@
     --------
 
     >>> from qgs.params.params import ScaleParams
-    >>> from qgs.params.parameter import Parameter, ArrayParameters
+    >>> from qgs.params.parameter import Parameter, ParametersArray
     >>> import numpy as np
     >>> # defining a scale object to help Parameter compute the nondimensionalization
     >>> sc = ScaleParams()
@@ -39,7 +39,7 @@
     False
     >>> # creating a parameters array initialized with a nondimensional values and returning
     >>> # nondimensional ones when called
-    >>> s = ArrayParameters(np.array([[0.1,0.2],[0.3,0.4]]), input_dimensional=False, scale_object=sc, units='[s^-1]',
+    >>> s = ParametersArray(np.array([[0.1,0.2],[0.3,0.4]]), input_dimensional=False, scale_object=sc, units='[s^-1]',
     ...                     description="atmosphere bottom friction coefficient")
     >>> s
     ArrayParameters([[0.1, 0.2],
@@ -265,7 +265,7 @@ class Parameter(float):
             return self._conversion_factor(self._units, self._scale_object)
 
 
-class ArrayParameters(np.ndarray):
+class ParametersArray(np.ndarray):
     """Base class of model's array of parameters.
 
     Parameters
@@ -367,6 +367,11 @@ class ArrayParameters(np.ndarray):
         for idx in np.ndindex(self.shape):
             symbols[idx] = self[idx].symbol
         return symbols
+
+    @property
+    def sparsesymbols(self):
+        """To be implemented"""
+        pass
 
     @property
     def input_dimensional(self):

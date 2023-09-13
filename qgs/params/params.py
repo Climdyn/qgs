@@ -46,7 +46,7 @@ import pickle
 import warnings
 from abc import ABC
 
-from qgs.params.parameter import Parameter, ScalingParameter, ArrayParameters
+from qgs.params.parameter import Parameter, ScalingParameter, ParametersArray
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
@@ -422,7 +422,7 @@ class AtmosphericTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
         sy = [Symbol('C_a'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbol=sy)
 
     def set_thetas(self, value, pos=None):
@@ -462,7 +462,7 @@ class AtmosphericTemperatureParams(Params):
         d = ["spectral component "+str(pos+1)+" of the temperature profile" for pos in range(dim)]
         sy = [Symbol('thetas_'+str(pos+1)) for pos in range(dim)]
 
-        self.thetas = ArrayParameters(values, scale_object=self._scale_params,
+        self.thetas = ParametersArray(values, scale_object=self._scale_params,
                                       description=d, return_dimensional=False, input_dimensional=False, symbol=sy)
 
 
@@ -589,7 +589,7 @@ class OceanicTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbol=sy)
 
 
@@ -668,7 +668,7 @@ class GroundParams(Params):
 
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
 
-        self.hk = ArrayParameters(values, scale_object=self._scale_params,
+        self.hk = ParametersArray(values, scale_object=self._scale_params,
                                   description=d, return_dimensional=False, input_dimensional=False)
 
 
@@ -756,7 +756,7 @@ class GroundTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ground" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ArrayParameters(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbol=sy)
 
 
@@ -849,57 +849,6 @@ class QgParams(Params):
 
     """
     _name = "General"
-
-    #//TODO: Should this dictionary be separated into three separate for atm, ocn, gnd?   
-    symbolic_params = {
-        # Scale Parameters
-        'L': Symbol('L'),
-        'fo': Symbol('f0'),
-        'beta': Symbol('beta'),
-        'n': Symbol('n', positive=True),
-        'rr': Symbol('R'),
-        'sb': Symbol('sigma_b'),
-
-        # Atmosphere Parameters
-        'kd': Symbol('k_d'),
-        'kdp': Symbol('k_p'),
-        'sigma': Symbol('sigma'),
-
-        # Atmosphere Temp Parameters
-        'hd': Symbol('hd'),
-        'theta': Symbol('theta'),
-        #//TODO: Need to work out what thetas should be
-        'thetas': None,
-        'atm_gamma': Symbol('gamma_a'),
-        'atm_C_val': Symbol('C_a'),
-        'atm_C': None,
-        'eps': Symbol('epsilon'),
-        'atm_T0': Symbol('T_a0'),
-        'sc': Symbol('sc'),
-        'hlambda': Symbol('lambda'),
-
-        # Ground Parameters
-        'hk_val': Symbol('h_k'),
-        'hk': None,
-
-        # Ground Temperature Parameters
-        'gnd_gamma': Symbol('gamma_g'),
-        
-        # Ground/ocean Parameters
-        'go_C_val': Symbol('C_go'),
-        'go_C': None,
-        'go_T0': Symbol('T_go0'),
-        
-        # Ocean Parameters
-        'gp': Symbol('g_p'),
-        'r': Symbol('r'),
-        'h': Symbol('h'),
-        'd': Symbol('d'),
-
-        # Ocean Temperature Parameters
-        'ocn_gamma': Symbol('gamma_o'),
-
-    }
 
     def __init__(self, dic=None, scale_params=None,
                  atmospheric_params=True, atemperature_params=True,
@@ -1254,56 +1203,6 @@ class QgParams(Params):
         print("Qgs v0.2.8 parameters summary")
         print("=============================\n")
         print(s)
-
-    def symbolic_insolation_array(self, Cpa=None, Cpgo=None):
-        """Set the array Cpa and Cpgo from given value, or the default symbols
-        
-        It is assumed that the values given are either for Cpa, or Cpgo, there is no option to set both Cpa and Cpgo at the same time.
-
-        Parameters
-        ----------
-        Cpa: List(sympy Symbol, float)
-            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
-
-        Cpgo: List(sympy Symbol, float)
-            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
-
-        """
-        if Cpa is not None:
-            atm_C_list = Cpa
-        elif Cpgo is not None:
-            go_C_list = Cpgo
-
-        else:
-            atm_C_list = [0] * self.number_of_variables[1]
-            go_C_list = [0] * self.number_of_variables[1]
-
-            atm_C_list[0] = self.symbolic_params['atm_C_val']
-            go_C_list[0] = self.symbolic_params['go_C_val']
-
-            if self.dynamic_T:
-                atm_C_list[1] = self.symbolic_params['atm_C_val']
-                go_C_list[1] = self.symbolic_params['go_C_val']
-        
-        self.symbolic_params['atm_C'] = ImmutableSparseMatrix(atm_C_list)
-        self.symbolic_params['go_C'] = ImmutableSparseMatrix(go_C_list)
-
-    def symbolic_orography_array(self, hk=None):
-        """Set the array hk from given value, or the defulat symbols
-        
-        Parameters
-        ----------
-        hk: List(sympy Symbol, float)
-            A list of the sympy symbols, or floats, that will be converted to an ImmutableSparseNDimArray. 
-            
-        """
-        if hk is not None:
-            oro_list = hk
-        else:
-            oro_list = [0] * self.nmod[0]
-            oro_list[1] = self.symbolic_params['hk_val']
-
-        self.symbolic_params['hk'] = ImmutableSparseMatrix(oro_list)
 
     @property
     def ndim(self):
@@ -2092,74 +1991,3 @@ class QgParams(Params):
         for i in range(self.nmod[1]):
             self._ground_latex_var_string.append(r'delta T_{\rm g,' + str(i + 1) + "}")
             self._ground_var_string.append(r'delta_T_g_' + str(i + 1))
-    
-    def _set_symbolic_parameters(self):
-        """
-        Function to make a map between symbolic parameters and numberical values
-        """
-
-        #//TODO: THis function is a really lazy way of doing this, look into setting up the Parameter class with each symbol stored in the class
-        #//TODO: Need a better way to trigger this function, it cannot happen before the symbolic_qgtensor class is initiated I think? 
-        self.symbol_to_value = dict()
-
-        # Scale Parameters
-        if self.scale_params is not None:
-            self.symbol_to_value['L'] = (self.symbolic_params['L'], self.scale_params.L)
-            self.symbol_to_value['fo'] = (self.symbolic_params['fo'], self.scale_params.f0)
-            self.symbol_to_value['beta'] = (self.symbolic_params['beta'], self.scale_params.beta)
-            self.symbol_to_value['n'] = (self.symbolic_params['n'], self.scale_params.n)
-            self.symbol_to_value['rr'] = (self.symbolic_params['rr'], self.rr)
-            self.symbol_to_value['sb'] = (self.symbolic_params['sb'], self.sb)
-            
-        # Atmosphere Parameters
-        if self.atmospheric_params is not None:
-            self.symbol_to_value['kd'] = (self.symbolic_params['kd'], self.atmospheric_params.kd)
-            self.symbol_to_value['kdp'] = (self.symbolic_params['kdp'], self.atmospheric_params.kdp)
-            self.symbol_to_value['sigma'] = (self.symbolic_params['sigma'], self.atmospheric_params.sigma)
-
-
-        #//TODO: Fix the bogde on the index of the insolation
-        # Atmosphere Temp Parameters
-        if self.atemperature_params is not None:
-            self.symbol_to_value['hd'] = (self.symbolic_params['hd'], self.atemperature_params.hd)
-            self.symbol_to_value['theta'] = (self.symbolic_params['theta'], self.atemperature_params.thetas)
-            self.symbol_to_value['thetas'] = (self.symbolic_params['theta'], self.atemperature_params.thetas)
-            self.symbol_to_value['atm_gamma'] = (self.symbolic_params['atm_gamma'], self.atemperature_params.gamma)
-            self.symbol_to_value['atm_C_val'] = (self.symbolic_params['atm_C_val'], self.atemperature_params.C[0])
-            self.symbol_to_value['atm_C'] = (self.symbolic_params['atm_C_val'], self.atemperature_params.C[0])
-            self.symbol_to_value['eps'] = (self.symbolic_params['eps'], self.atemperature_params.eps)
-            self.symbol_to_value['atm_T0'] = (self.symbolic_params['atm_T0'], self.atemperature_params.T0)
-            self.symbol_to_value['sc'] = (self.symbolic_params['sc'], self.atemperature_params.sc)
-            self.symbol_to_value['hlambda'] = (self.symbolic_params['hlambda'], self.atemperature_params.hlambda)
-
-        # Ground Parameters
-        if self.ground_params is not None:
-            self.symbol_to_value['hk_val'] = (self.symbolic_params['hk_val'], self.ground_params.hk)
-            #TODO The index here should not be hard coded
-            self.symbol_to_value['hk'] = (self.symbolic_params['hk_val'], self.ground_params.hk[1])
-
-        #//TODO: Fix the bogde on the index of the insolation
-        # Ground Temperature Parameters
-        if self.gotemperature_params is not None:
-            self.symbol_to_value['gnd_gamma'] = (self.symbolic_params['gnd_gamma'], self.gotemperature_params.gamma)
-
-        # Ground/ocean Parameters
-        if self.gotemperature_params is not None:
-            #TODO The index here should not be hard coded
-            self.symbol_to_value['go_C_val'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
-
-            #TODO The index here should not be hard coded
-            self.symbol_to_value['go_C'] = (self.symbolic_params['go_C_val'], self.gotemperature_params.C[0])
-            self.symbol_to_value['go_T0'] = (self.symbolic_params['go_T0'], self.gotemperature_params.T0)
-
-        # Ocean Parameters
-        if self.oceanic_params is not None:
-            self.symbol_to_value['gp'] = (self.symbolic_params['gp'], self.oceanic_params.gp)
-            self.symbol_to_value['r'] = (self.symbolic_params['r'], self.oceanic_params.r)
-            self.symbol_to_value['h'] = (self.symbolic_params['h'], self.oceanic_params.h)
-            self.symbol_to_value['d'] = (self.symbolic_params['d'], self.oceanic_params.d)
-
-        #//TODO: Fix the bogde on the index of the insolation
-        # Ocean Temperature Parameters
-        if self.gotemperature_params is not None:
-            self.symbol_to_value['ocn_gamma'] = (self.symbolic_params['ocn_gamma'], self.gotemperature_params.gamma)
