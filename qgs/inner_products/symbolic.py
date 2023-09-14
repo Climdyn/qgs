@@ -172,15 +172,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
         self.return_symbolic = return_symbolic
         if return_symbolic:
             self.mk_subs = make_substitution
-            # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [(params.symbolic_params['n'], self.n)]
+                self.subs = [(self.n.symbol, self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
-            # _parallel_compute = _parallel_compute
-            self.subs = [(params.symbolic_params['n'], self.n)]
+            self.subs = [(self.n.symbol, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -815,15 +813,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
         self.return_symbolic = return_symbolic
         if return_symbolic:
             self.mk_subs = make_substitution
-            # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [(params.symbolic_params['n'], self.n)]
+                self.subs = [(self.n.symbol, self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
-            # _parallel_compute = _parallel_compute
-            self.subs = [(params.symbolic_params['n'], self.n)]
+            self.subs = [(self.n.symbol, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()
@@ -1300,15 +1296,13 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
         self.return_symbolic = return_symbolic
         if return_symbolic:
             self.mk_subs = make_substitution
-            # _parallel_compute = _symbolic_compute
             if self.mk_subs:
-                self.subs = [(params.symbolic_params['n'], self.n)]
+                self.subs = [(self.n.symbol, self.n)]
             else:
                 self.subs = None
         else:
             self.mk_subs = True
-            # _parallel_compute = _parallel_compute
-            self.subs = [(params.symbolic_params['n'], self.n)]
+            self.subs = [(self.n.symbol, self.n)]
 
         if inner_product_definition is None:
             self.ip = StandardSymbolicInnerProductDefinition()

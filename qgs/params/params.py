@@ -67,8 +67,6 @@ class Params(ABC):
 
     _name = ""
 
-    symbolic_params = dict()
-
     def __init__(self, dic=None):
 
         self.set_params(dic)
@@ -316,7 +314,7 @@ class AtmosphericParams(Params):
     def sig0(self):
         """Parameter: Static stability of the atmosphere divided by 2."""
         return Parameter(self.sigma / 2, input_dimensional=False, scale_object=self._scale_params, units='[m^2][s^-2][Pa^-2]',
-                         description="0.5 * static stability of the atmosphere")
+                         description="0.5 * static stability of the atmosphere", symbol=self.sigma.symbol / 2)
 
 
 class AtmosphericTemperatureParams(Params):
@@ -666,10 +664,11 @@ class GroundParams(Params):
             dim = values
             values = dim * [0.]
 
+
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
 
         self.hk = ParametersArray(values, scale_object=self._scale_params,
-                                  description=d, return_dimensional=False, input_dimensional=False)
+                                  description=d, return_dimensional=False, input_dimensional=False, symbol=values)
 
 
 class GroundTemperatureParams(Params):
@@ -771,8 +770,6 @@ class QgParams(Params):
         Scale parameters instance.
         If `None`, create a new ScaleParams instance. Default to None.
         Default to `None`.
-    symbolic_params: dict(Symbolic Parameters),
-        A dictionary with the parameter names and symbolic variables.
     atmospheric_params: bool, None or AtmosphericParams, optional
         Atmospheric parameters instance.
         If 'True`, create a new AtmosphericParams instance.
@@ -856,7 +853,8 @@ class QgParams(Params):
                  ground_params=True, gtemperature_params=None,
                  dynamic_T=False, T4=False):
 
-        Params.__init__(self, dic)
+        # Params.__init__(self, dic)
+        self.base_params = Params(dic)
 
         # General scale parameters object (Mandatory param block)
         if scale_params is None:
@@ -923,7 +921,6 @@ class QgParams(Params):
         self.time_unit = 'days'
 
         # Physical constants
-
         self.rr = Parameter(287.058e0, return_dimensional=True, units='[J][kg^-1][K^-1]',
                             scale_object=self.scale_params, description="gas constant of dry air", symbol=Symbol('R'))
         self.sb = Parameter(5.67e-8, return_dimensional=True, units='[J][m^-2][s^-1][K^-4]',
@@ -1147,10 +1144,24 @@ class QgParams(Params):
         if dic is not None:
             for key, val in zip(dic.keys(), dic.values()):
                 if key in self.__dict__.keys():
-                    self.__dict__[key] = val
+                    if isinstance(self.__dict__[key], Parameter):
+                        if isinstance(val, Parameter):
+                            self.__dict__[key] = val
+                        else:
+                            d = self.__dict__[key].__dict__
+                            self.__dict__[key] = Parameter(val,
+                                                           input_dimensional=d['_input_dimensional'],
+                                                           units=d['_units'],
+                                                           description=d['_description'],
+                                                           scale_object=d['_scale_object'],
+                                                           symbol=d['_symbol'],
+                                                           return_dimensional=d['_return_dimensional'])
+                    else:
+                        self.__dict__[key] = val
 
             if 'scale_params' in self.__dict__.keys():
                 self.scale_params.set_params(dic)
+
             if 'atmospheric_params' in self.__dict__.keys():
                 if self.atmospheric_params is not None:
                     self.atmospheric_params.set_params(dic)
