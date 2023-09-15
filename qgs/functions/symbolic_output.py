@@ -27,8 +27,6 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-# TODO: this function isnt working with user input IPs, still calculated them from scratch
-
 def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=list(), language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """
     Function to output the raw symbolic functions of the qgs model.
@@ -43,7 +41,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         Allows for stored inner products to be input
     gnd_ip: SymbolicGroundInnerProducts, optional
         Allows for stored inner products to be input
-    continuation_variables: Set or List or None
+    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         The variables to not substitute and to leave in the equations, if None no variables are substituted
     language: String
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'
@@ -70,6 +68,8 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         If `return_symbolic_qgtensor` is True, the symbolic tendencies tensor of the system.
 
     """
+    make_ip_subs = True
+
     if continuation_variables is None:
         make_ip_subs = False
     else:
@@ -79,8 +79,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
                     make_ip_subs = False
             except:
                 pass
-        else:
-            make_ip_subs = True
+
 
     if not(make_ip_subs):
         warnings.warn("Calculating innerproducts symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
@@ -420,7 +419,7 @@ def create_auto_file(equations, params, continuation_variables):
         Dictionary of the substituted symbolic model equations
     params: QGParams
         The parameters fully specifying the model configuration.
-    continuation_variables: Set or List or None
+    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         Variables that are not substituted with numerical values. If None, no symbols are substituted
 
     '''

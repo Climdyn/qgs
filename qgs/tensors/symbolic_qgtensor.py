@@ -814,8 +814,7 @@ class SymbolicTensorLinear(object):
         ----------
         tensor: dict, sympy array
 
-        continuation_variables: Parameter, ScalingParameter
-            iterable of variables not to substitute
+        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
             if None all variables are substituted. This variable is the opposite of 'variables'
 
         Returns
@@ -984,7 +983,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             a_theta = dict()
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
-                    a_theta[(i, j)] = par.atmospheric_parameters.sig0.symbol * aips.a(i, j) - aips.u(i, j)
+                    a_theta[(i, j)] = par.atmospheric_params.sig0.symbol * aips.a(i, j) - aips.u(i, j)
             a_theta = ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = a_theta.inverse()
 
@@ -1113,7 +1112,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             a_theta = dict()
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
-                    a_theta[(i, j)] = ap.sig0.symbol * aips.a(i, j) - aips.u(i, j)
+                    a_theta[(i, j)] = par.atmospheric_params.sig0.symbol * aips.a(i, j) - aips.u(i, j)
 
             a_theta = ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = a_theta.inverse()
@@ -1311,7 +1310,7 @@ class SymbolicTensorT4(SymbolicTensorLinear):
             a_theta = dict()
             for i in range(nvar[1]):
                 for j in range(nvar[1]):
-                    a_theta[(i, j)] = ap.sig0.symbol * aips.a(i, j) - aips.u(i, j)
+                    a_theta[(i, j)] = par.atmospheric_params.sig0.symbol * aips.a(i, j) - aips.u(i, j)
 
             a_theta = ImmutableSparseMatrix(nvar[1], nvar[1], a_theta)
             a_theta = a_theta.inverse()
