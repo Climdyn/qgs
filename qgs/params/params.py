@@ -50,7 +50,7 @@ from qgs.params.parameter import Parameter, ScalingParameter, ParametersArray
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
-from sympy import Symbol, simplify, ImmutableSparseMatrix
+from sympy import Symbol, simplify
 
 # TODO: - store model version in a variable somewhere
 #       - force or warn the user to define the aspect ratio n at parameter object instantiation

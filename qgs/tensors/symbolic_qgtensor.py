@@ -9,7 +9,6 @@ from qgs.functions.symbolic_mul import _add_to_dict, _symbolic_tensordot
 from qgs.params.params import Parameter, ScalingParameter, ParametersArray
 
 import numpy as np
-import sparse as sp
 import sympy as sy
 import pickle
 
