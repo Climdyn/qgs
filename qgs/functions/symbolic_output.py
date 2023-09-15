@@ -4,7 +4,7 @@ import sympy as sy
 import warnings
 from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4, _parameter_substitutions
+from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4
 
 import os
 
@@ -271,14 +271,9 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         for i in range(1, params.ndim+1):
             vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
 
-    free_vars = set()
     for k in equations.keys():
         eq = equations[k].subs(vector_subs)
         eq = eq.evalf()
-
-        for vars in eq.free_symbols:
-            if vars not in vector_subs.values():
-                free_vars.add(vars)
 
         if (language is not None) and print_equations:
             eq = translate_equations(eq, language)
@@ -296,9 +291,9 @@ def format_equations(equations, params, save_loc=None, language='python', print_
                         f.write("%s\n" % eq)
                 print("Equations written")
     else:
-        return equation_dict, free_vars
+        return equation_dict
 
-def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=dict()):
+def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=list()):
     '''
     Converts the symbolic equations to a function in string format in the language syntax specified, or a lambdified python function 
     
@@ -321,7 +316,7 @@ def equation_as_function(equations, params, string_output=True, language='python
     
     '''
 
-    eq_dict, free_vars = format_equations(equations, params, language=language)
+    eq_dict = format_equations(equations, params, language=language)
 
     f_output = list()
     if language == 'python':
@@ -330,8 +325,9 @@ def equation_as_function(equations, params, string_output=True, language='python
             f_output.append('def f(t, U, **kwargs):')
             f_output.append('\t#Tendency function of the qgs model')
             f_output.append('\tF = np.empty_like(U)')
-            for v in free_vars:
-                f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
+
+            for v in continuation_variables:
+                f_output.append('\t' + str(v) + " = kwargs['" + str(v.symbol) + "']")
 
             for n, eq in enumerate(eq_dict.values()):
                 f_output.append('\tF['+str(n)+'] = ' + str(eq))
@@ -343,8 +339,8 @@ def equation_as_function(equations, params, string_output=True, language='python
             array_eqs = np.array(list(eq_dict.values()))
             inputs = ['t', vec]
 
-            for v in free_vars:
-                inputs.append(v)
+            for v in continuation_variables:
+                inputs.append(v.symbol)
 
             f_output = sy.lambdify(inputs, array_eqs)
 
@@ -354,8 +350,9 @@ def equation_as_function(equations, params, string_output=True, language='python
         f_output.append('function f(t, U, kwargs...)')
         f_output.append('\t#Tendency function of the qgs model')
         f_output.append('\tF = similar(U)')
-        for v in free_vars:
-            f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
+
+        for v in continuation_variables:
+            f_output.append('\t' + str(v) + " = kwargs['" + str(v.symbol) + "']")
 
         for n, eq in enumerate(eq_dict.values()):
             f_output.append('\tF['+str(n+1)+'] = ' + str(eq))
@@ -367,9 +364,9 @@ def equation_as_function(equations, params, string_output=True, language='python
         eq_dict = translate_equations(eq_dict, language='fortran')
 
         f_var = ''
-        if len(free_vars) > 0:
-            for fv in free_vars:
-                f_var += str(fv) + ', '
+        if len(continuation_variables) > 0:
+            for fv in continuation_variables:
+                f_var += str(fv.symbol) + ', '
             f_output.append('SUBROUTINE FUNC(NDIM, t, U, F, ' + f_var[:-2] + ')')
         else:
             f_output.append('SUBROUTINE FUNC(NDIM, t, U, F)')
@@ -379,8 +376,8 @@ def equation_as_function(equations, params, string_output=True, language='python
         f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)')
         f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: F(NDIM)')
 
-        for v in free_vars:
-            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v))
+        for v in continuation_variables:
+            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol))
 
         f_output.append('')
 
@@ -392,7 +389,7 @@ def equation_as_function(equations, params, string_output=True, language='python
         eq_dict = translate_equations(eq_dict, language='fortran')
 
         eq_dict = _split_equations(eq_dict, f_output)
-        create_auto_file(eq_dict, params, free_vars)
+        create_auto_file(eq_dict, params, continuation_variables)
         
     if language == 'mathematica':
         #TODO: This function needs testing before release
@@ -440,19 +437,18 @@ def create_auto_file(equations, params, continuation_variables):
 
     # Declare variables
     declare_var = list()    
-    for i in continuation_variables:
-        declare_var.append('DOUBLE PRECISION ' + str(i))
+    for v in continuation_variables:
+        declare_var.append('DOUBLE PRECISION ' + str(v.symbol))
 
     # make list of parameters
     var_list = list()
     var_ini = list()
 
-    model_parameters = _parameter_substitutions(params, {})
+    for i, v in enumerate(continuation_variables):
 
-    for i, cv in enumerate(continuation_variables):
-        temp_str = "PAR(" + str(i) + ") = " + str(cv.symbol)
+        temp_str = "PAR(" + str(i) + ") = " + str(v.symbol)
 
-        initial_value = "PAR(" + str(i) + ") = " + str(cv) + "   Variable: " + str(cv.symbol)
+        initial_value = "PAR(" + str(i) + ") = " + str(v) + "   Variable: " + str(v.symbol)
 
         var_list.append(temp_str)
         var_ini.append(initial_value)
@@ -493,7 +489,7 @@ def create_auto_file(equations, params, continuation_variables):
     auto_config = list()
     for ln in lines:
         if '! PARAMETERS' in ln:
-            auto_config.append('parnames = ' + str({i+1: v for i, v in enumerate(continuation_variables)}))
+            auto_config.append('parnames = ' + str({i+1: v.symbol for i, v in enumerate(continuation_variables)}))
 
         elif '! VARIABLES' in ln:
             auto_config.append('unames = ' + str(_variable_names(params)))
@@ -502,9 +498,15 @@ def create_auto_file(equations, params, continuation_variables):
             auto_config.append('NDIM = ' + str(params.ndim))
 
         elif '! CONTINUATION ORDER' in ln:
-            auto_config.append('ICP = ' + str(list(continuation_variables)))
+            auto_config.append('ICP = ' + str([v.symbol for v in continuation_variables]))
         
-        #TODO: Need to include bounds on continuation parameters
+        elif '! SOLUTION SAVE' in ln:
+            auto_config.append("# ! User to input save locations")
+            auto_config.append('UZR = ' + str({v.symbol: [] for v in continuation_variables}))
+
+        elif '! STOP CONDITIONS' in ln:
+            auto_config.append("# ! User to input variable bounds")
+            auto_config.append('UZSTOP = ' + str({v.symbol: [] for v in continuation_variables}))
         
         else:
             auto_config.append(ln.replace('\n', ''))
