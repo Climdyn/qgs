@@ -3,10 +3,8 @@ import sympy as sy
 
 import warnings
 from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
-
 from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-
-from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4
+from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4, _parameter_substitutions
 
 import os
 
@@ -29,7 +27,9 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables={}, language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
+# TODO: this function isnt working with user input IPs, still calculated them from scratch
+
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=list(), language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """
     Function to output the raw symbolic functions of the qgs model.
 
@@ -73,8 +73,12 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     if continuation_variables is None:
         make_ip_subs = False
     else:
-        if 'n' in continuation_variables:
-            make_ip_subs = False
+        for cv in continuation_variables:
+            try:
+                if params.scale_params.n  == cv:
+                    make_ip_subs = False
+            except:
+                pass
         else:
             make_ip_subs = True
 
@@ -125,14 +129,14 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         xx.append(sy.Symbol('U_'+str(i)))
 
     if params.dynamic_T:
-        eq = symbolic_sparse_mult5(agotensor.tensor_dic, xx, xx, xx, xx)
+        eq = symbolic_sparse_mult5(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx, xx, xx)
         if return_jacobian:
-            Deq = symbolic_sparse_mult4(agotensor.jac_dic, xx, xx, xx)
+            Deq = symbolic_sparse_mult4(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx, xx, xx)
 
     else:
-        eq = symbolic_sparse_mult3(agotensor.tensor_dic, xx, xx)
+        eq = symbolic_sparse_mult3(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx)
         if return_jacobian:
-            Deq = symbolic_sparse_mult2(agotensor.jac_dic, xx)
+            Deq = symbolic_sparse_mult2(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx)
 
     eq_simplified = dict()
     Deq_simplified = dict()
@@ -152,10 +156,10 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         if return_jacobian:
             Deq_simplified = Deq
 
-    funcs = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True, free_variables=continuation_variables)
+    func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True, continuation_variables=continuation_variables)
 
     ret = list()
-    ret.append('\n'.join(funcs))
+    ret.append('\n'.join(func))
     if return_jacobian:
         ret.append(Deq_simplified)
     if return_inner_products:
@@ -214,7 +218,7 @@ def translate_equations(equations, language='python'):
 
     return str_eq
 
-def format_equations(equations, params, save_loc=None, language='python', free_variables={}, print_equations=False):
+def format_equations(equations, params, save_loc=None, language='python', print_equations=False):
     '''
     Function formats the equations, in the programming language specified, and saves the equations to the specified location.
     The variables in the equation are substituted if the model variable is input.
@@ -250,8 +254,6 @@ def format_equations(equations, params, save_loc=None, language='python', free_v
     '''
     equation_dict = dict()
 
-    sub_vals = _sub_values(params, free_variables)
-
     # Substitute variable symbols
     vector_subs = dict()
     if language == 'python':
@@ -273,13 +275,8 @@ def format_equations(equations, params, save_loc=None, language='python', free_v
     free_vars = set()
     for k in equations.keys():
         eq = equations[k].subs(vector_subs)
+        eq = eq.evalf()
 
-        #substitute syntax
-        if sub_vals is not None:
-            eq = eq.subs(sub_vals)
-            eq = eq.evalf()
-        else:
-            eq = eq.simplify()
         for vars in eq.free_symbols:
             if vars not in vector_subs.values():
                 free_vars.add(vars)
@@ -302,7 +299,7 @@ def format_equations(equations, params, save_loc=None, language='python', free_v
     else:
         return equation_dict, free_vars
 
-def equation_as_function(equations, params, string_output=True, language='python', free_variables={}):
+def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=dict()):
     '''
     Converts the symbolic equations to a function in string format in the language syntax specified, or a lambdified python function 
     
@@ -325,7 +322,7 @@ def equation_as_function(equations, params, string_output=True, language='python
     
     '''
 
-    eq_dict, free_vars = format_equations(equations, params, language=language, free_variables=free_variables)
+    eq_dict, free_vars = format_equations(equations, params, language=language)
 
     f_output = list()
     if language == 'python':
@@ -357,7 +354,7 @@ def equation_as_function(equations, params, string_output=True, language='python
 
         f_output.append('function f(t, U, kwargs...)')
         f_output.append('\t#Tendency function of the qgs model')
-        f_output.append('\tU_out = similar(U)')
+        f_output.append('\tF = similar(U)')
         for v in free_vars:
             f_output.append('\t' + str(v) + " = kwargs['" + str(v) + "']")
 
@@ -407,12 +404,12 @@ def equation_as_function(equations, params, string_output=True, language='python
         for n, eq in enumerate(eq_dict.values()):
             f_output.append('F['+str(n+1)+'] = ' + str(eq))
 
-        #TODO !!!! Killing output as I have no confidence in the above code !!!!
+        #TODO !!!! Killing output as I have not tested the above code !!!!
         f_output = None
 
     return f_output
 
-def create_auto_file(equations, params, free_variables):
+def create_auto_file(equations, params, continuation_variables):
     '''
     Creates the auto configuration file and the model file.
     Saves files to specified folder.
@@ -423,7 +420,7 @@ def create_auto_file(equations, params, free_variables):
         Dictionary of the substituted symbolic model equations
     params: QGParams
         The parameters fully specifying the model configuration.
-    free_variables: Set or List or None
+    continuation_variables: Set or List or None
         Variables that are not substituted with numerical values. If None, no symbols are substituted
 
     '''
@@ -433,30 +430,30 @@ def create_auto_file(equations, params, free_variables):
 
     # User passes the equations, with the variables to leave as variables.
     # The existing model parameters are used to populate the auto file
-    # The variables given as `free_variables` remain in the equations.
+    # The variables given as `continuation_variables` remain in the equations.
     # There is a limit of 1-10 remian variables
     base_path = os.path.dirname(__file__)
     base_file = '.modelproto'
     base_config = '.cproto'
 
-    if (len(free_variables) < 1) or (len(free_variables) > 10):
+    if (len(continuation_variables) < 1) or (len(continuation_variables) > 10):
         ValueError("Too many variables for auto file")
 
     # Declare variables
     declare_var = list()    
-    for i in free_variables:
+    for i in continuation_variables:
         declare_var.append('DOUBLE PRECISION ' + str(i))
 
     # make list of parameters
     var_list = list()
     var_ini = list()
 
-    sub_vals = _sub_values(params, free_variables)
+    model_parameters = _parameter_substitutions(params, {})
 
-    for i, fv in enumerate(free_variables):
-        temp_str = "PAR(" + str(i) + ") = " + str(fv)
+    for i, cv in enumerate(continuation_variables):
+        temp_str = "PAR(" + str(i) + ") = " + str(cv.symbol)
 
-        initial_value = "PAR(" + str(i) + ") = " + str(sub_vals[fv]) + "   Variable: " + str(fv)
+        initial_value = "PAR(" + str(i) + ") = " + str(cv) + "   Variable: " + str(cv.symbol)
 
         var_list.append(temp_str)
         var_ini.append(initial_value)
@@ -497,7 +494,7 @@ def create_auto_file(equations, params, free_variables):
     auto_config = list()
     for ln in lines:
         if '! PARAMETERS' in ln:
-            auto_config.append('parnames = ' + str({i+1: v for i, v in enumerate(free_variables)}))
+            auto_config.append('parnames = ' + str({i+1: v for i, v in enumerate(continuation_variables)}))
 
         elif '! VARIABLES' in ln:
             auto_config.append('unames = ' + str(_variable_names(params)))
@@ -506,7 +503,7 @@ def create_auto_file(equations, params, free_variables):
             auto_config.append('NDIM = ' + str(params.ndim))
 
         elif '! CONTINUATION ORDER' in ln:
-            auto_config.append('ICP = ' + str(list(free_variables)))
+            auto_config.append('ICP = ' + str(list(continuation_variables)))
         
         #TODO: Need to include bounds on continuation parameters
         
@@ -516,30 +513,6 @@ def create_auto_file(equations, params, free_variables):
     print('\n'.join(auto_config))
 
     return equations
-
-def _sub_values(params, free_variables):
-    # Substitute variables
-    if isinstance(free_variables, (set, list, dict)):
-        # make a dictionary of variables to substitute from parameters
-
-        sub_vals = dict()
-        for key in params.symbol_to_value.keys():
-
-            # Sympy 1.12 cannot have subs contain None
-            if params.symbol_to_value[key][1] is not None:
-                if len(free_variables) == 0:
-                    sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-                else:
-                    if key not in free_variables:
-                        sub_vals[params.symbol_to_value[key][0]] = params.symbol_to_value[key][1]
-
-    elif free_variables is None:
-        sub_vals = None
-
-    else:
-        raise ValueError("Incorrect type for substitution, needs to be set, list, or dict of strings, not: " + str(type(free_variables)))
-    
-    return sub_vals
     
 def _split_equations(eq_dict, f_output, line_len=80):
     '''

@@ -6,6 +6,7 @@
 
 """
 from qgs.functions.symbolic_mul import _add_to_dict, _symbolic_tensordot
+from qgs.params.params import Parameter, ScalingParameter, ParametersArray
 
 import numpy as np
 import sparse as sp
@@ -314,14 +315,14 @@ class SymbolicTensorLinear(object):
             a_inv_mult_c = _symbolic_tensordot(a_inv, aips._c[offset:, offset:], axes=1)
 
             if gp is not None:
-                hk_sym_arr = ImmutableSparseNDimArray(gp.hk.symbol)
+                hk_sym_arr = ImmutableSparseNDimArray(gp.hk.symbols)
 
                 if gp.orographic_basis == "atmospheric":
                     a_inv_mult_g = _symbolic_tensordot(a_inv, aips._g[offset:, offset:, offset:], axes=1)
                     oro = _symbolic_tensordot(a_inv_mult_g, hk_sym_arr, axes=1)
                 else:
                     a_inv_mult_gh = _symbolic_tensordot(a_inv, aips._gh[offset:, offset:, offset:], axes=1)
-                    oro = _symbolic_tensordot(a_inv_mult_gh, gp.hk.symbol, axes=1)
+                    oro = _symbolic_tensordot(a_inv_mult_gh, hk_sym_arr, axes=1)
 
             a_inv_mult_b = _symbolic_tensordot(a_inv, aips._b[offset:, offset:, offset:], axes=1)
             
@@ -339,8 +340,8 @@ class SymbolicTensorLinear(object):
                     if gp is not None:
                         # convert 
                         if gp.hk is not None:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -oro[i, j][0] / 2)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), oro[i, j][0] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_a(j), 0), -oro[i, j] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), oro[i, j] / 2)
 
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
@@ -401,8 +402,8 @@ class SymbolicTensorLinear(object):
 
                     if gp is not None:
                         if gp.hk is not None:
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -ap.sig0.symbol * oro[i, j][0] / 2)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), ap.sig0.symbol * oro[i, j][0] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), -ap.sig0.symbol * oro[i, j] / 2)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), ap.sig0.symbol * oro[i, j] / 2)
 
                     for k in range(nvar[0]):
                         ko = k + offset  # skipping the theta 0 variable if it exists
@@ -515,7 +516,7 @@ class SymbolicTensorLinear(object):
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_a(i), self._theta_a(jo), 0), (ap.kd.symbol * _kronecker_delta(i, j)) / 2)
 
                     if gp is not None:
-                        hk_sym_arr = ImmutableSparseNDimArray(gp.hk.symbol)
+                        hk_sym_arr = ImmutableSparseNDimArray(gp.hk.symbols)
                         if gp.hk is not None:
                             oro = 0
                             if gp.orographic_basis == "atmospheric":
@@ -581,11 +582,11 @@ class SymbolicTensorLinear(object):
                             if gp.orographic_basis == "atmospheric":
                                 for jj in range(nvar[1]):
                                     for kk in range(nvar[0]):
-                                        oro += a_theta[i, jj] * aips.g(jj, jo, offset + kk) * gp.hk.symbol[kk]
+                                        oro += a_theta[i, jj] * aips.g(jj, jo, offset + kk) * gp.hk[kk].symbol
                             else:
                                 for jj in range(nvar[1]):
                                     for kk in range(nvar[0]):
-                                        oro += a_theta[i, jj] * aips.gh(jj, jo, offset + kk) * gp.hk.symbol[kk]
+                                        oro += a_theta[i, jj] * aips.gh(jj, jo, offset + kk) * gp.hk[kk].symbol
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), - ap.sig0.symbol * oro / 2)
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), ap.sig0.symbol * oro / 2)
 
@@ -790,7 +791,7 @@ class SymbolicTensorLinear(object):
             dic_upp = _add_to_dict(dic_upp, new_key, dic[key])
 
         return dic_upp
-
+    
     def save_to_file(self, filename, **kwargs):
         """Function to save the tensor object to a file with the :mod:`pickle` module.
 
@@ -805,7 +806,7 @@ class SymbolicTensorLinear(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def sub_tensor(self, tensor=None, dict_opp=True, remain_variables=dict()):
+    def sub_tensor(self, tensor=None, continuation_variables=list()):
         """
         Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
 
@@ -813,9 +814,8 @@ class SymbolicTensorLinear(object):
         ----------
         tensor: dict, sympy array
 
-        dict_opp: Boolian, if True, uses the stored tensor_dic object as the input
-
-        remain_variables: dict of variables not to substitute
+        continuation_variables: Parameter, ScalingParameter
+            iterable of variables not to substitute
             if None all variables are substituted. This variable is the opposite of 'variables'
 
         Returns
@@ -824,41 +824,26 @@ class SymbolicTensorLinear(object):
             Dictionary of the substituted tensor of the model tendencies, with coordinates and value
         """
 
-        symbol_to_number_map = list()
-        variables_not_found = list()
-
-        for key in self.sym_params.keys():
-            if key not in remain_variables:
-                try:
-                    # Sympy 1.12 cannot have subs contain None
-                    if self.params.symbol_to_value[key][1] is not None:
-                        symbol_to_number_map.append(self.params.symbol_to_value[key])
-                except:
-                    variables_not_found.append(key)
+        param_subs = _parameter_substitutions(self.params, continuation_variables)
         
-        if isinstance(tensor, dict):
-            ten_out = dict()
-            for key in tensor.keys():
-                val = tensor[key].subs(symbol_to_number_map)
-                try:
-                    ten_out[key] = float(val)
-                except:
-                    ten_out[key] = val
+        if tensor is None:
+            ten = self.tensor_dic
+        else:
+            ten = tensor
 
-        elif dict_opp:
+        if isinstance(ten, dict):
             ten_out = dict()
-            for key in self.tensor_dic.keys():
-                val = self.tensor_dic[key].subs(symbol_to_number_map)
+            for key in ten.keys():
+                val = ten[key].subs(param_subs)
                 try:
                     ten_out[key] = float(val)
                 except:
                     ten_out[key] = val
 
         else:
-            if tensor is not None:
-                ten_out = tensor.subs(symbol_to_number_map)
-            else:
-                ten_out = self.tensor.subs(symbol_to_number_map)
+            #Assuming the tensor is a sympy tensor
+            ten_out = ten.subs(param_subs)
+
         
         return ten_out
             
@@ -1481,7 +1466,70 @@ def _shift_dict_keys(dic, shift):
         new_key = key + shift
         shifted_dic[new_key] = dic[key]
     
-    return shifted_dic 
+    return shifted_dic
+
+def _parameter_substitutions(params, continuation_varaibles):
+        
+    subs = _parameter_values(params)
+
+    if 'scale_params' in params.__dict__.keys():
+        subs.update(_parameter_values(params.scale_params))
+
+        # TODO: Is there a better way to do this which is dynamic, the __dict__ method doesnt include the properties?
+        # Manually add properties from class
+        subs[params.scale_params.L.symbol] = params.scale_params.L
+        subs[params.scale_params.beta.symbol] = params.scale_params.beta
+
+    if 'atmospheric_params' in params.__dict__.keys():
+        if params.atmospheric_params is not None:
+            subs.update(_parameter_values(params.atmospheric_params))
+
+    if 'atemperature_params' in params.__dict__.keys():
+        if params.atemperature_params is not None:
+            subs.update(_parameter_values(params.atemperature_params))
+
+    if 'oceanic_params' in params.__dict__.keys():
+        if params.oceanic_params is not None:
+            subs.update(_parameter_values(params.oceanic_params))
+
+    if 'ground_params' in params.__dict__.keys():
+        if params.ground_params is not None:
+            subs.update(_parameter_values(params.ground_params))
+
+    if 'gotemperature_params' in params.__dict__.keys():
+        if params.gotemperature_params is not None:
+            subs.update(_parameter_values(params.gotemperature_params))
+
+    # Remove variables in continuation variables
+    for cv in continuation_varaibles:
+        if isinstance(cv, ParametersArray):
+            for cv_i in cv.symbols:
+                subs.pop(cv_i)
+        else:
+            subs.pop(cv.symbol)
+
+    return subs
+
+def _parameter_values(pars):
+    """
+    Function takes a parameter class and produces a dictionary of the symbol and the corrisponding numerical value
+    """
+
+    subs = dict()
+    for val in pars.__dict__.values():
+        if isinstance(val, Parameter):
+            if val.symbol is not None:
+                subs[val.symbol] = val
+
+        if isinstance(val, ScalingParameter):
+            if val.symbol is not None:
+                subs[val.symbol] = val
+
+        if isinstance(val, ParametersArray):
+            for v in val:
+                if v.symbol is not None or v.symbol != 0:
+                    subs[v.symbol] = v
+    return subs
     
 if __name__ == "__main__":
     dic = dict()

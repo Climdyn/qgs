@@ -853,8 +853,7 @@ class QgParams(Params):
                  ground_params=True, gtemperature_params=None,
                  dynamic_T=False, T4=False):
 
-        # Params.__init__(self, dic)
-        self.base_params = Params(dic)
+        Params.__init__(self, dic)
 
         # General scale parameters object (Mandatory param block)
         if scale_params is None:
@@ -1177,14 +1176,20 @@ class QgParams(Params):
             if 'ground_params' in self.__dict__.keys():
                 if self.ground_params is not None:
                     self.ground_params.set_params(dic)
-
-            if 'otemperature_params' in self.__dict__.keys():
+            
+            #TODO: Needs checking!
+            
+            if 'gotemperature_params' in self.__dict__.keys():
                 if self.gotemperature_params is not None:
                     self.gotemperature_params.set_params(dic)
 
-            if 'gtemperature_params' in self.__dict__.keys():
-                if self.gotemperature_params is not None:
-                    self.gotemperature_params.set_params(dic)
+            # if 'otemperature_params' in self.__dict__.keys():
+            #     if self.gotemperature_params is not None:
+            #         self.gotemperature_params.set_params(dic)
+
+            # if 'gtemperature_params' in self.__dict__.keys():
+            #     if self.gotemperature_params is not None:
+            #         self.gotemperature_params.set_params(dic)
 
     def print_params(self):
         """Print all the parameters in the container."""
