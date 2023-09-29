@@ -350,7 +350,6 @@ def equation_as_function(equations, params, string_output=True, language='python
 
         f_output.append('function f!(du, U, p, t)')
         f_output.append('\t#Tendency function of the qgs model')
-        f_output.append('\tF = similar(U)')
 
         for v in continuation_variables:
             f_output.append('\t' + str(v) + " = kwargs['" + str(v.symbol) + "']")
@@ -358,7 +357,6 @@ def equation_as_function(equations, params, string_output=True, language='python
         for n, eq in enumerate(eq_dict.values()):
             f_output.append('\tdu['+str(n+1)+'] = ' + str(eq))
         
-        f_output.append('\treturn F')
         f_output.append('end')
 
     if language == 'fortran':
