@@ -664,7 +664,6 @@ class GroundParams(Params):
             dim = values
             values = dim * [0.]
 
-
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
 
         self.hk = ParametersArray(values, scale_object=self._scale_params,
@@ -1177,19 +1176,13 @@ class QgParams(Params):
                 if self.ground_params is not None:
                     self.ground_params.set_params(dic)
             
-            #TODO: Needs checking!
-            
-            if 'gotemperature_params' in self.__dict__.keys():
+            if 'otemperature_params' in self.__dict__.keys():
                 if self.gotemperature_params is not None:
                     self.gotemperature_params.set_params(dic)
 
-            # if 'otemperature_params' in self.__dict__.keys():
-            #     if self.gotemperature_params is not None:
-            #         self.gotemperature_params.set_params(dic)
-
-            # if 'gtemperature_params' in self.__dict__.keys():
-            #     if self.gotemperature_params is not None:
-            #         self.gotemperature_params.set_params(dic)
+            if 'gtemperature_params' in self.__dict__.keys():
+                if self.gotemperature_params is not None:
+                    self.gotemperature_params.set_params(dic)
 
     def print_params(self):
         """Print all the parameters in the container."""
