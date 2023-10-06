@@ -369,11 +369,6 @@ class ParametersArray(np.ndarray):
         return symbols
 
     @property
-    def sparsesymbols(self):
-        """To be implemented"""
-        pass
-
-    @property
     def input_dimensional(self):
         """bool: Indicate if the provided value is dimensional or not."""
         return self._input_dimensional
