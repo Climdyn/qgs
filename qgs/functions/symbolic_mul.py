@@ -1,10 +1,12 @@
 import sympy as sy
 
-def _add_to_dict(dic, loc, value):
-    '''
-    Adds `value` to dictionary `dic`, with the dictionary key of `loc`.
+
+def add_to_dict(dic, loc, value):
+    """Adds `value` to dictionary `dic`, with the dictionary key of `loc`.
     If the dictionary did not have a key of `loc` before, a new key is made.
-    '''
+
+    # Jonathan: Add parameters descriptions
+    """
     
     try:
         dic[loc] += value
@@ -12,9 +14,9 @@ def _add_to_dict(dic, loc, value):
         dic[loc] = value
     return dic
 
-def _symbolic_tensordot(a, b, axes=2):
-    """
-    Compute tensor dot product along specified axes of two sympy symbolic arrays
+
+def symbolic_tensordot(a, b, axes=2):
+    """Compute tensor dot product along specified axes of two sympy symbolic arrays
 
     This is based on numpy.tensordot
 
@@ -45,21 +47,21 @@ def _symbolic_tensordot(a, b, axes=2):
     
     return sy.tensorcontraction(prod, sum_cols)
 
+
 def symbolic_sparse_mult2(dic, vec_a):
-    """
-    Symbolic multiplication of a tensor with one vector:
-    :math:`A_{i,j} = {\displaystyle \sum_{k=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k} \, a_k`
+    """Symbolic multiplication of a tensor with one vector:
+    :math:`A_{i,j} = {\\displaystyle \\sum_{k=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k} \\, a_k`
 
     Parameters
     ----------
-    dic: Dict(Sympy.Symbol)
+    dic: dict(Sympy.Symbol)
         A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the tensor.
-    vec_a: List(Sympy.Symbol)
+    vec_a: list(Sympy.Symbol)
         The list :math:`a_k` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
-    res: dict
+    res: dict  # Jonathan: dict of what ?
         The matrix :math:`A_{i,j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1), contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
     """
     res = dict()
@@ -67,14 +69,14 @@ def symbolic_sparse_mult2(dic, vec_a):
     for key in dic.keys():
         coo1, coo2, coo3 = key
         val = vec_a[coo3] * dic[key]
-        res = _add_to_dict(res, (coo1, coo2), val)
+        res = add_to_dict(res, (coo1, coo2), val)
 
     return res
 
+
 def symbolic_sparse_mult3(dic, vec_a, vec_b):
-    """
-    Symbolic multiplication of a tensor with two vectors:
-    :math:`v_i = {\displaystyle \sum_{j,k=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k} \, a_j \, b_k`
+    """Symbolic multiplication of a tensor with two vectors:
+    :math:`v_i = {\\displaystyle \\sum_{j,k=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k} \\, a_j \\, b_k`
 
     Parameters
     ----------
@@ -97,14 +99,14 @@ def symbolic_sparse_mult3(dic, vec_a, vec_b):
     for key in dic.keys():
         coo1, coo2, coo3 = key
         val = vec_a[coo2] * vec_b[coo3] * dic[key]
-        res = _add_to_dict(res, coo1, val)
+        res = add_to_dict(res, coo1, val)
 
     return res
 
+
 def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
-    """
-    Symbolic multiplication of a rank-5 tensor with three vectors:
-    :math:`A_{i, j} = {\displaystyle \sum_{k,l,m=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k,l, m} \, a_k \, b_l \, c_m`
+    """Symbolic multiplication of a rank-5 tensor with three vectors:
+    :math:`A_{i, j} = {\\displaystyle \\sum_{k,l,m=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k,l, m} \\, a_k \\, b_l \\, c_m`
 
 
     Parameters
@@ -130,14 +132,14 @@ def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
     for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
         val = vec_a[coo3] * vec_b[coo4] * vec_c[coo5] * dic[key]
-        res = _add_to_dict(res, (coo1, coo2), val)
+        res = add_to_dict(res, (coo1, coo2), val)
 
     return res
 
+
 def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
-    """
-    Symbolic multiplication of a rank-5 tensor with four vectors:
-    :math:`v_i = {\displaystyle \sum_{j,k,l,m=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k,l,m} \, a_j \, b_k \, c_l \, d_m`
+    """Symbolic multiplication of a rank-5 tensor with four vectors:
+    :math:`v_i = {\\displaystyle \\sum_{j,k,l,m=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k,l,m} \\, a_j \\, b_k \\, c_l \\, d_m`
 
     Parameters
     ----------
@@ -162,6 +164,6 @@ def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
     for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
         val = vec_a[coo2] * vec_b[coo3] * vec_c[coo4] * vec_d[coo5] * dic[key]
-        res = _add_to_dict(res, coo1, val)
+        res = add_to_dict(res, coo1, val)
 
     return res

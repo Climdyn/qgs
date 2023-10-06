@@ -703,12 +703,12 @@ class QgsTensor(object):
 
         Parameters
         ----------
-        tensor: ~sparse.COO
+        tensor: sparse.COO
             The qgs tensor.
 
         Returns
         -------
-        ~sparse.COO
+        sparse.COO
             The Jacobian tensor.
         """
 
@@ -729,12 +729,12 @@ class QgsTensor(object):
 
         Parameters
         ----------
-        tensor: ~sparse.COO
+        tensor: sparse.COO
             The tensor to simplify.
 
         Returns
         -------
-        ~sparse.COO
+        sparse.COO
             The upper-triangularized tensor.
         """
         coords = tensor.coords.copy()
