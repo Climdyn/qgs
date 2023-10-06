@@ -20,7 +20,8 @@ fortran_lang_translation = {
 
 julia_lang_translation = {
     '**': '^',
-    'pi': 'pi()'
+    'pi': 'pi()',
+    'conjugate': 'conj'
 }
 
 mathematica_lang_translation = {
@@ -347,17 +348,15 @@ def equation_as_function(equations, params, string_output=True, language='python
     if language == 'julia':
         eq_dict = translate_equations(eq_dict, language='julia')
 
-        f_output.append('function f(t, U, kwargs...)')
+        f_output.append('function f!(du, U, p, t)')
         f_output.append('\t#Tendency function of the qgs model')
-        f_output.append('\tF = similar(U)')
 
         for v in continuation_variables:
             f_output.append('\t' + str(v) + " = kwargs['" + str(v.symbol) + "']")
 
         for n, eq in enumerate(eq_dict.values()):
-            f_output.append('\tF['+str(n+1)+'] = ' + str(eq))
+            f_output.append('\tdu['+str(n+1)+'] = ' + str(eq))
         
-        f_output.append('\treturn F')
         f_output.append('end')
 
     if language == 'fortran':

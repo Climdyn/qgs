@@ -149,7 +149,10 @@ class SymbolicTensorLinear(object):
 
     @property
     def LR(self):
-        return sy.sqrt(self.params.oceanic_params.gp.symbol * self.params.oceanic_params.h.symbol) / self.params.scale_params.f0.symbol
+        if self.params.oceanic_params.gp is None or self.params.oceanic_params.h is None:
+            return None
+        else:
+            return sy.sqrt(self.params.oceanic_params.gp.symbol * self.params.oceanic_params.h.symbol) / self.params.scale_params.f0.symbol
 
     @property
     def G(self):
@@ -157,21 +160,33 @@ class SymbolicTensorLinear(object):
     
     @property
     def Cpgo(self):
-        C = ImmutableSparseNDimArray(self.params.gotemperature_params.C.symbols)
-        return C / (self.params.gotemperature_params.gamma.symbol * self.params.scale_params.f0.symbol) * self.params.rr.symbol / (self.params.scale_params.f0.symbol ** 2 * self.params.scale_params.L.symbol ** 2)
+        if self.params.gotemperature_params.C is None:
+            return None
+        else:
+            C = ImmutableSparseNDimArray(self.params.gotemperature_params.C.symbols)
+            return C / (self.params.gotemperature_params.gamma.symbol * self.params.scale_params.f0.symbol) * self.params.rr.symbol / (self.params.scale_params.f0.symbol ** 2 * self.params.scale_params.L.symbol ** 2)
     
     @property
     def Lpgo(self):
-        return self.params.atemperature_params.hlambda.symbol / (self.params.gotemperature_params.gamma.symbol * self.params.scale_params.f0.symbol)
+        if self.params.atemperature_params.hlambda is None or self.params.gotemperature_params.gamma is None:
+            return None
+        else:
+            return self.params.atemperature_params.hlambda.symbol / (self.params.gotemperature_params.gamma.symbol * self.params.scale_params.f0.symbol)
     
     @property
     def Cpa(self):
-        C = ImmutableSparseNDimArray(self.params.atemperature_params.C.symbols)
-        return C / (self.params.atemperature_params.gamma.symbol * self.params.scale_params.f0.symbol) * self.params.rr.symbol / (self.params.scale_params.f0.symbol ** 2 * self.params.scale_params.L.symbol ** 2) / 2
+        if self.params.atemperature_params.C is None:
+            return None
+        else:
+            C = ImmutableSparseNDimArray(self.params.atemperature_params.C.symbols)
+            return C / (self.params.atemperature_params.gamma.symbol * self.params.scale_params.f0.symbol) * self.params.rr.symbol / (self.params.scale_params.f0.symbol ** 2 * self.params.scale_params.L.symbol ** 2) / 2
     
     @property
     def Lpa(self):
-        return self.params.atemperature_params.hlambda.symbol / (self.params.atemperature_params.gamma.symbol * self.params.scale_params.f0.symbol)
+        if self.params.atemperature_params.hlambda is None or self.params.atemperature_params.gamma is None:
+            return None
+        else:
+            return self.params.atemperature_params.hlambda.symbol / (self.params.atemperature_params.gamma.symbol * self.params.scale_params.f0.symbol)
     
     @property
     def sbpgo(self):
@@ -357,7 +372,7 @@ class SymbolicTensorLinear(object):
                 val_Cpa = _symbolic_tensordot(a_theta_mult_u , self.Cpa, axes=1)
 
             if atp.hd is not None and atp.thetas is not None:
-                thetas_sym_arr = ImmutableSparseNDimArray(atp.thetas.symbol)
+                thetas_sym_arr = ImmutableSparseNDimArray(atp.thetas.symbols)
                 val_thetas = _symbolic_tensordot(a_theta_mult_u, thetas_sym_arr, axes=1)  # not perfect
 
             a_theta_mult_a = _symbolic_tensordot(a_theta, aips._a[:, offset:], axes=1)
@@ -548,16 +563,20 @@ class SymbolicTensorLinear(object):
             # theta_a part
             for i in range(nvar[1]):
                 if self.Cpa is not None:
+                    val = 0
                     for jj in range(nvar[1]):
                         for kk in range(nvar[1]):
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), - a_theta[i, jj] * aips.u(jj, kk) * self.Cpa[kk])
+                            val -= a_theta[i, jj] * aips.u(jj, kk) * self.Cpa[kk]
+
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), val)
 
                 if atp.hd is not None and atp.thetas is not None:
-                    thetas_sym_arr = ImmutableSparseNDimArray(atp.thetas.symbol)
+                    thetas_sym_arr = ImmutableSparseNDimArray(atp.thetas.symbols)
                     val = 0
                     for jj in range(nvar[1]):
                         for kk in range(nvar[1]):
                             val -= a_theta[i, jj] * aips.u(jj, kk) * thetas_sym_arr[kk]
+
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), 0, 0), val * atp.hd.symbol)
 
                 for j in range(nvar[0]):
@@ -567,12 +586,14 @@ class SymbolicTensorLinear(object):
                     val = 0
                     for jj in range(nvar[1]):
                         val += a_theta[i, jj] * aips.a(jj, jo)
+
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), 0), val * ap.kd.symbol * ap.sig0.symbol / 2)
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), - val * (ap.kd.symbol / 2 - 2 * ap.kdp.symbol) * ap.sig0.symbol)
 
                     val = 0
                     for jj in range(nvar[1]):
                         val -= a_theta[i, jj] * aips.c(jj, jo)
+
                     sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), 0), val * par.scale_params.beta.symbol * ap.sig0.symbol)
 
                     if gp is not None:
@@ -594,6 +615,7 @@ class SymbolicTensorLinear(object):
                         val = 0
                         for jj in range(nvar[1]):
                             val += a_theta[i, jj] * aips.b(jj, jo, ko)
+
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_a(j), self._theta_a(ko)), - val * ap.sig0.symbol)
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(jo), self._psi_a(k)), - val * ap.sig0.symbol)
 
@@ -610,6 +632,7 @@ class SymbolicTensorLinear(object):
 
                     if self.Lpa is not None:
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(j), 0), val * atp.sc.symbol * self.Lpa)
+                    
                     if self.LSBpa is not None:
                         sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._theta_a(j), 0), val * self.LSBpa)
 
@@ -622,7 +645,8 @@ class SymbolicTensorLinear(object):
                         val = 0
                         for jj in range(nvar[1]):
                             val -= a_theta[i, jj] * aips.d(jj, jo)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_o(j), 0), val * ap.sig0.symbol * ap.kd.symbol / 2)
+                        
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._theta_a(i), self._psi_o(j), 0), val * ap.sig0.symbol * ap.kd.symbol / 2)
 
                     if self.Lpa is not None:
                         for j in range(nvar[3]):
@@ -651,8 +675,8 @@ class SymbolicTensorLinear(object):
 
                         for jj in range(nvar[2]):
                             val = M_psio[i, jj] * bips.K(offset + jj, jo) * par.oceanic_params.d.symbol
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_a(j), 0), val)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._theta_a(jo), 0), - val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_a(j), 0), val)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._theta_a(jo), 0), - val)
 
                     for j in range(nvar[2]):
                         jo = j + offset  # skipping the T 0 variable if it exists
@@ -669,14 +693,19 @@ class SymbolicTensorLinear(object):
 
                         for k in range(nvar[2]):
                             ko = k + offset  # skipping the T 0 variable if it exists
+                            val = 0
                             for jj in range(nvar[2]):
-                                sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_o(j), self._psi_o(k)), - M_psio[i, jj] * bips.C(offset + jj, jo, ko))
+                                val -= M_psio[i, jj] * bips.C(offset + jj, jo, ko)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_o(j), self._psi_o(k)), val)
 
                 # deltaT_o part
                 for i in range(nvar[3]):
+                    val = 0
                     for jj in range(nvar[1]):
                         for kk in range(nvar[3]):
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), 0, 0), U_inv[i, kk] * bips.W(kk, jj) * self.Cpgo[jj])
+                            val += U_inv[i, kk] * bips.W(kk, jj) * self.Cpgo[jj]
+                    
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), 0, 0), val)
 
                     for j in range(nvar[1]):
                         val = 0
@@ -694,21 +723,28 @@ class SymbolicTensorLinear(object):
                     for j in range(nvar[2]):
                         for k in range(offset, nvar[3]):
                             jo = j + offset  # skipping the T 0 variable if it exists
+
+                            val = 0
                             for jj in range(nvar[3]):
-                                sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._psi_o(j), self._deltaT_o(k)), - U_inv[i, jj] * bips.O(jj, jo, k))
+                                val -= U_inv[i, jj] * bips.O(jj, jo, k)
+                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._psi_o(j), self._deltaT_o(k)), val)
 
             # deltaT_g part
             if ground_temp:
                 for i in range(nvar[2]):
+                    val = 0
                     for jj in range(nvar[1]):
                         for kk in range(nvar[2]):
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), 0, 0), U_inv[i, kk] * bips.W(kk, jj) * self.Cpgo[jj])
+                            val += U_inv[i, kk] * bips.W(kk, jj) * self.Cpgo[jj]
+                    
+                    sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), 0, 0), val)
 
                     for j in range(nvar[1]):
                         val = 0
                         for jj in range(nvar[2]):
                             val += U_inv[i, jj] * bips.W(jj, j)
-                            sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), 0), val * 2 * atp.sc.symbol * self.Lpgo)
+                        sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), 0), val * 2 * atp.sc.symbol * self.Lpgo)
+                        
                         if self.sbpa is not None:
                             sy_arr_dic = _add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), 0), val * self.sbpa)
 
