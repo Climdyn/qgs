@@ -36,6 +36,7 @@ import sympy as sy
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 
+
 class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     """Class which contains all the atmospheric inner products coefficients needed for the tendencies
     tensor :class:`~.tensors.qgtensor.QgsTensor` computation, computed with analytic formula.
@@ -262,7 +263,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.iip.ip_lap, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._d, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._d, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._d = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
                 else:
@@ -272,7 +273,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
                 else:
@@ -283,15 +284,14 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.natm)
                                  for j in range(noc) for k in range(j, noc) for ell in range(k, noc) for m in range(ell, noc)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # v inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.natm) for m in range(noc)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not self.mk_subs)
 
-                
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
                         self._v = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, noc, noc, noc, noc))
@@ -357,19 +357,18 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._F(i), self._phi(j))] for i in range(self.natm)
                              for j in range(ngr)]
 
-                output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, ngr, output)
                 else:
                     self._s = self._s.to_coo()
-
 
                 # gh inner products
                 if orographic_basis != "atmospheric":
                     args_list = [[(i, j, k), self.iip.ip_jac, (self._F(i), self._F(j), self._phi(k))] for i in range(self.natm)
                                  for j in range(self.natm) for k in range(ngr)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._gh, timeout, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._gh, timeout, symbolic_int=not self.mk_subs)
                     if self.return_symbolic:
                         self._gh = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, ngr))
                     else:
@@ -381,13 +380,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.natm)
                                  for j in range(ngr) for k in range(j, ngr) for ell in range(k, ngr) for m in range(ell, ngr)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # v inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.natm) for m in range(ngr)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._v, timeout, permute=True, symbolic_int=not self.mk_subs)
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
@@ -439,7 +438,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.ip.ip_lap, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
                 
-                output = _parallel_compute(pool, args_list, subs, self._a, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._a, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._a = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
@@ -449,7 +448,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._u, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._u, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._u = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
@@ -459,7 +458,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j), self.ip.ip_diff_x, (self._F(i), self._F(j))] for i in range(self.natm)
                              for j in range(self.natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._c, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._c, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._c = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
@@ -469,7 +468,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                              for j in range(self.natm) for k in range(self.natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._b, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._b, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._b = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
                 else:
@@ -479,7 +478,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 args_list = [[(i, j, k), self.ip.ip_jac, (self._F(i), self._F(j), self._F(k))] for i in range(self.natm)
                              for j in range(self.natm) for k in range(self.natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._g, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._g, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._g = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
                 else:
@@ -490,13 +489,13 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._F(i), self._F(j) * self._F(k) * self._F(ell) * self._F(m))] for i in range(self.natm)
                                  for j in range(self.natm) for k in range(j, self.natm) for ell in range(k, self.natm) for m in range(ell, self.natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # z inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._F(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.natm) for m in range(self.natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._z, timeout, permute=True, symbolic_int=not self.mk_subs)
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
@@ -514,7 +513,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
     # !-----------------------------------------------------!
 
     def _integrate(self, subs, args):
-        if not(self.mk_subs):
+        if not self.mk_subs:
             res = _apply(args)
             return res[1]
         
@@ -891,9 +890,9 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 # K inner products
                 args_list = [[(i, j), self.iip.ip_lap, (self._phi(i), self._F(j))] for i in range(self.noc)
-                     for j in range(natm)]
+                             for j in range(natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._K, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._K, timeout, symbolic_int=not self.mk_subs)
 
                 if self.return_symbolic:
                     self._K = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, natm, output)
@@ -902,9 +901,9 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 # W inner products
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.noc)
-                     for j in range(natm)]
+                             for j in range(natm)]
 
-                output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not self.mk_subs)
 
                 if self.return_symbolic:
                     self._W = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, natm, output)
@@ -916,13 +915,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(j) * self._F(k) * self._F(ell) * self._F(m))] for i in range(self.noc)
                                  for j in range(natm) for k in range(j, natm) for ell in range(k, natm) for m in range(ell, natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # Z inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.noc) for m in range(natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not self.mk_subs)
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
@@ -973,7 +972,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 # N inner products
                 args_list = [[(i, j), self.ip.ip_diff_x, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._N, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._N, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._N = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
@@ -982,7 +981,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 # M inner products
                 args_list = [[(i, j), self.ip.ip_lap, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._M, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._M, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._M = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
@@ -991,7 +990,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 # U inner products
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.noc) for j in range(self.noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._U = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
@@ -1001,7 +1000,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 args_list = [[(i, j, k), self.ip.ip_jac, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
                              for j in range(self.noc) for k in range(self.noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._O, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._O, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._O = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
@@ -1011,7 +1010,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 args_list = [[(i, j, k), self.ip.ip_jac_lap, (self._phi(i), self._phi(j), self._phi(k))] for i in range(self.noc)
                              for j in range(self.noc) for k in range(self.noc)]
 
-                output = _parallel_compute(pool, args_list, subs, self._C, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._C, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._C = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
@@ -1022,13 +1021,13 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.noc)
                                  for j in range(self.noc) for k in range(j, self.noc) for ell in range(k, self.noc) for m in range(ell, self.noc)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # V inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.noc) for m in range(self.noc)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not self.mk_subs)
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
@@ -1372,7 +1371,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                 # W inner products
                 args_list = [[(i, j), self.iip.symbolic_inner_product, (self._phi(i), self._F(j))] for i in range(self.ngr)
                              for j in range(natm)]
-                output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._W = sy.matrices.immutable.ImmutableSparseMatrix(self.ngr, natm, output)
                 else:
@@ -1383,13 +1382,13 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(j) * self._F(k) * self._F(ell) * self._F(m))] for i in range(self.ngr)
                                  for j in range(natm) for k in range(j, natm) for ell in range(k, natm) for m in range(ell, natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not self.mk_subs)
                 elif self._dynamic_T:
                     # Z inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._F(0) * self._F(0) * self._F(0) * self._F(m))]
                                  for i in range(self.ngr) for m in range(natm)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._Z, timeout, permute=True, symbolic_int=not self.mk_subs)
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
@@ -1431,7 +1430,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
                 # U inner products
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
-                output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not(self.mk_subs))
+                output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
                     self._U = sy.matrices.immutable.ImmutableSparseMatrix(self.ngr, self.ngr, output)
                 else:
@@ -1442,14 +1441,14 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                     args_list = [[(i, j, k, ell, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j) * self._phi(k) * self._phi(ell) * self._phi(m))] for i in range(self.ngr)
                                  for j in range(self.ngr) for k in range(j, self.ngr) for ell in range(k, self.ngr) for m in range(ell, self.ngr)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not self.mk_subs)
 
                 elif self._dynamic_T:
                     # V inner products
                     args_list = [[(i, 0, 0, 0, m), self.ip.symbolic_inner_product, (self._phi(i), self._phi(0) * self._phi(0) * self._phi(0) * self._phi(m))]
                                  for i in range(self.ngr) for m in range(self.ngr)]
 
-                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not(self.mk_subs))
+                    output = _parallel_compute(pool, args_list, subs, self._V, timeout, permute=True, symbolic_int=not self.mk_subs)
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
