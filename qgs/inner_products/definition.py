@@ -95,7 +95,7 @@ class InnerProductDefinition(ABC):
 
     @abstractmethod
     def ip_diff_x(self, S, G, symbolic_expr=False):
-        """Function to compute the inner product :math:`(S, \partial_x G)`.
+        """Function to compute the inner product :math:`(S, \\partial_x G)`.
 
         Parameters
         ----------
@@ -215,7 +215,7 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
         return self.symbolic_inner_product(S, self.laplacian(G), symbolic_expr=symbolic_expr, integrand=integrand)
 
     def ip_diff_x(self, S, G, symbolic_expr=False, integrand=False):
-        """Function to compute the inner product :math:`(S, \partial_x G)`.
+        """Function to compute the inner product :math:`(S, \\partial_x G)`.
 
         Parameters
         ----------
@@ -323,7 +323,7 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
 
         .. math:
 
-            J(S, G) = \partial_x S\, \partial_y G - \partial_y S\, \partial_x G
+            J(S, G) = \\partial_x S\\, \\partial_y G - \\partial_y S\\, \\partial_x G
 
         Parameters
         ----------
@@ -359,7 +359,7 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
     @staticmethod
     def integrate_over_domain(expr, symbolic_expr=False):
         """Definition of the normalized integrals over the spatial domain used by the inner products:
-        :math:`\\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} \, \\mathrm{expr}(x, y) \, \\mathrm{d} x \, \\mathrm{d} y`.
+        :math:`\\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} \\, \\mathrm{expr}(x, y) \\, \\mathrm{d} x \\, \\mathrm{d} y`.
 
         Parameters
         ----------
@@ -380,7 +380,7 @@ class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
 
     def symbolic_inner_product(self, S, G, symbolic_expr=False, integrand=False):
         """Function defining the inner product to be computed symbolically:
-        :math:`(S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} S(x,y)\, G(x,y)\, \\mathrm{d} x \, \\mathrm{d} y`.
+        :math:`(S, G) = \\frac{n}{2\\pi^2}\\int_0^\\pi\\int_0^{2\\pi/n} S(x,y)\\, G(x,y)\\, \\mathrm{d} x \\, \\mathrm{d} y`.
 
         Parameters
         ----------
