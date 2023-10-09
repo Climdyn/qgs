@@ -113,8 +113,6 @@ def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
     ----------
     dic: Dict(Sympy.Symbol)
         A dictionary where they keys are a tuple of 5 elements which are the coordinates of the tensor values, which are contained in the dictionary values.
-    value: ~numpy.ndarray(float)
-        A 1D array of shape (n_elems,), a list of value in the tensor
     vec_a: List(Sympy.Symbol)
         The list :math:`a_j` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
     vec_b: List(Sympy.Symbol)

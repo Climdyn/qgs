@@ -285,7 +285,7 @@ class SymbolicInnerProductDefinition(InnerProductDefinition):
 
 
 class StandardSymbolicInnerProductDefinition(SymbolicInnerProductDefinition):
-    """Standard `qgs` class to define symbolic inner products using `Sympy`_.
+    """Standard qgs class to define symbolic inner products using `Sympy`_.
 
     Parameters
     ----------

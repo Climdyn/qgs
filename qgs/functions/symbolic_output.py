@@ -1,5 +1,7 @@
+# Jonathan: Needs a module description here
+
 import numpy as np
-import sympy as sy
+from sympy import Symbol, lambdify
 
 import warnings
 from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
@@ -15,7 +17,7 @@ python_lang_translation = {
 
 fortran_lang_translation = {
     '**': '^'
-    #TODO: may need to add variable for pi
+    # TODO: may need to add variable for pi
 }
 
 julia_lang_translation = {
@@ -28,13 +30,13 @@ mathematica_lang_translation = {
     '**': '^'
 }
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=list(), language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
-    """
-    Function to output the raw symbolic functions of the qgs model.
+
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None, language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
+    """Function to output the raw symbolic functions of the qgs model.
 
     Parameters
     ----------
-    params: QGParams
+    params: QgParams
         The parameters fully specifying the model configuration.
     atm_ip: SymbolicAtmosphericInnerProducts, optional
         Allows for stored inner products to be input
@@ -44,29 +46,29 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         Allows for stored inner products to be input
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         The variables to not substitute and to leave in the equations, if None no variables are substituted
-    language: String
+    language: str
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'
     return_inner_products: bool
-        If True, return the inner products of the model. Default to False.
+        If `True`, return the inner products of the model. Default to `False`.
     return_jacobian: bool
-        If True, return the Jacobian of the model. Default to False.
+        If `True`, return the Jacobian of the model. Default to `False`.
     return_symbolic_eqs: bool
-        If True, return the substituted symbolic equations
+        If `True`, return the substituted symbolic equations
     return_symbolic_qgtensor: bool
-        If True, return the symbolic tendencies tensor of the model. Default to False.
+        If `True`, return the symbolic tendencies tensor of the model. Default to `False`.
 
     Returns
     -------
-    funcs: string
+    funcs: str
         The substituted functions in the language syntax specified, as a string
-    Deq_simplified: symbolic equations
-        Dict of the substituted Jacobian matrix
-    inner_products: (SymbolicAtmosphericInnerProducts, SymbolicOceanicInnerProducts, SymbolicGroundInnerProducts)
-        If `return_inner_products` is True, the inner products of the system.
+    dict_eq_simplified: symbolic equations
+        Dictionary of the substituted Jacobian matrix
+    inner_products: tuple(SymbolicAtmosphericInnerProducts, SymbolicOceanicInnerProducts, SymbolicGroundInnerProducts)
+        If `return_inner_products` is `True`, the inner products of the system.
     eq_simplified: Symbolic equations
-        If `return_symbolic_eqs` is True, Dict of the model tendencies symbolic functions
+        If `return_symbolic_eqs` is `True`, dictionary of the model tendencies symbolic functions.
     agotensor: SymbolicQgsTensor
-        If `return_symbolic_qgtensor` is True, the symbolic tendencies tensor of the system.
+        If `return_symbolic_qgtensor` is `True`, the symbolic tendencies tensor of the system.
 
     """
     make_ip_subs = True
@@ -76,19 +78,19 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     else:
         for cv in continuation_variables:
             try:
-                if params.scale_params.n  == cv:
+                if params.scale_params.n == cv:
                     make_ip_subs = False
             except:
                 pass
 
-
-    if not(make_ip_subs):
-        warnings.warn("Calculating innerproducts symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
+    if not make_ip_subs:
+        warnings.warn("Calculating inner products symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
 
     if params.atmospheric_basis is not None:
         if atm_ip is None:
             aip = AtmosphericSymbolicInnerProducts(params, return_symbolic=True, make_substitution=make_ip_subs)
-        else: aip = atm_ip
+        else:
+            aip = atm_ip
     else:
         aip = None
 
@@ -126,20 +128,20 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     xx.append(1)
 
     for i in range(1, params.ndim+1):
-        xx.append(sy.Symbol('U_'+str(i)))
+        xx.append(Symbol('U_'+str(i)))
 
     if params.dynamic_T:
         eq = symbolic_sparse_mult5(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx, xx, xx)
         if return_jacobian:
-            Deq = symbolic_sparse_mult4(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx, xx, xx)
+            dict_eq = symbolic_sparse_mult4(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx, xx, xx)
 
     else:
         eq = symbolic_sparse_mult3(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx)
         if return_jacobian:
-            Deq = symbolic_sparse_mult2(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx)
+            dict_eq = symbolic_sparse_mult2(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx)
 
     eq_simplified = dict()
-    Deq_simplified = dict()
+    dict_eq_simplified = dict()
     
     if continuation_variables is None:
         # Simplifying at this step is slow
@@ -148,20 +150,20 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
             eq_simplified[i] = eq[i].simplify()
             if return_jacobian:
                 for j in range(1, params.ndim+1):
-                    if (i, j) in Deq:
-                        Deq_simplified[(i, j)] = Deq[(i, j)].simplify()
+                    if (i, j) in dict_eq:
+                        dict_eq_simplified[(i, j)] = dict_eq[(i, j)].simplify()
 
     else:
         eq_simplified = eq
         if return_jacobian:
-            Deq_simplified = Deq
+            dict_eq_simplified = dict_eq
 
     func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True, continuation_variables=continuation_variables)
 
     ret = list()
     ret.append('\n'.join(func))
     if return_jacobian:
-        ret.append(Deq_simplified)
+        ret.append(dict_eq_simplified)
     if return_inner_products:
         ret.append((aip, oip, gip))
     if return_symbolic_eqs:
@@ -170,9 +172,9 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         ret.append(agotensor)
     return ret
 
+
 def translate_equations(equations, language='python'):
-    '''
-    Function to output the model equations as a string in the specified language syntax.
+    """Function to output the model equations as a string in the specified language syntax.
 
     Parameters
     ----------
@@ -185,12 +187,13 @@ def translate_equations(equations, language='python'):
         - `julia`
         - `auto`
         - `mathematica`
+        Default to `python`.
 
     Returns
     -------
     str_eq: dict
-        dict of strings of the model equations
-    '''
+        Dictionary of strings of the model equations.
+    """
 
     if language == 'python':
         translator = python_lang_translation
@@ -206,7 +209,7 @@ def translate_equations(equations, language='python'):
         str_eq = dict()
         for key in equations.keys():
             temp_str = str(equations[key])
-            #//TODO: This only works for single array, not jacobian
+            # TODO: This only works for single array, not jacobian
             for k in translator.keys():
                 temp_str = temp_str.replace(k, translator[k])
             str_eq[key] = temp_str
@@ -218,16 +221,16 @@ def translate_equations(equations, language='python'):
 
     return str_eq
 
+
 def format_equations(equations, params, save_loc=None, language='python', print_equations=False):
-    '''
-    Function formats the equations, in the programming language specified, and saves the equations to the specified location.
+    """Function formats the equations, in the programming language specified, and saves the equations to the specified location.
     The variables in the equation are substituted if the model variable is input.
 
     Parameters
     ----------
-    equations: Dict
+    equations: dict
         Dictionary of symbolic model equations
-    params: QGParams
+    params: QgParams
         qgs model params
     save_loc: String
         location to save the outputs as a .txt file
@@ -238,39 +241,38 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         - `julia`
         - `auto`
         - `mathematica`
-    free_variables: Set or list or None
-        The variables to not substitute and to leave in the equations, if None no variables are substituted
+        Default to `python`.
     print_equations: bool
-        If True, equations are printed by the function, if False, equation string is returned by the function. Defaults to False
+        If `True`, equations are printed by the function, if `False`, equation string is returned by the function. Defaults to `False`
 
     Returns
     -------
-    equation_dict: Dict
+    equation_dict: dict
         Dictionary of symbolic model equations, that have been substituted with numerical values
     
     free_vars: Set
-        Set of strings of model variables that have not been substitued in this function, and remain as variabes in the equaitons.
+        Set of strings of model variables that have not been substituted in this function, and remain as variables in the equations.
 
-    '''
+    """
     equation_dict = dict()
 
     # Substitute variable symbols
     vector_subs = dict()
     if language == 'python':
         for i in range(1, params.ndim+1):
-            vector_subs['U_'+str(i)] = sy.Symbol('U['+str(i-1)+']')
+            vector_subs['U_'+str(i)] = Symbol('U['+str(i-1)+']')
     
     if language == 'fortran' or language == 'auto':
         for i in range(1, params.ndim+1):
-            vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
+            vector_subs['U_'+str(i)] = Symbol('U('+str(i)+')')
 
     if language == 'julia':
         for i in range(1, params.ndim+1):
-            vector_subs['U_'+str(i)] = sy.Symbol('U['+str(i)+']')
+            vector_subs['U_'+str(i)] = Symbol('U['+str(i)+']')
 
     if language == 'mathematica':
         for i in range(1, params.ndim+1):
-            vector_subs['U_'+str(i)] = sy.Symbol('U('+str(i)+')')
+            vector_subs['U_'+str(i)] = Symbol('U('+str(i)+')')
 
     for k in equations.keys():
         eq = equations[k].subs(vector_subs)
@@ -294,28 +296,35 @@ def format_equations(equations, params, save_loc=None, language='python', print_
     else:
         return equation_dict
 
-def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=list()):
-    '''
-    Converts the symbolic equations to a function in string format in the language syntax specified, or a lambdified python function 
+
+def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=None):
+    """Converts the symbolic equations to a function in string format in the language syntax specified, or a lambdified python function
     
     Parameters
     ----------
-    equations: Dict
+    equations: dict
         Dictionary of the substituted symbolic model equations
-    params: QGParams
+    params: QgParams
         The parameters fully specifying the model configuration.
     string_output: bool
-        If True, returns a lambdified python function, if False returns a string function, defaults to True
-    free_variables: Set or List or None
+        If `True`, returns a lambdified python function, if `False` returns a string function. Defaults to `True`
+    language: string
+        Language syntax that the equations are returned in. Options are:
+        - `python`
+        - `fortran`
+        - `julia`
+        - `auto`
+        - `mathematica`
+        Default to `python`.
+    continuation_variables: Set or list or None
         Variables that are not substituted with numerical values. If None, no symbols are substituted
-
 
     Returns
     -------
-    f_output: lambdified python function, or String
-        If string_output is True, output is a funciton in the specified language syntax, if False the output is a lambdified python function
+    f_output: callable or str
+        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is a lambdified python function
     
-    '''
+    """
 
     eq_dict = format_equations(equations, params, language=language)
 
@@ -335,15 +344,15 @@ def equation_as_function(equations, params, string_output=True, language='python
             
             f_output.append('\treturn F')
         else:
-            # Return a lamdafied function
-            vec = [sy.Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
+            # Return a lambdified function
+            vec = [Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
             array_eqs = np.array(list(eq_dict.values()))
             inputs = ['t', vec]
 
             for v in continuation_variables:
                 inputs.append(v.symbol)
 
-            f_output = sy.lambdify(inputs, array_eqs)
+            f_output = lambdify(inputs, array_eqs)
 
     if language == 'julia':
         eq_dict = translate_equations(eq_dict, language='julia')
@@ -391,7 +400,7 @@ def equation_as_function(equations, params, string_output=True, language='python
         create_auto_file(eq_dict, params, continuation_variables)
         
     if language == 'mathematica':
-        #TODO: This function needs testing before release
+        # TODO: This function needs testing before release
         eq_dict = translate_equations(eq_dict, language='mathematica')
 
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
@@ -399,34 +408,34 @@ def equation_as_function(equations, params, string_output=True, language='python
         for n, eq in enumerate(eq_dict.values()):
             f_output.append('F['+str(n+1)+'] = ' + str(eq))
 
-        #TODO !!!! Killing output as I have not tested the above code !!!!
+        # TODO !!!! Killing output as I have not tested the above code !!!!
         f_output = None
 
     return f_output
 
+
 def create_auto_file(equations, params, continuation_variables):
-    '''
-    Creates the auto configuration file and the model file.
+    """Creates the auto configuration file and the model file.
     Saves files to specified folder.
 
     Parameters
     ----------
-    equations: Dict
+    equations: dict
         Dictionary of the substituted symbolic model equations
-    params: QGParams
+    params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         Variables that are not substituted with numerical values. If None, no symbols are substituted
 
-    '''
+    """
 
-    #TODO: Find out best way to save these files
-    #TODO: There is some weird double tab spacings in the output, and I am not sure why
+    # TODO: Find out best way to save these files
+    # TODO: There is some weird double tab spacings in the output, and I am not sure why
 
     # User passes the equations, with the variables to leave as variables.
     # The existing model parameters are used to populate the auto file
     # The variables given as `continuation_variables` remain in the equations.
-    # There is a limit of 1-10 remian variables
+    # There is a limit of 1-10 remaining variables
     base_path = os.path.dirname(__file__)
     base_file = '.modelproto'
     base_config = '.cproto'
@@ -452,7 +461,7 @@ def create_auto_file(equations, params, continuation_variables):
         var_list.append(temp_str)
         var_ini.append(initial_value)
 
-    ###### Writing model file ################
+    # Writing model file ################
 
     # Open base file and input strings
     f_base = open(base_path + '/' + base_file, 'r')
@@ -460,9 +469,9 @@ def create_auto_file(equations, params, continuation_variables):
     f_base.close()
 
     auto_file = list()
-    #TODO: Tabs not working here correctly
+    # TODO: Tabs not working here correctly
     for ln in lines:
-        if 'PARAMETER DECLERATION' in ln:
+        if 'PARAMETER DECLARATION' in ln:
             for dv in declare_var:
                 auto_file.append('\t' + dv)
         elif 'CONTINUATION PARAMETERS' in ln:
@@ -479,7 +488,7 @@ def create_auto_file(equations, params, continuation_variables):
 
     print('\n'.join(auto_file))
     
-    ###### Writing config file ################
+    # Writing config file ################
 
     c_base = open(base_path + '/' + base_config, 'r')
     lines = c_base.readlines()
@@ -513,15 +522,15 @@ def create_auto_file(equations, params, continuation_variables):
     print('\n'.join(auto_config))
 
     return equations
-    
+
+
 def _split_equations(eq_dict, f_output, line_len=80):
-    '''
-        Function to split FORTRAN equaitons to a set length when producing functions
-    '''
+    """Function to split FORTRAN equations to a set length when producing functions"""
+
     for n, eq in enumerate(eq_dict.values()):
-        # split equaitons to be a maximum of `line_len`
+        # split equations to be a maximum of `line_len`
         
-        #split remainder of equation into chunkcs of length `line_length`
+        # split remainder of equation into chunks of length `line_length`
         eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
         f_output.append('\tF('+str(n+1)+') =\t ' + eq_chunks[0] + "&")
         for ln in eq_chunks[1:-1]:
@@ -530,6 +539,7 @@ def _split_equations(eq_dict, f_output, line_len=80):
         f_output.append("\t\t&" + eq_chunks[-1])
         f_output.append('')
     return f_output
+
 
 def _variable_names(params):
     # Function to make the variable names for auto

@@ -9,10 +9,11 @@
 import numpy as np
 from numba import njit
 
+
 @njit
 def sparse_mul2(coo, value, vec):
     """Sparse multiplication of a tensor with one vector:
-    :math:`A_{i,j} = {\displaystyle \sum_{k=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k} \, a_k`
+    :math:`A_{i,j} = {\\displaystyle \\sum_{k=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k} \\, a_k`
 
     Warnings
     --------
@@ -47,7 +48,7 @@ def sparse_mul2(coo, value, vec):
 @njit
 def sparse_mul3(coo, value, vec_a, vec_b):
     """Sparse multiplication of a tensor with two vectors:
-    :math:`v_i = {\displaystyle \sum_{j,k=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k} \, a_j \, b_k`
+    :math:`v_i = {\\displaystyle \\sum_{j,k=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k} \\, a_j \\, b_k`
 
     Warnings
     --------
@@ -79,10 +80,11 @@ def sparse_mul3(coo, value, vec_a, vec_b):
     res[0] = 1.
     return res
 
+
 @njit
 def sparse_mul4(coo, value, vec_a, vec_b, vec_c):
     """Sparse multiplication of a rank-5 tensor with three vectors:
-    :math:`A_{i, j} = {\displaystyle \sum_{k,l,m=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k,l, m} \, a_k \, b_l \, c_m`
+    :math:`A_{i, j} = {\\displaystyle \\sum_{k,l,m=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k,l, m} \\, a_k \\, b_l \\, c_m`
 
     Warnings
     --------
@@ -119,7 +121,7 @@ def sparse_mul4(coo, value, vec_a, vec_b, vec_c):
 @njit
 def sparse_mul5(coo, value, vec_a, vec_b, vec_c, vec_d):
     """Sparse multiplication of a rank-5 tensor with four vectors:
-    :math:`v_i = {\displaystyle \sum_{j,k,l,m=0}^{\mathrm{ndim}}} \, \mathcal{T}_{i,j,k,l,m} \, a_j \, b_k \, c_l \, d_m`
+    :math:`v_i = {\\displaystyle \\sum_{j,k,l,m=0}^{\\mathrm{ndim}}} \\, \\mathcal{T}_{i,j,k,l,m} \\, a_j \\, b_k \\, c_l \\, d_m`
 
     Warnings
     --------
