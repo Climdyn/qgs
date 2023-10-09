@@ -1549,9 +1549,7 @@ def _parameter_substitutions(params, continuation_varaibles):
 
 
 def _parameter_values(pars):
-    """
-    Function takes a parameter class and produces a dictionary of the symbol and the corresponding numerical value
-    """
+    """Function takes a parameter class and produces a dictionary of the symbol and the corresponding numerical value"""
 
     subs = dict()
     for val in pars.__dict__.values():

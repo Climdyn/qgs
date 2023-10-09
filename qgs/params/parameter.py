@@ -139,6 +139,8 @@ class Parameter(float):
         String describing the parameter.
     symbol: ~sympy.core.symbol.Symbol, optional
         A `Sympy`_ symbol to represent the parameter in symbolic expressions.
+    symbolic_expression: ~sympy.core.expr.Expr, optional
+        A `Sympy`_ expression to represent a relationship to other parameters.
     return_dimensional: bool, optional
         Defined if the value returned by the parameter is dimensional or not. Default to `False`.
 
@@ -155,7 +157,7 @@ class Parameter(float):
     """
 
     def __new__(cls, value, input_dimensional=True, units="", scale_object=None, description="",
-                symbol=None, return_dimensional=False):
+                symbol=None, return_dimensional=False, symbolic_expression=None):
 
         no_scale = False
 
@@ -191,6 +193,7 @@ class Parameter(float):
         f._scale_object = scale_object
         f._description = description
         f._symbol = symbol
+        f._symbolic_expression = symbolic_expression
 
         return f
 
@@ -215,6 +218,14 @@ class Parameter(float):
         """~sympy.core.symbol.Symbol: Returns the symbol of the parameter."""
         return self._symbol
 
+    @property
+    def symbolic_expression(self):
+        """~sympy.core.expr.Expr: Returns the symbolic expression of the parameter."""
+        if self._symbolic_expression is None and self._symbol is not None:
+            return self._symbol
+        else:
+            return self._symbolic_expression
+    
     @property
     def input_dimensional(self):
         """bool: Indicate if the provided value is dimensional or not."""
@@ -263,6 +274,59 @@ class Parameter(float):
             return 1.
         else:
             return self._conversion_factor(self._units, self._scale_object)
+
+    def __add__(self, other):
+
+        res = float(self) + float(other)
+        if isinstance(other, Parameter):
+            if self.return_dimensional != other.return_dimensional:
+                raise ArithmeticError("Parameter class: Impossible to add a dimensional parameter with a non-dimensional one.")
+            if self.units != other.units:
+                raise ArithmeticError("Parameter class: Impossible to add two parameters with different units.")
+            if self.symbolic_expression is None:
+                if other.symbolic_expression is None:
+                    if self.symbol is not None and other.symbol is not None:
+                        expr = self.symbol + other.symbol
+                    else:
+                        expr = None
+                else:
+                    if self.symbol is not None:
+                        expr = self.symbol + other.symbolic_expression
+                    else:
+                        expr = None
+            else:
+                if other.symbolic_expression is None:
+                    if other.symbol is not None:
+                        expr = self.symbolic_expression + other.symbol
+                    else:
+                        expr = None
+                else:
+                    expr = self.symbolic_expression + other.symbolic_expression
+
+            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional, scale_object=self._scale_object,
+                             description=self.description + " + " + other.description, units=self.units, symbol=None, symbolic_expression=expr)
+
+        elif isinstance(other, ScalingParameter):
+            if self.units != other.units:
+                raise ArithmeticError("Parameter class: Impossible to add two parameters with different units.")
+            if self.symbolic_expression is None:
+                if self.symbol is not None and other.symbol is not None:
+                    expr = self.symbol + other.symbol
+                else:
+                    expr = None
+            else:
+                if other.symbol is not None:
+                    expr = self.symbolic_expression + other.symbol
+                else:
+                    expr = None
+
+            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional, scale_object=self._scale_object,
+                             description=self.description + " + " + other.description, units=self.units, symbol=None, symbolic_expression=expr)
+        else:
+            return res
+
+    def __radd__(self, other):
+        self.__add__(other)
 
 
 class ParametersArray(np.ndarray):
@@ -367,6 +431,14 @@ class ParametersArray(np.ndarray):
         for idx in np.ndindex(self.shape):
             symbols[idx] = self[idx].symbol
         return symbols
+
+    @property
+    def symbolic_expressions(self):
+        """~numpy.ndarray(~sympy.core.expr.Expr): Returns the symbolic expressions of the parameters in the array."""
+        symbolic_expressions = np.empty(self.shape, dtype=object)
+        for idx in np.ndindex(self.shape):
+            symbolic_expressions[idx] = self[idx].symbolic_expression
+        return symbolic_expressions
 
     @property
     def input_dimensional(self):
