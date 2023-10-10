@@ -231,7 +231,7 @@ class ScaleParams(Params):
         self.deltap = ScalingParameter(5.e4, units='[Pa]', description='pressure difference between the two atmospheric layers',
                                        dimensional=True)
         self.Ha = ScalingParameter(8500., units='[m]', description="Average height of the 500 hPa pressure level at midlatitude",
-                                   dimensional=True)
+                                   dimensional=True, symbol=Symbol('H_a'))
         self.set_params(dic)
 
     # ----------------------------------------
