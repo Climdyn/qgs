@@ -643,7 +643,7 @@ class Parameter(float):
                     expr = None
             else:
                 if other.symbol is not None:
-                    expr = self.symbolic_expression / other.symbol
+                    expr = (self.symbolic_expression) / other.symbol
                 else:
                     expr = None
 
@@ -684,7 +684,7 @@ class Parameter(float):
             units = "".join(units)
 
             if self.symbolic_expression is not None:
-                expr = self.symbolic_expression ** power
+                expr = (self.symbolic_expression) ** power
             elif self.symbol is not None:
                 expr = self.symbol ** power
             else:
