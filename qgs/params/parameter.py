@@ -64,6 +64,7 @@ from fractions import Fraction
 
 
 # TODO: Automatize warnings and errors
+# TODO: Implement operations for arrays
 
 class ScalingParameter(float):
     """Class of model's dimension parameter.
