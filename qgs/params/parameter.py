@@ -118,44 +118,76 @@ class ScalingParameter(float):
         """str: Description of the parameter."""
         return self._description
 
-    def __add__(self, other):
-
-        if isinstance(other, Parameter):
-            return other.__add__(self)
-        else:
-            return float(self) + other
-
-    def __radd__(self, other):
-        self.__add__(other)
-
-    def __sub__(self, other):
-
-        if isinstance(other, Parameter):
-            return other.__sub__(self)
-        else:
-            return float(self) - other
-
-    def __rsub__(self, other):
-        self.__sub__(other)
-
-    def __mul__(self, other):
-
-        if isinstance(other, Parameter):
-            return other.__mul__(self)
-        else:
-            return float(self) * other
-
-    def __rmul__(self, other):
-        self.__mul__(other)
-
-    def __truediv__(self, other):
-        if isinstance(other, Parameter):
-            return other.__truediv__(self)
-        else:
-            return float(self) / other
-
-    def __rtruediv__(self, other):
-        self.__truediv__(other)
+    # def __add__(self, other):
+    #
+    #     if isinstance(other, Parameter):
+    #         return other.__add__(self)
+    #     else:
+    #         return float(self) + other
+    #
+    # def __radd__(self, other):
+    #     self.__add__(other)
+    #
+    # def __sub__(self, other):
+    #
+    #     if isinstance(other, Parameter):
+    #         return other.__sub__(self)
+    #     else:
+    #         return float(self) - other
+    #
+    # def __rsub__(self, other):
+    #     self.__sub__(other)
+    #
+    # def __mul__(self, other):
+    #
+    #     if isinstance(other, Parameter):
+    #         return other.__mul__(self)
+    #     else:
+    #         return float(self) * other
+    #
+    # def __rmul__(self, other):
+    #     self.__mul__(other)
+    #
+    # def __truediv__(self, other):
+    #     if isinstance(other, Parameter):
+    #         return other.__truediv__(self)
+    #     else:
+    #         return float(self) / other
+    #
+    # def __rtruediv__(self, other):
+    #     self.__truediv__(other)
+    #
+    # def __pow__(self, power, modulo=None):
+    #
+    #     if modulo is not None:
+    #         raise NotImplemented('Parameter class: Modular exponentiation not implemented')
+    #
+    #     res = float(self) ** power
+    #     if int(power) == power:
+    #
+    #         ul = self.units.split('][')
+    #         ul[0] = ul[0][1:]
+    #         ul[-1] = ul[-1][:-1]
+    #
+    #         usl = list()
+    #         for us in ul:
+    #             up = us.split('^')
+    #             if len(up) == 1:
+    #                 up.append("1")
+    #
+    #             usl.append(tuple(up))
+    #
+    #         units_elements = list()
+    #         for us in usl:
+    #             units_elements.append(list((us[0], str(int(us[1]) * power))))
+    #
+    #         units = ["[" + us[0] + "^" + us[1] + "]" for us in units_elements if us is not None]
+    #         units = "".join(units)
+    #
+    #         return Parameter(res, description=self.description + " to the power "+str(power), units=units,
+    #                          symbol=None, symbolic_expression=self.symbol ** power)
+    #     else:
+    #         return res
 
 
 class Parameter(float):
@@ -553,7 +585,7 @@ class Parameter(float):
 
             units_elements = list()
             for us in usl:
-                new_us = [us[0]]
+                new_us = list((us[0],))
                 i = 0
                 for os in osl:
                     if os[0] == us[0]:
@@ -587,17 +619,17 @@ class Parameter(float):
                         expr = None
                 else:
                     if self.symbol is not None:
-                        expr = self.symbol / other.symbolic_expression
+                        expr = self.symbol / (other.symbolic_expression)
                     else:
                         expr = None
             else:
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
-                        expr = self.symbolic_expression / other.symbol
+                        expr = (self.symbolic_expression) / other.symbol
                     else:
                         expr = None
                 else:
-                    expr = self.symbolic_expression / other.symbolic_expression
+                    expr = (self.symbolic_expression) / (other.symbolic_expression)
 
             return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=self.description + " / " + other.description,
@@ -623,6 +655,46 @@ class Parameter(float):
 
     def __rtruediv__(self, other):
         self.__truediv__(other)
+
+    def __pow__(self, power, modulo=None):
+
+        if modulo is not None:
+            raise NotImplemented('Parameter class: Modular exponentiation not implemented')
+
+        res = float(self) ** power
+        if int(power) == power:
+
+            ul = self.units.split('][')
+            ul[0] = ul[0][1:]
+            ul[-1] = ul[-1][:-1]
+
+            usl = list()
+            for us in ul:
+                up = us.split('^')
+                if len(up) == 1:
+                    up.append("1")
+
+                usl.append(tuple(up))
+
+            units_elements = list()
+            for us in usl:
+                units_elements.append(list((us[0], str(int(us[1]) * power))))
+
+            units = ["[" + us[0] + "^" + us[1] + "]" for us in units_elements if us is not None]
+            units = "".join(units)
+
+            if self.symbolic_expression is not None:
+                expr = self.symbolic_expression ** power
+            elif self.symbol is not None:
+                expr = self.symbol ** power
+            else:
+                expr = None
+
+            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                             description=self.description + " to the power "+str(power), units=units,
+                             scale_object=self._scale_object, symbol=None, symbolic_expression=expr)
+        else:
+            return res
 
 
 class ParametersArray(np.ndarray):
