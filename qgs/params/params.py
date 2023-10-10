@@ -937,7 +937,7 @@ class QgParams(Params):
         scp = self.scale_params
         if op is not None:
             try:
-                return np.sqrt(op.gp * op.h) / scp.f0
+                return (op.gp * op.h) ** 0.5 / scp.f0
             except:
                 return None
         else:

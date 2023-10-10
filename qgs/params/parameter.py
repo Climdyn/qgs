@@ -60,7 +60,10 @@
 
 import warnings
 import numpy as np
+from fractions import Fraction
 
+
+# TODO: Automatize warnings and errors
 
 class ScalingParameter(float):
     """Class of model's dimension parameter.
@@ -406,9 +409,47 @@ class ScalingParameter(float):
                 expr = None
                 descr = self.description + " to the power "+str(power)
 
-            return ScalingParameter(res, description=descr, units=units, symbol=None, symbolic_expression=expr)
         else:
-            return res
+            power_fraction = Fraction(power)
+            ul = self.units.split('][')
+            ul[0] = ul[0][1:]
+            ul[-1] = ul[-1][:-1]
+
+            usl = list()
+            for us in ul:
+                up = us.split('^')
+                if len(up) == 1:
+                    up.append("1")
+
+                usl.append(tuple(up))
+
+            units_elements = list()
+            for us in usl:
+                new_power = int(us[1]) * power_fraction.numerator / power_fraction.denominator
+                if int(new_power) == new_power:
+                    units_elements.append(list((us[0], str(new_power))))
+                else:
+                    raise ArithmeticError("ScalingParameter class: Only support integer exponent in units")
+
+            units = list()
+            for us in units_elements:
+                if us is not None:
+                    if int(us[1]) != 1:
+                        units.append("[" + us[0] + "^" + us[1] + "]")
+                    else:
+                        units.append("[" + us[0] + "]")
+            units = "".join(units)
+            if self.symbolic_expression is not None:
+                expr = (self.symbolic_expression) ** power
+                descr = "( " + self.description + " ) to the power " + str(power)
+            elif self.symbol is not None:
+                expr = self.symbol ** power
+                descr = self.description + " to the power " + str(power)
+            else:
+                expr = None
+                descr = self.description + " to the power " + str(power)
+
+        return ScalingParameter(res, description=descr, units=units, symbol=None, symbolic_expression=expr)
 
 
 class Parameter(float):
@@ -856,11 +897,49 @@ class Parameter(float):
                 expr = None
                 descr = self.description + " to the power "+str(power)
 
-            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                             description=descr, units=units, scale_object=self._scale_object, symbol=None,
-                             symbolic_expression=expr)
         else:
-            return res
+            power_fraction = Fraction(power)
+            ul = self.units.split('][')
+            ul[0] = ul[0][1:]
+            ul[-1] = ul[-1][:-1]
+
+            usl = list()
+            for us in ul:
+                up = us.split('^')
+                if len(up) == 1:
+                    up.append("1")
+
+                usl.append(tuple(up))
+
+            units_elements = list()
+            for us in usl:
+                new_power = int(us[1]) * power_fraction.numerator / power_fraction.denominator
+                if int(new_power) == new_power:
+                    units_elements.append(list((us[0], str(int(new_power)))))
+                else:
+                    raise ArithmeticError("Parameter class: Only support integer exponent in units")
+
+            units = list()
+            for us in units_elements:
+                if us is not None:
+                    if int(us[1]) != 1:
+                        units.append("[" + us[0] + "^" + us[1] + "]")
+                    else:
+                        units.append("[" + us[0] + "]")
+            units = "".join(units)
+            if self.symbolic_expression is not None:
+                expr = (self.symbolic_expression) ** power
+                descr = "( " + self.description + " ) to the power "+str(power)
+            elif self.symbol is not None:
+                expr = self.symbol ** power
+                descr = self.description + " to the power "+str(power)
+            else:
+                expr = None
+                descr = self.description + " to the power "+str(power)
+
+        return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                         description=descr, units=units, scale_object=self._scale_object, symbol=None,
+                         symbolic_expression=expr)
 
 
 class ParametersArray(np.ndarray):
