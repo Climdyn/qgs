@@ -1026,10 +1026,9 @@ class ParametersArray(np.ndarray):
         else:
             return self._conversion_factor(self._units, self._scale_object)
 
+
 def _join_units(units1, units2, operation):
     ul = units1.split('][')
-
-
     ul[0] = ul[0][1:]
     ul[-1] = ul[-1][:-1]
     ol = units2.split('][')
@@ -1042,7 +1041,8 @@ def _join_units(units1, units2, operation):
         if len(up) == 1:
             up.append("1")
 
-        usl.append(tuple(up))
+        if up[0]:
+            usl.append(tuple(up))
 
     osl = list()
     for os in ol:
@@ -1050,7 +1050,8 @@ def _join_units(units1, units2, operation):
         if len(op) == 1:
             op.append("1")
 
-        osl.append(tuple(op))
+        if op[0]:
+            osl.append(tuple(op))
 
     units_elements = list()
     for us in usl:
@@ -1068,13 +1069,11 @@ def _join_units(units1, units2, operation):
         else:
             power = int(us[1])
 
-        if power == 0:
-            new_us = None
-        else:
+        if power != 0:
             new_us.append(str(power))
-        units_elements.append(new_us)
+            units_elements.append(new_us)
 
-    if osl:
+    if len(osl) != 0:
         units_elements += osl
 
     units = list()
