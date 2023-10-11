@@ -255,7 +255,7 @@ class ScalingParameter(float):
 
         res = float(self) * float(other)
         if isinstance(other, (Parameter, ScalingParameter)):
-            units = _join_units(self.units, other.units, '+')
+            units = _combine_units(self.units, other.units, '+')
 
             if self.symbolic_expression is None:
                 if other.symbolic_expression is None:
@@ -309,7 +309,7 @@ class ScalingParameter(float):
 
         res = float(self) / float(other)
         if isinstance(other, (ScalingParameter, Parameter)):
-            units = _join_units(self.units, other.units, '-')
+            units = _combine_units(self.units, other.units, '-')
             if self.symbolic_expression is None:
                 if other.symbolic_expression is None:
                     if self.symbol is not None and other.symbol is not None:
@@ -742,7 +742,7 @@ class Parameter(float):
         res = float(self) * float(other)
         if isinstance(other, (Parameter, ScalingParameter)):
             if hasattr(other, "units"):
-                units = _join_units(self.units, other.units, '+')
+                units = _combine_units(self.units, other.units, '+')
             else:
                 units = ""
 
@@ -796,7 +796,7 @@ class Parameter(float):
 
         res = float(self) / float(other)
         if isinstance(other, (ScalingParameter, Parameter)):
-            units = _join_units(self.units, other.units, '-')
+            units = _combine_units(self.units, other.units, '-')
             if self.symbolic_expression is None:
                 if other.symbolic_expression is None:
                     if self.symbol is not None and other.symbol is not None:
@@ -948,7 +948,7 @@ class ParametersArray(np.ndarray):
 
     Parameters
     ----------
-    values: list(float) or ~numpy.ndarray(float) or list(Parameter) or ~numpy.ndarray(Parameter)
+    values: list(float) or ~numpy.ndarray(float) or list(Parameter) or ~numpy.ndarray(Parameter) or list(ScalingParameter) or ~numpy.ndarray(ScalingParameter)
         Values of the parameter array.
     input_dimensional: bool, optional
         Specify whether the value provided is dimensional or not. Default to `True`.
@@ -962,8 +962,11 @@ class ParametersArray(np.ndarray):
     description: str or list(str) or array(str), optional
         String or an iterable of strings, describing the parameters.
         If an iterable, should have the same length or shape as `values`.
-    symbol: ~sympy.core.symbol.Symbol or list(~sympy.core.symbol.Symbol) or ~numpy.ndarray(~sympy.core.symbol.Symbol), optional
+    symbols ~sympy.core.symbol.Symbol or list(~sympy.core.symbol.Symbol) or ~numpy.ndarray(~sympy.core.symbol.Symbol), optional
         A `Sympy`_ symbol or an iterable of symbols, to represent the parameters in symbolic expressions.
+        If an iterable, should have the same length or shape as `values`.
+    symbolic_expressions: ~sympy.core.expr.Expr or list(~sympy.core.expr.Expr) or ~numpy.ndarray(~sympy.core.expr.Expr), optional
+        A `Sympy`_ expression or an iterable of expressions, to represent a relationship to other parameters.
         If an iterable, should have the same length or shape as `values`.
     return_dimensional: bool, optional
         Defined if the value returned by the parameter is dimensional or not. Default to `False`.
@@ -976,7 +979,7 @@ class ParametersArray(np.ndarray):
     """
 
     def __new__(cls, values, input_dimensional=True, units="", scale_object=None, description="",
-                symbol=None, return_dimensional=False):
+                symbols=None, symbolic_expressions=None, return_dimensional=False):
 
         if isinstance(values, (tuple, list)):
             new_arr = np.empty(len(values), dtype=object)
@@ -985,25 +988,36 @@ class ParametersArray(np.ndarray):
                     descr = description[i]
                 else:
                     descr = description
-                if isinstance(symbol, (tuple, list, np.ndarray)):
-                    sy = symbol[i]
+                if isinstance(symbols, (tuple, list, np.ndarray)):
+                    sy = symbols[i]
                 else:
-                    sy = symbol
+                    sy = symbols
+                if isinstance(symbolic_expressions, (tuple, list, np.ndarray)):
+                    expr = symbolic_expressions[i]
+                else:
+                    expr = symbolic_expressions
                 new_arr[i] = Parameter(val, input_dimensional=input_dimensional, units=units, scale_object=scale_object, description=descr,
-                                       return_dimensional=return_dimensional, symbol=sy)
+                                       return_dimensional=return_dimensional, symbol=sy, symbolic_expression=expr)
         else:
-            new_arr = np.empty_like(values, dtype=object)
-            for idx in np.ndindex(values.shape):
-                if isinstance(description, np.ndarray):
-                    descr = description[idx]
-                else:
-                    descr = description
-                if isinstance(symbol, np.ndarray):
-                    sy = symbol[idx]
-                else:
-                    sy = symbol
-                new_arr[idx] = Parameter(values[idx], input_dimensional=input_dimensional, units=units, scale_object=scale_object, description=descr,
-                                         return_dimensional=return_dimensional, symbol=sy)
+            if isinstance(values.flatten()[0], (Parameter, ScalingParameter)):
+                new_arr = values.copy()
+            else:
+                new_arr = np.empty_like(values, dtype=object)
+                for idx in np.ndindex(values.shape):
+                    if isinstance(description, np.ndarray):
+                        descr = description[idx]
+                    else:
+                        descr = description
+                    if isinstance(symbols, np.ndarray):
+                        sy = symbols[idx]
+                    else:
+                        sy = symbols
+                    if isinstance(symbolic_expressions, np.ndarray):
+                        expr = symbolic_expressions[idx]
+                    else:
+                        expr = symbolic_expressions
+                    new_arr[idx] = Parameter(values[idx], input_dimensional=input_dimensional, units=units, scale_object=scale_object, description=descr,
+                                             return_dimensional=return_dimensional, symbol=sy, symbolic_expression=expr)
         arr = np.asarray(new_arr).view(cls)
         arr._input_dimensional = input_dimensional
         arr._return_dimensional = return_dimensional
@@ -1106,8 +1120,128 @@ class ParametersArray(np.ndarray):
         else:
             return self._conversion_factor(self._units, self._scale_object)
 
+    def __add__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = self[idx] + other
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = self[idx] + other[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return self + other
+        else:
+            return self + other
 
-def _join_units(units1, units2, operation):
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = self[idx] - other
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = self[idx] - other[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return self - other
+        else:
+            return self - other
+
+    def __rsub__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = other - self[idx]
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = other - self[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return other - self
+        else:
+            return other - self
+
+    def __mul__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = self[idx] * other
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = self[idx] * other[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return self * other
+        else:
+            return self * other
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = self[idx] / other
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = self[idx] / other[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return self / other
+        else:
+            return self / other
+
+    def __rtruediv__(self, other):
+        if isinstance(other, (Parameter, ScalingParameter, float, int)):
+            res = np.empty(self.shape, dtype=object)
+            for idx in np.ndindex(self.shape):
+                res[idx] = other / self[idx]
+            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                   units=res[idx].units, scale_object=self._scale_object)
+        elif isinstance(other, ParametersArray):
+            if other.shape == self.shape:  # Does not do broadcast
+                res = np.empty(self.shape, dtype=object)
+                for idx in np.ndindex(self.shape):
+                    res[idx] = other / self[idx]
+                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+                                       units=res[idx].units, scale_object=self._scale_object)
+            else:
+                return other / self
+        else:
+            return other / self
+
+
+def _combine_units(units1, units2, operation):
     ul = units1.split('][')
     ul[0] = ul[0][1:]
     ul[-1] = ul[-1][:-1]

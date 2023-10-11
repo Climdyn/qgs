@@ -421,7 +421,7 @@ class AtmosphericTemperatureParams(Params):
         sy = [Symbol('C_a'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True, symbol=sy)
+                                 description=d, return_dimensional=True, symbols=sy)
 
     def set_thetas(self, value, pos=None):
         """Function to define the spectral decomposition of the Newtonian cooling
@@ -461,7 +461,7 @@ class AtmosphericTemperatureParams(Params):
         sy = [Symbol('thetas_'+str(pos+1)) for pos in range(dim)]
 
         self.thetas = ParametersArray(values, scale_object=self._scale_params,
-                                      description=d, return_dimensional=False, input_dimensional=False, symbol=sy)
+                                      description=d, return_dimensional=False, input_dimensional=False, symbols=sy)
 
 
 class OceanicParams(Params):
@@ -588,7 +588,7 @@ class OceanicTemperatureParams(Params):
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True, symbol=sy)
+                                 description=d, return_dimensional=True, symbols=sy)
 
 
 class GroundParams(Params):
@@ -667,7 +667,7 @@ class GroundParams(Params):
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
 
         self.hk = ParametersArray(values, scale_object=self._scale_params,
-                                  description=d, return_dimensional=False, input_dimensional=False, symbol=values)
+                                  description=d, return_dimensional=False, input_dimensional=False, symbols=values)
 
 
 class GroundTemperatureParams(Params):
@@ -755,7 +755,7 @@ class GroundTemperatureParams(Params):
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
         self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
-                                 description=d, return_dimensional=True, symbol=sy)
+                                 description=d, return_dimensional=True, symbols=sy)
 
 
 class QgParams(Params):
