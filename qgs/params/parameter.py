@@ -135,7 +135,7 @@ class ScalingParameter(float):
 
     def __add__(self, other):
 
-        res = float(self) + float(other)
+        res = float(self) + other
         if isinstance(other, (Parameter, ScalingParameter)):
             if self.units != other.units:
                 raise ArithmeticError("ScalingParameter class: Impossible to add two parameters with different units.")
@@ -173,23 +173,26 @@ class ScalingParameter(float):
             else:
                 return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol + other
-                descr = self.description + " + " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) + other
-                descr = "(" + self.description + ") + " + str(other)
-            else:
-                expr = None
-                descr = self.description + " + " + str(other)
-            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol + other
+                    descr = self.description + " + " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) + other
+                    descr = "(" + self.description + ") + " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " + " + str(other)
+                return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
 
-        res = float(self) - float(other)
+        res = float(self) - other
         if isinstance(other, (Parameter, ScalingParameter)):
             if self.units != other.units:
                 raise ArithmeticError("ScalingParameter class: Impossible to subtract two parameters with different units.")
@@ -227,33 +230,39 @@ class ScalingParameter(float):
             else:
                 return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol - other
-                descr = self.description + " - " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) - other
-                descr = "(" + self.description + ") - " + str(other)
-            else:
-                expr = None
-                descr = self.description + " - " + str(other)
-            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol - other
+                    descr = self.description + " - " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) - other
+                    descr = "(" + self.description + ") - " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " - " + str(other)
+                return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
 
     def __rsub__(self, other):
-        res = float(other) - float(self)
-        if self.symbol is not None:
-            expr = other - self.symbol
-            descr = str(other) + " - " + self.description
-        elif self.symbolic_expression is not None:
-            expr = other - (self.symbolic_expression)
-            descr = str(other) + " - (" + self.description + ")"
-        else:
-            expr = None
-            descr = str(other) + " - " + self.description
-        return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        try:
+            res = other - float(self)
+            if self.symbol is not None:
+                expr = other - self.symbol
+                descr = str(other) + " - " + self.description
+            elif self.symbolic_expression is not None:
+                expr = other - (self.symbolic_expression)
+                descr = str(other) + " - (" + self.description + ")"
+            else:
+                expr = None
+                descr = str(other) + " - " + self.description
+            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        except:
+            return res
 
     def __mul__(self, other):
 
-        res = float(self) * float(other)
+        res = float(self) * other
         if isinstance(other, (Parameter, ScalingParameter)):
             units = _combine_units(self.units, other.units, '+')
 
@@ -291,23 +300,26 @@ class ScalingParameter(float):
             else:
                 return ScalingParameter(res, description=descr, units=units, symbol=None, symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol * other
-                descr = self.description + " * " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) * other
-                descr = "(" + self.description + ") * " + str(other)
-            else:
-                expr = None
-                descr = self.description + " * " + str(other)
-            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol * other
+                    descr = self.description + " * " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) * other
+                    descr = "(" + self.description + ") * " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " * " + str(other)
+                return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
 
-        res = float(self) / float(other)
+        res = float(self) / other
         if isinstance(other, (ScalingParameter, Parameter)):
             units = _combine_units(self.units, other.units, '-')
             if self.symbolic_expression is None:
@@ -343,29 +355,35 @@ class ScalingParameter(float):
             else:
                 return ScalingParameter(res, description=descr, units=units, symbol=None, symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol / other
-                descr = self.description + " / " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) / other
-                descr = "(" + self.description + ") / " + str(other)
-            else:
-                expr = None
-                descr = self.description + " / " + str(other)
-            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol / other
+                    descr = self.description + " / " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) / other
+                    descr = "(" + self.description + ") / " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " / " + str(other)
+                return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
 
     def __rtruediv__(self, other):
-        res = float(other) / float(self)
-        if self.symbol is not None:
-            expr = other / self.symbol
-            descr = str(other) + " / " + self.description
-        elif self.symbolic_expression is not None:
-            expr = other / (self.symbolic_expression)
-            descr = str(other) + " / (" + self.description + ")"
-        else:
-            expr = None
-            descr = str(other) + " / " + self.description
-        return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        res = other / float(self)
+        try:
+            if self.symbol is not None:
+                expr = other / self.symbol
+                descr = str(other) + " / " + self.description
+            elif self.symbolic_expression is not None:
+                expr = other / (self.symbolic_expression)
+                descr = str(other) + " / (" + self.description + ")"
+            else:
+                expr = None
+                descr = str(other) + " / " + self.description
+            return ScalingParameter(res, description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        except:
+            return res
 
     def __pow__(self, power, modulo=None):
 
@@ -618,7 +636,7 @@ class Parameter(float):
 
     def __add__(self, other):
 
-        res = float(self) + float(other)
+        res = float(self) + other
         if isinstance(other, (Parameter, ScalingParameter)):
             if isinstance(other, Parameter) and self.return_dimensional != other.return_dimensional:
                 raise ArithmeticError("Parameter class: Impossible to subtract a dimensional parameter with a non-dimensional one.")
@@ -655,25 +673,28 @@ class Parameter(float):
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol + other
-                descr = self.description + " + " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) + other
-                descr = "(" + self.description + ") + " + str(other)
-            else:
-                expr = None
-                descr = self.description + " + " + str(other)
-            return Parameter(res, input_dimensional=self.return_dimensional,
-                             return_dimensional=self.return_dimensional, scale_object=self._scale_object,
-                             description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol + other
+                    descr = self.description + " + " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) + other
+                    descr = "(" + self.description + ") + " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " + " + str(other)
+                return Parameter(res, input_dimensional=self.return_dimensional,
+                                 return_dimensional=self.return_dimensional, scale_object=self._scale_object,
+                                 description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
 
-        res = float(self) - float(other)
+        res = float(self) - other
         if isinstance(other, (Parameter, ScalingParameter)):
             if isinstance(other, Parameter) and self.return_dimensional != other.return_dimensional:
                 raise ArithmeticError("Parameter class: Impossible to subtract a dimensional parameter with a non-dimensional one.")
@@ -709,37 +730,43 @@ class Parameter(float):
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol - other
+                    descr = self.description + " - " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) - other
+                    descr = "(" + self.description + ") - " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " - " + str(other)
+                return Parameter(res, input_dimensional=self.return_dimensional,
+                                 return_dimensional=self.return_dimensional, scale_object=self._scale_object,
+                                 description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+            except:
+                return res
+
+    def __rsub__(self, other):
+        res = other - float(self)
+        try:
             if self.symbol is not None:
-                expr = self.symbol - other
-                descr = self.description + " - " + str(other)
+                expr = other - self.symbol
+                descr = str(other) + " - " + self.description
             elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) - other
-                descr = "(" + self.description + ") - " + str(other)
+                expr = other - (self.symbolic_expression)
+                descr = str(other) + " - (" + self.description + ")"
             else:
                 expr = None
-                descr = self.description + " - " + str(other)
+                descr = str(other) + " - " + self.description
             return Parameter(res, input_dimensional=self.return_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
-
-    def __rsub__(self, other):
-        res = float(other) - float(self)
-        if self.symbol is not None:
-            expr = other - self.symbol
-            descr = str(other) + " - " + self.description
-        elif self.symbolic_expression is not None:
-            expr = other - (self.symbolic_expression)
-            descr = str(other) + " - (" + self.description + ")"
-        else:
-            expr = None
-            descr = str(other) + " - " + self.description
-        return Parameter(res, input_dimensional=self.return_dimensional,
-                         return_dimensional=self.return_dimensional, scale_object=self._scale_object,
-                         description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        except:
+            return res
 
     def __mul__(self, other):
 
-        res = float(self) * float(other)
+        res = float(self) * other
         if isinstance(other, (Parameter, ScalingParameter)):
             if hasattr(other, "units"):
                 units = _combine_units(self.units, other.units, '+')
@@ -776,25 +803,28 @@ class Parameter(float):
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
                              symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol * other
-                descr = self.description + " * " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) * other
-                descr = "(" + self.description + ") * " + str(other)
-            else:
-                expr = None
-                descr = self.description + " * " + str(other)
-            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
-                             scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
-                             symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol * other
+                    descr = self.description + " * " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) * other
+                    descr = "(" + self.description + ") * " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " * " + str(other)
+                return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
+                                 scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
+                                 symbolic_expression=expr)
+            except:
+                return res
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
 
-        res = float(self) / float(other)
+        res = float(self) / other
         if isinstance(other, (ScalingParameter, Parameter)):
             units = _combine_units(self.units, other.units, '-')
             if self.symbolic_expression is None:
@@ -827,33 +857,39 @@ class Parameter(float):
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
                              symbolic_expression=expr)
         else:
-            if self.symbol is not None:
-                expr = self.symbol / other
-                descr = self.description + " / " + str(other)
-            elif self.symbolic_expression is not None:
-                expr = (self.symbolic_expression) / other
-                descr = "(" + self.description + ") / " + str(other)
-            else:
-                expr = None
-                descr = self.description + " / " + str(other)
-            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
-                             scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
-                             symbolic_expression=expr)
+            try:
+                if self.symbol is not None:
+                    expr = self.symbol / other
+                    descr = self.description + " / " + str(other)
+                elif self.symbolic_expression is not None:
+                    expr = (self.symbolic_expression) / other
+                    descr = "(" + self.description + ") / " + str(other)
+                else:
+                    expr = None
+                    descr = self.description + " / " + str(other)
+                return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
+                                 scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
+                                 symbolic_expression=expr)
+            except:
+                return res
 
     def __rtruediv__(self, other):
-        res = float(other) / float(self)
-        if self.symbol is not None:
-            expr = other / self.symbol
-            descr = str(other) + " / " + self.description
-        elif self.symbolic_expression is not None:
-            expr = other / (self.symbolic_expression)
-            descr = str(other) + " / (" + self.description + ")"
-        else:
-            expr = None
-            descr = str(other) + " / " + self.description
-        return Parameter(res, input_dimensional=self.return_dimensional,
-                         return_dimensional=self.return_dimensional, scale_object=self._scale_object,
-                         description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        res = other / float(self)
+        try:
+            if self.symbol is not None:
+                expr = other / self.symbol
+                descr = str(other) + " / " + self.description
+            elif self.symbolic_expression is not None:
+                expr = other / (self.symbolic_expression)
+                descr = str(other) + " / (" + self.description + ")"
+            else:
+                expr = None
+                descr = str(other) + " / " + self.description
+            return Parameter(res, input_dimensional=self.return_dimensional,
+                             return_dimensional=self.return_dimensional, scale_object=self._scale_object,
+                             description=descr, units=self.units, symbol=None, symbolic_expression=expr)
+        except:
+            return res
 
     def __pow__(self, power, modulo=None):
 
