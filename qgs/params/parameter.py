@@ -149,7 +149,7 @@ class ScalingParameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol + (other.symbolic_expression)
-                        descr = self.description + " + ( " + other.description + " )"
+                        descr = self.description + " + (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " + " + other.description
@@ -157,13 +157,13 @@ class ScalingParameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) + other.symbol
-                        descr = "( " + self.description + " ) + " + other.description
+                        descr = "(" + self.description + ") + " + other.description
                     else:
                         expr = None
                         descr = self.description + " + " + other.description
                 else:
                     expr = (self.symbolic_expression) + (other.symbolic_expression)
-                    descr = "( " + self.description + " ) + ( " + other.description + " )"
+                    descr = "(" + self.description + ") + (" + other.description + ")"
 
             if isinstance(other, Parameter):
                 return Parameter(res, input_dimensional=other.input_dimensional,
@@ -178,7 +178,7 @@ class ScalingParameter(float):
                 descr = self.description + " + " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) + other
-                descr = "( " + self.description + " ) + " + str(other)
+                descr = "(" + self.description + ") + " + str(other)
             else:
                 expr = None
                 descr = self.description + " + " + str(other)
@@ -203,7 +203,7 @@ class ScalingParameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol - (other.symbolic_expression)
-                        descr = self.description + " - ( " + other.description + " )"
+                        descr = self.description + " - (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " - " + other.description
@@ -211,13 +211,13 @@ class ScalingParameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) - other.symbol
-                        descr = "( " + self.description + " ) - " + other.description
+                        descr = "(" + self.description + ") - " + other.description
                     else:
                         expr = None
                         descr = self.description + " - " + other.description
                 else:
                     expr = (self.symbolic_expression) - (other.symbolic_expression)
-                    descr = "( " + self.description + " ) - ( " + other.description + " )"
+                    descr = "(" + self.description + ") - (" + other.description + ")"
 
             if isinstance(other, Parameter):
                 return Parameter(res, input_dimensional=other.input_dimensional,
@@ -232,7 +232,7 @@ class ScalingParameter(float):
                 descr = self.description + " - " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) - other
-                descr = "( " + self.description + " ) - " + str(other)
+                descr = "(" + self.description + ") - " + str(other)
             else:
                 expr = None
                 descr = self.description + " - " + str(other)
@@ -245,7 +245,7 @@ class ScalingParameter(float):
             descr = str(other) + " - " + self.description
         elif self.symbolic_expression is not None:
             expr = other - (self.symbolic_expression)
-            descr = str(other) + " - ( " + self.description + " )"
+            descr = str(other) + " - (" + self.description + ")"
         else:
             expr = None
             descr = str(other) + " - " + self.description
@@ -267,7 +267,7 @@ class ScalingParameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol * (other.symbolic_expression)
-                        descr = self.description + " * ( " + other.description + " )"
+                        descr = self.description + " * (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " * " + other.description
@@ -275,13 +275,13 @@ class ScalingParameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) * other.symbol
-                        descr = "( " + self.description + " ) * " + other.description
+                        descr = "(" + self.description + ") * " + other.description
                     else:
                         expr = None
                         descr = self.description + " * " + other.description
                 else:
                     expr = (self.symbolic_expression) * (other.symbolic_expression)
-                    descr = "( " + self.description + " ) * ( " + other.description + " )"
+                    descr = "(" + self.description + ") * (" + other.description + ")"
 
             if isinstance(other, Parameter):
                 return Parameter(res, input_dimensional=other.input_dimensional, return_dimensional=other.return_dimensional,
@@ -296,7 +296,7 @@ class ScalingParameter(float):
                 descr = self.description + " * " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) * other
-                descr = "( " + self.description + " ) * " + str(other)
+                descr = "(" + self.description + ") * " + str(other)
             else:
                 expr = None
                 descr = self.description + " * " + str(other)
@@ -320,7 +320,7 @@ class ScalingParameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol / (other.symbolic_expression)
-                        descr = self.description + " / ( " + other.description + " )"
+                        descr = self.description + " / (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " / " + other.description
@@ -328,13 +328,13 @@ class ScalingParameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) / other.symbol
-                        descr = "( " + self.description + " ) / " + other.description
+                        descr = "(" + self.description + ") / " + other.description
                     else:
                         expr = None
                         descr = self.description + " / " + other.description
                 else:
                     expr = (self.symbolic_expression) / (other.symbolic_expression)
-                    descr = "( " + self.description + " ) / ( " + other.description + " )"
+                    descr = "(" + self.description + ") / (" + other.description + ")"
 
             if isinstance(other, Parameter):
                 return Parameter(res, input_dimensional=other.input_dimensional, return_dimensional=other.return_dimensional,
@@ -348,7 +348,7 @@ class ScalingParameter(float):
                 descr = self.description + " / " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) / other
-                descr = "( " + self.description + " ) / " + str(other)
+                descr = "(" + self.description + ") / " + str(other)
             else:
                 expr = None
                 descr = self.description + " / " + str(other)
@@ -361,7 +361,7 @@ class ScalingParameter(float):
             descr = str(other) + " / " + self.description
         elif self.symbolic_expression is not None:
             expr = other / (self.symbolic_expression)
-            descr = str(other) + " / ( " + self.description + " )"
+            descr = str(other) + " / (" + self.description + ")"
         else:
             expr = None
             descr = str(other) + " / " + self.description
@@ -402,7 +402,7 @@ class ScalingParameter(float):
 
             if self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) ** power
-                descr = "( " + self.description + " ) to the power "+str(power)
+                descr = "(" + self.description + ") to the power "+str(power)
             elif self.symbol is not None:
                 expr = self.symbol ** power
                 descr = self.description + " to the power "+str(power)
@@ -442,7 +442,7 @@ class ScalingParameter(float):
             units = "".join(units)
             if self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) ** power
-                descr = "( " + self.description + " ) to the power " + str(power)
+                descr = "(" + self.description + ") to the power " + str(power)
             elif self.symbol is not None:
                 expr = self.symbol ** power
                 descr = self.description + " to the power " + str(power)
@@ -635,7 +635,7 @@ class Parameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol + (other.symbolic_expression)
-                        descr = self.description + " + ( " + other.description + " )"
+                        descr = self.description + " + (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " + " + other.description
@@ -643,13 +643,13 @@ class Parameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) + other.symbol
-                        descr = "( " + self.description + " ) + " + other.description
+                        descr = "(" + self.description + ") + " + other.description
                     else:
                         expr = None
                         descr = self.description + " + " + other.description
                 else:
                     expr = (self.symbolic_expression) + (other.symbolic_expression)
-                    descr = "( " + self.description + " ) + ( " + other.description + " )"
+                    descr = "(" + self.description + ") + (" + other.description + ")"
 
             return Parameter(res, input_dimensional=self.input_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
@@ -660,7 +660,7 @@ class Parameter(float):
                 descr = self.description + " + " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) + other
-                descr = "( " + self.description + " ) + " + str(other)
+                descr = "(" + self.description + ") + " + str(other)
             else:
                 expr = None
                 descr = self.description + " + " + str(other)
@@ -689,7 +689,7 @@ class Parameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol - (other.symbolic_expression)
-                        descr = self.description + " - ( " + other.description + " )"
+                        descr = self.description + " - (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " - " + other.description
@@ -697,13 +697,13 @@ class Parameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) - other.symbol
-                        descr = "( " + self.description + " ) - " + other.description
+                        descr = "(" + self.description + ") - " + other.description
                     else:
                         expr = None
                         descr = self.description + " - " + other.description
                 else:
                     expr = (self.symbolic_expression) - (other.symbolic_expression)
-                    descr = "( " + self.description + " ) - ( " + other.description + " )"
+                    descr = "(" + self.description + ") - (" + other.description + ")"
 
             return Parameter(res, input_dimensional=self.input_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
@@ -714,7 +714,7 @@ class Parameter(float):
                 descr = self.description + " - " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) - other
-                descr = "( " + self.description + " ) - " + str(other)
+                descr = "(" + self.description + ") - " + str(other)
             else:
                 expr = None
                 descr = self.description + " - " + str(other)
@@ -729,7 +729,7 @@ class Parameter(float):
             descr = str(other) + " - " + self.description
         elif self.symbolic_expression is not None:
             expr = other - (self.symbolic_expression)
-            descr = str(other) + " - ( " + self.description + " )"
+            descr = str(other) + " - (" + self.description + ")"
         else:
             expr = None
             descr = str(other) + " - " + self.description
@@ -756,7 +756,7 @@ class Parameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol * (other.symbolic_expression)
-                        descr = self.description + " * ( " + other.description + " )"
+                        descr = self.description + " * (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " * " + other.description
@@ -764,13 +764,13 @@ class Parameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) * other.symbol
-                        descr = "( " + self.description + " ) * " + other.description
+                        descr = "(" + self.description + ") * " + other.description
                     else:
                         expr = None
                         descr = self.description + " * " + other.description
                 else:
                     expr = (self.symbolic_expression) * (other.symbolic_expression)
-                    descr = "( " + self.description + " ) * ( " + other.description + " )"
+                    descr = "(" + self.description + ") * (" + other.description + ")"
 
             return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
@@ -781,7 +781,7 @@ class Parameter(float):
                 descr = self.description + " * " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) * other
-                descr = "( " + self.description + " ) * " + str(other)
+                descr = "(" + self.description + ") * " + str(other)
             else:
                 expr = None
                 descr = self.description + " * " + str(other)
@@ -807,7 +807,7 @@ class Parameter(float):
                 else:
                     if self.symbol is not None:
                         expr = self.symbol / (other.symbolic_expression)
-                        descr = self.description + " / ( " + other.description + " )"
+                        descr = self.description + " / (" + other.description + ")"
                     else:
                         expr = None
                         descr = self.description + " / " + other.description
@@ -815,13 +815,13 @@ class Parameter(float):
                 if other.symbolic_expression is None:
                     if other.symbol is not None:
                         expr = (self.symbolic_expression) / other.symbol
-                        descr = "( " + self.description + " ) / " + other.description
+                        descr = "(" + self.description + ") / " + other.description
                     else:
                         expr = None
                         descr = self.description + " / " + other.description
                 else:
                     expr = (self.symbolic_expression) / (other.symbolic_expression)
-                    descr = "( " + self.description + " ) / ( " + other.description + " )"
+                    descr = "(" + self.description + ") / (" + other.description + ")"
 
             return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
@@ -832,7 +832,7 @@ class Parameter(float):
                 descr = self.description + " / " + str(other)
             elif self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) / other
-                descr = "( " + self.description + " ) / " + str(other)
+                descr = "(" + self.description + ") / " + str(other)
             else:
                 expr = None
                 descr = self.description + " / " + str(other)
@@ -847,7 +847,7 @@ class Parameter(float):
             descr = str(other) + " / " + self.description
         elif self.symbolic_expression is not None:
             expr = other / (self.symbolic_expression)
-            descr = str(other) + " / ( " + self.description + " )"
+            descr = str(other) + " / (" + self.description + ")"
         else:
             expr = None
             descr = str(other) + " / " + self.description
@@ -890,7 +890,7 @@ class Parameter(float):
 
             if self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) ** power
-                descr = "( " + self.description + " ) to the power "+str(power)
+                descr = "(" + self.description + ") to the power "+str(power)
             elif self.symbol is not None:
                 expr = self.symbol ** power
                 descr = self.description + " to the power "+str(power)
@@ -930,7 +930,7 @@ class Parameter(float):
             units = "".join(units)
             if self.symbolic_expression is not None:
                 expr = (self.symbolic_expression) ** power
-                descr = "( " + self.description + " ) to the power "+str(power)
+                descr = "(" + self.description + ") to the power "+str(power)
             elif self.symbol is not None:
                 expr = self.symbol ** power
                 descr = self.description + " to the power "+str(power)
