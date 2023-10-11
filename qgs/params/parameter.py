@@ -651,7 +651,7 @@ class Parameter(float):
                     expr = (self.symbolic_expression) + (other.symbolic_expression)
                     descr = "(" + self.description + ") + (" + other.description + ")"
 
-            return Parameter(res, input_dimensional=self.input_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
@@ -664,7 +664,7 @@ class Parameter(float):
             else:
                 expr = None
                 descr = self.description + " + " + str(other)
-            return Parameter(res, input_dimensional=self.input_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
 
@@ -705,7 +705,7 @@ class Parameter(float):
                     expr = (self.symbolic_expression) - (other.symbolic_expression)
                     descr = "(" + self.description + ") - (" + other.description + ")"
 
-            return Parameter(res, input_dimensional=self.input_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
         else:
@@ -718,7 +718,7 @@ class Parameter(float):
             else:
                 expr = None
                 descr = self.description + " - " + str(other)
-            return Parameter(res, input_dimensional=self.input_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional,
                              return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                              description=descr, units=self.units, symbol=None, symbolic_expression=expr)
 
@@ -733,7 +733,7 @@ class Parameter(float):
         else:
             expr = None
             descr = str(other) + " - " + self.description
-        return Parameter(res, input_dimensional=self.input_dimensional,
+        return Parameter(res, input_dimensional=self.return_dimensional,
                          return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                          description=descr, units=self.units, symbol=None, symbolic_expression=expr)
 
@@ -772,7 +772,7 @@ class Parameter(float):
                     expr = (self.symbolic_expression) * (other.symbolic_expression)
                     descr = "(" + self.description + ") * (" + other.description + ")"
 
-            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
                              symbolic_expression=expr)
         else:
@@ -785,7 +785,7 @@ class Parameter(float):
             else:
                 expr = None
                 descr = self.description + " * " + str(other)
-            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
                              symbolic_expression=expr)
 
@@ -823,7 +823,7 @@ class Parameter(float):
                     expr = (self.symbolic_expression) / (other.symbolic_expression)
                     descr = "(" + self.description + ") / (" + other.description + ")"
 
-            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=units, symbol=None,
                              symbolic_expression=expr)
         else:
@@ -836,7 +836,7 @@ class Parameter(float):
             else:
                 expr = None
                 descr = self.description + " / " + str(other)
-            return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+            return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
                              scale_object=self._scale_object, description=descr, units=self.units, symbol=None,
                              symbolic_expression=expr)
 
@@ -851,7 +851,7 @@ class Parameter(float):
         else:
             expr = None
             descr = str(other) + " / " + self.description
-        return Parameter(res, input_dimensional=self.input_dimensional,
+        return Parameter(res, input_dimensional=self.return_dimensional,
                          return_dimensional=self.return_dimensional, scale_object=self._scale_object,
                          description=descr, units=self.units, symbol=None, symbolic_expression=expr)
 
@@ -938,7 +938,7 @@ class Parameter(float):
                 expr = None
                 descr = self.description + " to the power "+str(power)
 
-        return Parameter(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
+        return Parameter(res, input_dimensional=self.return_dimensional, return_dimensional=self.return_dimensional,
                          description=descr, units=units, scale_object=self._scale_object, symbol=None,
                          symbolic_expression=expr)
 
@@ -1125,15 +1125,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = self[idx] + other
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = self[idx] + other[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return self + other
         else:
@@ -1147,15 +1149,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = self[idx] - other
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = self[idx] - other[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return self - other
         else:
@@ -1166,15 +1170,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = other - self[idx]
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = other - self[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return other - self
         else:
@@ -1185,15 +1191,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = self[idx] * other
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = self[idx] * other[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return self * other
         else:
@@ -1207,15 +1215,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = self[idx] / other
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = self[idx] / other[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return self / other
         else:
@@ -1226,15 +1236,17 @@ class ParametersArray(np.ndarray):
             res = np.empty(self.shape, dtype=object)
             for idx in np.ndindex(self.shape):
                 res[idx] = other / self[idx]
-            return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                   units=res[idx].units, scale_object=self._scale_object)
+            item = res[idx]
+            return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                   units=item.units, scale_object=self._scale_object)
         elif isinstance(other, ParametersArray):
             if other.shape == self.shape:  # Does not do broadcast
                 res = np.empty(self.shape, dtype=object)
                 for idx in np.ndindex(self.shape):
                     res[idx] = other / self[idx]
-                return ParametersArray(res, input_dimensional=self.input_dimensional, return_dimensional=self.return_dimensional,
-                                       units=res[idx].units, scale_object=self._scale_object)
+                item = res[idx]
+                return ParametersArray(res, input_dimensional=item.return_dimensional, return_dimensional=item.return_dimensional,
+                                       units=item.units, scale_object=self._scale_object)
             else:
                 return other / self
         else:
