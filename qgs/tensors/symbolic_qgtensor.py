@@ -1,15 +1,16 @@
 """
     symbolic qgs tensor module
-    =================
+    ==========================
 
-    This module computes and holds the symbolic representation of the tensors representing the tendencies of the model's equations.
+    This module computes and holds the symbolic representation of the tensors representing the tendencies of the model's
+    equations.
 
 """
 from qgs.functions.symbolic_mul import add_to_dict, symbolic_tensordot
 from qgs.params.params import Parameter, ScalingParameter, ParametersArray
 
 import numpy as np
-import sympy as sy
+from sympy import simplify
 import pickle
 
 from sympy.matrices.immutable import ImmutableSparseMatrix
@@ -27,7 +28,8 @@ class SymbolicQgsTensor(object):
     params: None or QgParams, optional
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
-        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
+        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are
+        projected.
         If None, disable the atmospheric tendencies. Default to `None`.
         The inner product is returned in symbolic or numeric form.
     oceanic_inner_products: None or OceanicInnerProducts, optional
@@ -44,7 +46,8 @@ class SymbolicQgsTensor(object):
     params: None or QgParams
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
-        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
+        The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are
+        projected.
         If None, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
@@ -58,7 +61,8 @@ class SymbolicQgsTensor(object):
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
-    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
+    def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None,
+                 ground_inner_products=None):
 
         self.atmospheric_inner_products = atmospheric_inner_products
         self.oceanic_inner_products = oceanic_inner_products
@@ -215,7 +219,8 @@ class SymbolicQgsTensor(object):
                 M_psio = dict()
                 for i in range(offset, nvar[3]):
                     for j in range(offset, nvar[3]):
-                        M_psio[(i - offset, j - offset)] = bips.M(i, j) + self.params.G.symbolic_expression * bips.U(i, j)
+                        M_psio[(i - offset, j - offset)] = bips.M(i, j) + self.params.G.symbolic_expression \
+                                                           * bips.U(i, j)
 
                 M_psio = ImmutableSparseMatrix(nvar[2], nvar[2], M_psio)
                 M_psio = M_psio.inverse()
@@ -697,8 +702,8 @@ class SymbolicQgsTensor(object):
         jacobian_tensor = ImmutableSparseNDimArray(self.jac_dic.copy(), dims)
         tensor = ImmutableSparseNDimArray(self.tensor_dic.copy(), dims)
 
-        self.jacobian_tensor = jacobian_tensor.applyfunc(sy.simplify)
-        self.tensor = tensor.applyfunc(sy.simplify)
+        self.jacobian_tensor = jacobian_tensor.applyfunc(simplify)
+        self.tensor = tensor.applyfunc(simplify)
 
     @staticmethod
     def remove_dic_zeros(dic):
@@ -754,7 +759,7 @@ class SymbolicQgsTensor(object):
         pickle.dump(self.__dict__, f, **kwargs)
         f.close()
 
-    def sub_tensor(self, tensor=None, continuation_variables=list()):
+    def sub_tensor(self, tensor=None, continuation_variables=None):
         """Uses sympy substitution to convert the symbolic tensor or a symbolic dictionary to a numerical one.
 
         Parameters
@@ -769,6 +774,9 @@ class SymbolicQgsTensor(object):
         ten_out: dict
             Dictionary of the substituted tensor of the model tendencies, with coordinates and value
         """
+
+        if continuation_variables is None:
+            continuation_variables = list()
 
         param_subs = _parameter_substitutions(self.params, continuation_variables)
         
@@ -1193,7 +1201,7 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
 class SymbolicQgsTensorT4(SymbolicQgsTensor):
     # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
-    # Jonathan: Could be done by raising an error if so.
+    # Jonathan: Could be done by raising a warning if so.
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
@@ -1417,15 +1425,13 @@ def _shift_dict_keys(dic, shift):
     return shifted_dic
 
 
-def _parameter_substitutions(params, continuation_varaibles):
+def _parameter_substitutions(params, continuation_variables):
         
     subs = _parameter_values(params)
 
     if 'scale_params' in params.__dict__.keys():
         subs.update(_parameter_values(params.scale_params))
 
-        # TODO: Is there a better way to do this which is dynamic, the __dict__ method doesnt include the properties?
-        # Jonathan: I don't understand
         # Manually add properties from class
         subs[params.scale_params.L.symbol] = params.scale_params.L
         subs[params.scale_params.beta.symbol] = params.scale_params.beta
@@ -1451,7 +1457,7 @@ def _parameter_substitutions(params, continuation_varaibles):
             subs.update(_parameter_values(params.gotemperature_params))
 
     # Remove variables in continuation variables
-    for cv in continuation_varaibles:
+    for cv in continuation_variables:
         if isinstance(cv, ParametersArray):
             for cv_i in cv.symbols:
                 subs.pop(cv_i)

@@ -71,7 +71,7 @@ def symbolic_sparse_mult2(dic, vec_a):
 
     Returns
     -------
-    res: dict  # Jonathan: dict of what ?
+    res: dict(~sympy.core.symbol.Symbol)
         The matrix :math:`A_{i,j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1),
         contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
     """
@@ -104,7 +104,7 @@ def symbolic_sparse_mult3(dic, vec_a, vec_b):
 
     Returns
     -------
-    res: list(~sympy.core.symbol.Symbol)
+    res: dict(~sympy.core.symbol.Symbol)
         The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary, where
         the keys are the tensor coordinates, and the values are the tensor values.
 
@@ -141,7 +141,7 @@ def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
 
     Returns
     -------
-    res: list(~sympy.core.symbol.Symbol)
+    res: dict(~sympy.core.symbol.Symbol)
         The matrix :math:`A_{i, j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1),
         contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
     """
@@ -179,7 +179,7 @@ def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
 
     Returns
     -------
-    res: list(~sympy.core.symbol.Symbol)
+    res: dict(~sympy.core.symbol.Symbol)
         The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary,
         where the keys are the tensor coordinates, and the values are the tensor values.
     """
