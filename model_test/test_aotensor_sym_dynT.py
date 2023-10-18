@@ -16,7 +16,7 @@ import numpy as np
 from qgs.params.params import QgParams
 from qgs.inner_products import symbolic
 from qgs.tensors.qgtensor import QgsTensorDynamicT
-from qgs.tensors.symbolic_qgtensor import SymbolicTensorDynamicT
+from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensorDynamicT
 
 from model_test.test_base_symbolic import TestBaseSymbolic
 
@@ -51,7 +51,7 @@ class TestSymbolicAOTensorDynT(TestBaseSymbolic):
 
         aip.connect_to_ocean(oip)
 
-        sym_aotensor = SymbolicTensorDynamicT(params=params, atmospheric_inner_products=aip, oceanic_inner_products=oip)
+        sym_aotensor = SymbolicQgsTensorDynamicT(params=params, atmospheric_inner_products=aip, oceanic_inner_products=oip)
         
         subbed_tensor = sym_aotensor.sub_tensor()
 

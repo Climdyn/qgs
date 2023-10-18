@@ -1,4 +1,13 @@
-import sympy as sy
+"""
+    Symbolic matrix operation module
+    ================================
+
+    This module supports operations and functions on the symbolic sparse tensors defined in
+    the :class:`~.tensors.symbolic_qgtensor.SymbolicQgsTensor` objects.
+
+"""
+
+from sympy import tensorproduct, tensorcontraction
 
 
 def add_to_dict(dic, loc, value):
@@ -18,22 +27,21 @@ def add_to_dict(dic, loc, value):
 def symbolic_tensordot(a, b, axes=2):
     """Compute tensor dot product along specified axes of two sympy symbolic arrays
 
-    This is based on numpy.tensordot
+    This is based on ~numpy.tensordot .
 
     Parameters
     ----------
-    a, b: sympy arrays
-        Tensors to "dot"
+    a, b: Sympy arrays or tensors
+        Tensors to take the dot product of.
 
     axes: int
-        * integer_like
-          If an int N, sum over the last N axes of `a` and the first N axes
-          of `b` in order. The sizes of the corresponding axes must match.
+        Sum over the last `axes` axes of `a` and the first `axes` axes
+        of `b` in order. The sizes of the corresponding axes must match.
 
     Returns
     -------
     output: sympy tensor
-        The tensor dot product of the input
+        The tensor dot product of the input.
 
     """
     as_ = a.shape
@@ -43,9 +51,9 @@ def symbolic_tensordot(a, b, axes=2):
     b_com = [nda+i for i in range(axes)]
     sum_cols = tuple(a_com + b_com)
     
-    prod = sy.tensorproduct(a, b)
+    prod = tensorproduct(a, b)
     
-    return sy.tensorcontraction(prod, sum_cols)
+    return tensorcontraction(prod, sum_cols)
 
 
 def symbolic_sparse_mult2(dic, vec_a):
@@ -54,15 +62,18 @@ def symbolic_sparse_mult2(dic, vec_a):
 
     Parameters
     ----------
-    dic: dict(Sympy.Symbol)
-        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the tensor.
-    vec_a: list(Sympy.Symbol)
-        The list :math:`a_k` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    dic: dict(~sympy.core.symbol.Symbol)
+        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the
+        tensor.
+    vec_a: list(~sympy.core.symbol.Symbol)
+        The list :math:`a_k` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
     res: dict  # Jonathan: dict of what ?
-        The matrix :math:`A_{i,j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1), contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
+        The matrix :math:`A_{i,j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1),
+        contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
     """
     res = dict()
 
@@ -80,18 +91,22 @@ def symbolic_sparse_mult3(dic, vec_a, vec_b):
 
     Parameters
     ----------
-    dic: Dict(Sympy.Symbol)
-        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the tensor.
-    vec_a: List(Sympy.Symbol)
-        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_b: List(Sympy.Symbol)
-        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    dic: dict(~sympy.core.symbol.Symbol)
+        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the
+        tensor.
+    vec_a: list(~sympy.core.symbol.Symbol)
+        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_b: list(~sympy.core.symbol.Symbol)
+        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
 
     Returns
     -------
-    res: List(Sympy.Symbol)
-        The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
+    res: list(~sympy.core.symbol.Symbol)
+        The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary, where
+        the keys are the tensor coordinates, and the values are the tensor values.
 
     """
     res = dict()
@@ -111,19 +126,24 @@ def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
 
     Parameters
     ----------
-    dic: Dict(Sympy.Symbol)
-        A dictionary where they keys are a tuple of 5 elements which are the coordinates of the tensor values, which are contained in the dictionary values.
-    vec_a: List(Sympy.Symbol)
-        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_b: List(Sympy.Symbol)
-        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_c: List(Sympy.Symbol)
-        The list :math:`c_l` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    dic: dict(~sympy.core.symbol.Symbol)
+        A dictionary where they keys are a tuple of 5 elements which are the coordinates of the tensor values,
+        which are contained in the dictionary values.
+    vec_a: list(~sympy.core.symbol.Symbol)
+        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_b: list(~sympy.core.symbol.Symbol)
+        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_c: list(~sympy.core.symbol.Symbol)
+        The list :math:`c_l` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
-    res: List(Sympy.Symbol)
-        The matrix :math:`A_{i, j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1), contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
+    res: list(~sympy.core.symbol.Symbol)
+        The matrix :math:`A_{i, j}`, of shape (:attr:`~.params.QgParams.ndim` + 1, :attr:`~.params.QgParams.ndim` + 1),
+        contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
     """
     res = dict()
 
@@ -141,21 +161,27 @@ def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
 
     Parameters
     ----------
-    dic: Dict(Sympy.Symbol)
-        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the tensor.
-    vec_a: List(Sympy.Symbol)
-        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_b: List(Sympy.Symbol)
-        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_c: List(Sympy.Symbol)
-        The list :math:`c_l` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
-    vec_d: List(Sympy.Symbol)
-        The list :math:`d_m` to contract the tensor with entries of Sympy Symbols. Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    dic: dict(~sympy.core.symbol.Symbol)
+        A dictionary whose keys are the coordinates of the tensor, and the dictionary values are the values of the
+        tensor.
+    vec_a: list(~sympy.core.symbol.Symbol)
+        The list :math:`a_j` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_b: list(~sympy.core.symbol.Symbol)
+        The list :math:`b_k` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_c: list(~sympy.core.symbol.Symbol)
+        The list :math:`c_l` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
+    vec_d: list(~sympy.core.symbol.Symbol)
+        The list :math:`d_m` to contract the tensor with entries of Sympy Symbols.
+        Must be of shape (:attr:`~.params.QgParams.ndim` + 1,).
 
     Returns
     -------
-    res: List(Sympy.Symbol)
-        The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary, where the keys are the tensor coordinates, and the values are the tensor values.
+    res: list(~sympy.core.symbol.Symbol)
+        The vector :math:`v_i`, of shape (:attr:`~.params.QgParams.ndim` + 1,), contained in a dictionary,
+        where the keys are the tensor coordinates, and the values are the tensor values.
     """
     res = dict()
 

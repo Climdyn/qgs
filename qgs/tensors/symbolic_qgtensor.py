@@ -19,7 +19,7 @@ from sympy.tensor.array import ImmutableSparseNDimArray
 # Jonathan: All public functions should have a docstring
 
 
-class SymbolicTensorLinear(object):
+class SymbolicQgsTensor(object):
     """Symbolic qgs tendencies tensor class.
 
     Parameters
@@ -834,7 +834,7 @@ class SymbolicTensorLinear(object):
                 print(str(ix) + ": " + str(output_val))
 
 
-class SymbolicTensorDynamicT(SymbolicTensorLinear):
+class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
@@ -872,7 +872,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
 
     def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
-        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
+        SymbolicQgsTensor.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
         
         if params.dynamic_T:
             self.compute_tensor()
@@ -1179,7 +1179,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             # TODO: Make a proper error message for here
             raise ValueError("Parameters are set for T4 version, set dynamic_T=True")
 
-        symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)
+        symbolic_dict_linear = SymbolicQgsTensor._compute_tensor_dicts(self)
         symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
 
         symbolic_dict_dynT = self._compute_tensor_dicts()
@@ -1191,7 +1191,7 @@ class SymbolicTensorDynamicT(SymbolicTensorLinear):
             self._set_tensor(symbolic_dict_dynT)
 
 
-class SymbolicTensorT4(SymbolicTensorLinear):
+class SymbolicQgsTensorT4(SymbolicQgsTensor):
     # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
     # Jonathan: Could be done by raising an error if so.
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
@@ -1231,7 +1231,7 @@ class SymbolicTensorT4(SymbolicTensorLinear):
 
     def __init__(self, params=None, atmospheric_inner_products=None, oceanic_inner_products=None, ground_inner_products=None):
 
-        SymbolicTensorLinear.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
+        SymbolicQgsTensor.__init__(self, params, atmospheric_inner_products, oceanic_inner_products, ground_inner_products)
         
         if params.T4:
             self.compute_tensor()
@@ -1377,7 +1377,7 @@ class SymbolicTensorT4(SymbolicTensorLinear):
         if not self.params.T4:
             raise ValueError("Parameters are not set for T4 version")
 
-        symbolic_dict_linear = SymbolicTensorLinear._compute_tensor_dicts(self)
+        symbolic_dict_linear = SymbolicQgsTensor._compute_tensor_dicts(self)
         symbolic_dict_linear = _shift_dict_keys(symbolic_dict_linear, (0, 0))
 
         symbolic_dict_T4 = self._compute_non_stored_full_dict()

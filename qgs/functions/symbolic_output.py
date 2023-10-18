@@ -1,12 +1,21 @@
-# Jonathan: Needs a module description here
+"""
+    Symbolic output module
+    ======================
+
+    This module provides functions to create a symbolic representation of the tendencies functions of the model
+    in various languages and for various external software.
+
+"""
 
 import numpy as np
 from sympy import Symbol, lambdify
 
 import warnings
-from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, symbolic_sparse_mult5
-from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts
-from qgs.tensors.symbolic_qgtensor import SymbolicTensorLinear, SymbolicTensorDynamicT, SymbolicTensorT4
+from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, \
+    symbolic_sparse_mult5
+from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, \
+    GroundSymbolicInnerProducts
+from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensor, SymbolicQgsTensorDynamicT, SymbolicQgsTensorT4
 
 import os
 
@@ -31,7 +40,9 @@ mathematica_lang_translation = {
 }
 
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None, language='python', return_inner_products=False, return_jacobian=False, return_symbolic_eqs=False, return_symbolic_qgtensor=False):
+def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None,
+                              language='python', return_inner_products=False, return_jacobian=False,
+                              return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """Function to output the raw symbolic functions of the qgs model.
 
     Parameters
@@ -47,7 +58,8 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         The variables to not substitute and to leave in the equations, if None no variables are substituted
     language: str
-        Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'
+        Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
+        Default to `python`.
     return_inner_products: bool
         If `True`, return the inner products of the model. Default to `False`.
     return_jacobian: bool
@@ -60,12 +72,12 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     Returns
     -------
     funcs: str
-        The substituted functions in the language syntax specified, as a string
-    dict_eq_simplified: symbolic equations
-        Dictionary of the substituted Jacobian matrix
+        The substituted functions in the language syntax specified, as a string.
+    dict_eq_simplified: dict(~sympy.core.expr.Expr)
+        Dictionary of the substituted Jacobian matrix.
     inner_products: tuple(SymbolicAtmosphericInnerProducts, SymbolicOceanicInnerProducts, SymbolicGroundInnerProducts)
         If `return_inner_products` is `True`, the inner products of the system.
-    eq_simplified: Symbolic equations
+    eq_simplified: dict(~sympy.core.expr.Expr)
         If `return_symbolic_eqs` is `True`, dictionary of the model tendencies symbolic functions.
     agotensor: SymbolicQgsTensor
         If `return_symbolic_qgtensor` is `True`, the symbolic tendencies tensor of the system.
@@ -84,7 +96,8 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
                 pass
 
     if not make_ip_subs:
-        warnings.warn("Calculating inner products symbolically, as the variable 'n' has been specified as a variable, this takes several minutes.")
+        warnings.warn("Calculating inner products symbolically, as the variable 'n' has been specified as a variable, "
+                      "this takes several minutes.")
 
     if params.atmospheric_basis is not None:
         if atm_ip is None:
@@ -118,11 +131,11 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
             aip.connect_to_ground(gip)
 
     if params.T4:
-        agotensor = SymbolicTensorT4(params, aip, oip, gip)
+        agotensor = SymbolicQgsTensorT4(params, aip, oip, gip)
     elif params.dynamic_T:
-        agotensor = SymbolicTensorDynamicT(params, aip, oip, gip)
+        agotensor = SymbolicQgsTensorDynamicT(params, aip, oip, gip)
     else:
-        agotensor = SymbolicTensorLinear(params, aip, oip, gip)
+        agotensor = SymbolicQgsTensor(params, aip, oip, gip)
 
     xx = list()
     xx.append(1)
@@ -133,12 +146,14 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     if params.dynamic_T:
         eq = symbolic_sparse_mult5(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx, xx, xx)
         if return_jacobian:
-            dict_eq = symbolic_sparse_mult4(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx, xx, xx)
+            dict_eq = symbolic_sparse_mult4(agotensor.sub_tensor(
+                agotensor.jac_dic, continuation_variables=continuation_variables), xx, xx, xx)
 
     else:
         eq = symbolic_sparse_mult3(agotensor.sub_tensor(continuation_variables=continuation_variables), xx, xx)
         if return_jacobian:
-            dict_eq = symbolic_sparse_mult2(agotensor.sub_tensor(agotensor.jac_dic, continuation_variables=continuation_variables), xx)
+            dict_eq = symbolic_sparse_mult2(agotensor.sub_tensor(
+                agotensor.jac_dic, continuation_variables=continuation_variables), xx)
 
     eq_simplified = dict()
     dict_eq_simplified = dict()
@@ -158,7 +173,8 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         if return_jacobian:
             dict_eq_simplified = dict_eq
 
-    func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True, continuation_variables=continuation_variables)
+    func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True,
+                                continuation_variables=continuation_variables)
 
     ret = list()
     ret.append('\n'.join(func))
@@ -178,8 +194,8 @@ def translate_equations(equations, language='python'):
 
     Parameters
     ----------
-    equations: dict
-        Dictinary of the symbolic model equations
+    equations: dict(~sympy.core.expr.Expr)
+        Dictionary of the symbolic model equations.
     language: string
         Language syntax that the equations are returned in. Options are:
         - `python`
@@ -191,7 +207,7 @@ def translate_equations(equations, language='python'):
 
     Returns
     -------
-    str_eq: dict
+    str_eq: dict(str)
         Dictionary of strings of the model equations.
     """
 
@@ -223,18 +239,18 @@ def translate_equations(equations, language='python'):
 
 
 def format_equations(equations, params, save_loc=None, language='python', print_equations=False):
-    """Function formats the equations, in the programming language specified, and saves the equations to the specified location.
-    The variables in the equation are substituted if the model variable is input.
+    """Function formats the equations, in the programming language specified, and saves the equations to the specified
+    location. The variables in the equation are substituted if the model variable is input.
 
     Parameters
     ----------
-    equations: dict
-        Dictionary of symbolic model equations
+    equations: dict(~sympy.core.expr.Expr)
+        Dictionary of symbolic model equations.
     params: QgParams
-        qgs model params
-    save_loc: String
-        location to save the outputs as a .txt file
-    language: string
+        The parameters fully specifying the model configuration.
+    save_loc: str
+        Location to save the outputs as a .txt file.
+    language: str
         Language syntax that the equations are returned in. Options are:
         - `python`
         - `fortran`
@@ -243,15 +259,18 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         - `mathematica`
         Default to `python`.
     print_equations: bool
-        If `True`, equations are printed by the function, if `False`, equation string is returned by the function. Defaults to `False`
+        If `True`, equations are printed by the function, if `False`, equation strings are returned by the function.
+        Defaults to `False`
 
     Returns
     -------
-    equation_dict: dict
-        Dictionary of symbolic model equations, that have been substituted with numerical values
+    equation_dict: dict(~sympy.core.expr.Expr)
+        Dictionary of symbolic model equations, that have been substituted with numerical values.
     
     free_vars: Set
-        Set of strings of model variables that have not been substituted in this function, and remain as variables in the equations.
+        Set of strings of model variables that have not been substituted in this function, and remain as variables in
+        the equations.
+        # Jonathan: I don't see where free_vars is returned in the code !!
 
     """
     equation_dict = dict()
@@ -298,17 +317,18 @@ def format_equations(equations, params, save_loc=None, language='python', print_
 
 
 def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=None):
-    """Converts the symbolic equations to a function in string format in the language syntax specified, or a lambdified python function
+    """Converts the symbolic equations to a function in string format in the language syntax specified,
+    or a lambdified python function.
     
     Parameters
     ----------
-    equations: dict
-        Dictionary of the substituted symbolic model equations
+    equations: dict(~sympy.core.expr.Expr)
+        Dictionary of the substituted symbolic model equations.
     params: QgParams
         The parameters fully specifying the model configuration.
     string_output: bool
-        If `True`, returns a lambdified python function, if `False` returns a string function. Defaults to `True`
-    language: string
+        If `True`, returns a lambdified python function, if `False` returns a string function. Defaults to `True`.
+    language: str
         Language syntax that the equations are returned in. Options are:
         - `python`
         - `fortran`
@@ -316,13 +336,14 @@ def equation_as_function(equations, params, string_output=True, language='python
         - `auto`
         - `mathematica`
         Default to `python`.
-    continuation_variables: Set or list or None
-        Variables that are not substituted with numerical values. If None, no symbols are substituted
+    continuation_variables: ~sympy.sets.sets.Set(~sympy.core.symbol.Symbol) or list(~sympy.core.symbol.Symbol) or None
+        Variables that are not substituted with numerical values. If `None`, no symbols are substituted.
 
     Returns
     -------
     f_output: callable or str
-        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is a lambdified python function
+        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is
+        a lambdified python function.
     
     """
 
@@ -414,7 +435,7 @@ def equation_as_function(equations, params, string_output=True, language='python
     return f_output
 
 
-def create_auto_file(equations, params, continuation_variables):
+def create_auto_file(equations, params, continuation_variables, auto_main_template=None, auto_c_template=None):
     """Creates the auto configuration file and the model file.
     Saves files to specified folder.
 
@@ -426,7 +447,12 @@ def create_auto_file(equations, params, continuation_variables):
         The parameters fully specifying the model configuration.
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         Variables that are not substituted with numerical values. If None, no symbols are substituted
-
+    auto_main_template: str, optional
+        The template to be used to generate the main AUTO file.
+        If not provided, use the default template.
+    auto_c_template: str, optional
+        The template to be used to generate the AUTO config file.
+        If not provided, use the default template.
     """
 
     # TODO: Find out best way to save these files
@@ -436,12 +462,9 @@ def create_auto_file(equations, params, continuation_variables):
     # The existing model parameters are used to populate the auto file
     # The variables given as `continuation_variables` remain in the equations.
     # There is a limit of 1-10 remaining variables
-    base_path = os.path.dirname(__file__)
-    base_file = '.modelproto'
-    base_config = '.cproto'
 
     if (len(continuation_variables) < 1) or (len(continuation_variables) > 10):
-        ValueError("Too many variables for auto file")
+        raise ValueError("Too many variables for auto file")
 
     # Declare variables
     declare_var = list()    
@@ -463,13 +486,14 @@ def create_auto_file(equations, params, continuation_variables):
 
     # Writing model file ################
 
-    # Open base file and input strings
-    f_base = open(base_path + '/' + base_file, 'r')
-    lines = f_base.readlines()
-    f_base.close()
+    if auto_main_template is not None:
+        lines = auto_main_template
+    else:
+        lines = default_auto_main_template
 
     auto_file = list()
     # TODO: Tabs not working here correctly
+    # Jonathan: Is it solved with the new method?
     for ln in lines:
         if 'PARAMETER DECLARATION' in ln:
             for dv in declare_var:
@@ -490,9 +514,10 @@ def create_auto_file(equations, params, continuation_variables):
     
     # Writing config file ################
 
-    c_base = open(base_path + '/' + base_config, 'r')
-    lines = c_base.readlines()
-    c_base.close()
+    if auto_c_template is not None:
+        lines = auto_c_template
+    else:
+        lines = default_auto_c_template
 
     auto_config = list()
     for ln in lines:
@@ -570,3 +595,307 @@ def _variable_names(params):
         output[i+1] = v
     
     return output
+
+
+# ------------- Default AUTO files templates ----------------
+
+default_auto_main_template = """!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+!   AUTO file for qgs model
+!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+
+SUBROUTINE FUNC(NDIM,U,ICP,PAR,IJAC,F,DFDU,DFDP)
+    !--------- ----
+  
+    ! Evaluates the algebraic equations or ODE right hand side
+  
+    ! Input arguments :
+    !      NDIM   :   Dimension of the algebraic or ODE system 
+    !      U      :   State variables
+    !      ICP    :   Array indicating the free parameter(s)
+    !      PAR    :   Equation parameters
+  
+    ! Values to be returned :
+    !      F      :   Equation or ODE right hand side values
+  
+    ! Normally unused Jacobian arguments : IJAC, DFDU, DFDP (see manual)
+  
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM, IJAC, ICP(*)
+    DOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)
+    DOUBLE PRECISION, INTENT(OUT) :: F(NDIM)
+    DOUBLE PRECISION, INTENT(INOUT) :: DFDU(NDIM,NDIM),DFDP(NDIM,*)
+  
+  
+    
+!   PARAMETER DECLERATION
+  
+!  CONTINUATION PARAMETERS
+
+
+!  EVOLUTION EQUATIONS
+
+END SUBROUTINE FUNC
+
+!-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+
+SUBROUTINE STPNT(NDIM,U,PAR,T)
+    !--------- -----
+    
+    ! Input arguments :
+    !      NDIM   :   Dimension of the algebraic or ODE system 
+    
+    ! Values to be returned :
+    !      U      :   A starting solution vector
+    !      PAR    :   The corresponding equation-parameter values
+    
+    ! Note : For time- or space-dependent solutions this subroutine has
+    !        the scalar input parameter T contains the varying time or space
+    !        variable value.
+    
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM
+    DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
+    DOUBLE PRECISION, INTENT(IN) :: T
+    DOUBLE PRECISION :: X(NDIM+1)
+    INTEGER :: i,is
+    
+    ! Initialize the equation parameters
+
+! INITIALISE PARAMETERS
+
+    ! Initialize the solution
+    U = 0.0d0
+    ! Initialization from a solution file (selection with PAR36)
+    ! open(unit=15,file='',status='old')
+    ! is=int(PAR(36))
+    ! if (is.gt.0) print*, 'Loading from solution :',is
+    ! DO i=1,is
+    !    read(15,*) X
+    ! ENDDO
+    ! close(15)
+    ! U=X(2:NDIM+1)
+    
+    
+END SUBROUTINE STPNT
+    
+!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+
+SUBROUTINE BCND(NDIM,PAR,ICP,NBC,U0,U1,FB,IJAC,DBC)
+    !--------- ----
+    
+    ! Boundary Conditions
+    
+    ! Input arguments :
+    !      NDIM   :   Dimension of the ODE system 
+    !      PAR    :   Equation parameters
+    !      ICP    :   Array indicating the free parameter(s)
+    !      NBC    :   Number of boundary conditions
+    !      U0     :   State variable values at the left boundary
+    !      U1     :   State variable values at the right boundary
+    
+    ! Values to be returned :
+    !      FB     :   The values of the boundary condition functions 
+    
+    ! Normally unused Jacobian arguments : IJAC, DBC (see manual)
+    
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM, ICP(*), NBC, IJAC
+    DOUBLE PRECISION, INTENT(IN) :: PAR(*), U0(NDIM), U1(NDIM)
+    DOUBLE PRECISION, INTENT(OUT) :: FB(NBC)
+    DOUBLE PRECISION, INTENT(INOUT) :: DBC(NBC,*)
+    
+    !X FB(1)=
+    !X FB(2)=
+    
+END SUBROUTINE BCND
+    
+!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+    
+SUBROUTINE ICND(NDIM,PAR,ICP,NINT,U,UOLD,UDOT,UPOLD,FI,IJAC,DINT)
+
+    ! Integral Conditions
+
+    ! Input arguments :
+    !      NDIM   :   Dimension of the ODE system 
+    !      PAR    :   Equation parameters
+    !      ICP    :   Array indicating the free parameter(s)
+    !      NINT   :   Number of integral conditions
+    !      U      :   Value of the vector function U at `time' t
+
+    ! The following input arguments, which are normally not needed,
+    ! correspond to the preceding point on the solution branch
+    !      UOLD   :   The state vector at 'time' t
+    !      UDOT   :   Derivative of UOLD with respect to arclength
+    !      UPOLD  :   Derivative of UOLD with respect to `time'
+
+    ! Normally unused Jacobian arguments : IJAC, DINT
+
+    ! Values to be returned :
+    !      FI     :   The value of the vector integrand 
+
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM, ICP(*), NINT, IJAC
+    DOUBLE PRECISION, INTENT(IN) :: PAR(*)
+    DOUBLE PRECISION, INTENT(IN) :: U(NDIM), UOLD(NDIM), UDOT(NDIM), UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(OUT) :: FI(NINT)
+    DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
+
+END SUBROUTINE ICND
+
+!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+    
+
+SUBROUTINE FOPT(NDIM,U,ICP,PAR,IJAC,FS,DFDU,DFDP)
+    !--------- ----
+    !
+    ! Defines the objective function for algebraic optimization problems
+    !
+    ! Supplied variables :
+    !      NDIM   :   Dimension of the state equation
+    !      U      :   The state vector
+    !      ICP    :   Indices of the control parameters
+    !      PAR    :   The vector of control parameters
+    !
+    ! Values to be returned :
+    !      FS      :   The value of the objective function
+    !
+    ! Normally unused Jacobian argument : IJAC, DFDP
+    
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM, ICP(*), IJAC
+    DOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)
+    DOUBLE PRECISION, INTENT(OUT) :: FS
+    DOUBLE PRECISION, INTENT(INOUT) :: DFDU(NDIM),DFDP(*)
+    
+END SUBROUTINE FOPT
+    
+!----------------------------------------------------------------------
+!----------------------------------------------------------------------
+    
+SUBROUTINE PVLS(NDIM,U,PAR)
+    !--------- ----
+    
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: NDIM
+    DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM)
+    DOUBLE PRECISION, INTENT(INOUT) :: PAR(*)
+    DOUBLE PRECISION :: GETP,pi,realfm,imagfm,imagfm1
+    DOUBLE PRECISION :: lw,lw1
+    LOGICAL, SAVE :: first = .TRUE.
+    DOUBLE PRECISION :: T
+    INTEGER :: i
+
+    IF (first) THEN
+        CALL STPNT(NDIM,U,PAR,T)
+        first = .FALSE.
+    ENDIF
+
+    !PAR(26)=U(44)
+    !PAR(27)=U(52)
+    PAR(25)=0.
+    pi = 4*ATAN(1d0)
+    i=1
+    lw=100.
+    lw1=101.
+    DO WHILE(i < NDIM)
+        realfm = GETP('EIG',I*2-1,U)
+        IF (ABS(realfm) < lw) THEN
+            lw = ABS(realfm)
+            lw1 = ABS(GETP('EIG',(I+1)*2-1,U))
+            imagfm1 = ABS(GETP('EIG',(I+1)*2,U))
+            imagfm = ABS(GETP('EIG',I*2,U))
+        END IF
+        i=i+1
+    END DO
+    IF ((lw==lw1).AND.(imagfm1==imagfm).AND.(imagfm/=0.D0)) THEN
+    PAR(25) = 2*pi/imagfm
+    ENDIF
+    !---------------------------------------------------------------------- 
+    ! NOTE : 
+    ! Parameters set in this subroutine should be considered as ``solution 
+    ! measures'' and be used for output purposes only.
+    ! 
+    ! They should never be used as `true'' continuation parameters. 
+    !
+    ! They may, however, be added as ``over-specified parameters'' in the 
+    ! parameter list associated with the AUTO-Constant NICP, in order to 
+    ! print their values on the screen and in the ``p.xxx file.
+    !
+    ! They may also appear in the list associated with AUTO-Constant NUZR.
+    !
+    !---------------------------------------------------------------------- 
+    ! For algebraic problems the argument U is, as usual, the state vector.
+    ! For differential equations the argument U represents the approximate 
+    ! solution on the entire interval [0,1]. In this case its values must 
+    ! be accessed indirectly by calls to GETP, as illustrated below.
+    !---------------------------------------------------------------------- 
+    !
+    ! Set PAR(2) equal to the L2-norm of U(1)
+    !X PAR(2)=GETP('NRM',1,U)
+    !
+    ! Set PAR(3) equal to the minimum of U(2)
+    !X PAR(3)=GETP('MIN',2,U)
+    !
+    ! Set PAR(4) equal to the value of U(2) at the left boundary.
+    !X PAR(4)=GETP('BV0',2,U)
+    !
+    ! Set PAR(5) equal to the pseudo-arclength step size used.
+    !X PAR(5)=GETP('STP',1,U)
+    !
+    !---------------------------------------------------------------------- 
+    ! The first argument of GETP may be one of the following:
+    !        'NRM' (L2-norm),     'MAX' (maximum),
+    !        'INT' (integral),    'BV0 (left boundary value),
+    !        'MIN' (minimum),     'BV1' (right boundary value).
+    !
+    ! Also available are
+    !   'STP' (Pseudo-arclength step size used).
+    !   'FLD' (`Fold function', which vanishes at folds).
+    !   'BIF' (`Bifurcation function', which vanishes at singular points).
+    !   'HBF' (`Hopf function'; which vanishes at Hopf points).
+    !   'SPB' ( Function which vanishes at secondary periodic bifurcations).
+    !---------------------------------------------------------------------- 
+END SUBROUTINE PVLS
+"""
+
+default_auto_c_template = """#Configuration files
+
+#Parameters name
+# ! PARAMETERS
+#Variables name
+# ! VARIABLES
+#Dimension of the system
+# ! DIMENSION
+#Problem type (1 for FP, 2 for PO, -2 for time integration)
+IPS =   1
+#Start solution label
+IRS =   0
+#Continuation parameters (in order of use)
+# ! CONTINUATION ORDER
+#Number of mesh intervals
+NTST=   100
+#Print and restart every NPR steps (0 to disable)
+NPR=   0
+#Number of bifurcating branches to compute (negative number means continue only in one direction)
+MXBF=0
+#Detection of Special Points
+ISP=2
+#Maximum number of iteration in the Newton-Chord method
+ITNW=7
+#Arc-length continuation parameters
+DS  =  0.00001, DSMIN= 1e-15, DSMAX=   1.0
+#Precision parameters (Typiq. EPSS = EPSL * 10^-2)
+EPSL=1e-07, EPSU=1e-07, EPSS=1e-05
+#Number of parameter (don't change it)
+NPAR = 36
+#User defined value where to save the solution
+# ! SOLUTION SAVE
+#Stop conditions
+# ! STOP CONDITIONS
+"""
