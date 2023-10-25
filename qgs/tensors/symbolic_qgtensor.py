@@ -17,7 +17,6 @@ from sympy.matrices.immutable import ImmutableSparseMatrix
 from sympy.tensor.array import ImmutableSparseNDimArray
 
 # TODO: Check non stored IP version of this
-# Jonathan: All public functions should have a docstring
 
 
 class SymbolicQgsTensor(object):
@@ -707,6 +706,18 @@ class SymbolicQgsTensor(object):
 
     @staticmethod
     def remove_dic_zeros(dic):
+        """Removes zero values from dictionary
+
+        Parameters
+        ----------
+        tensor: dict
+            dictionary which could include 0 in values
+        Returns
+        -------
+        ten_out: dict
+            dictionary with same keys and values as input, but keys with value of 0 are removed
+        """
+
         non_zero_dic = dict()
         for key in dic.keys():
             if dic[key] != 0:
@@ -716,6 +727,18 @@ class SymbolicQgsTensor(object):
     
     @staticmethod
     def jacobian_from_dict(dic):
+        """Calculates the Jacobian from the qgs tensor
+
+        Parameters
+        ----------
+        dic: dict
+            dictionary of tendencies of the model
+        Returns
+        -------
+        dic_jac: dict
+            Jacobian tensor stored in a dictionary
+        """
+
         rank = max([len(i) for i in dic.keys()])
         n_perm = rank - 2
         
@@ -736,6 +759,19 @@ class SymbolicQgsTensor(object):
     
     @staticmethod
     def simplify_dict(dic):
+        """calculates the upper triangular tensor of a given tensor, stored in dictionary
+
+        Parameters
+        ----------
+        dic: dict
+            dictionary of tendencies of the model
+
+        Returns
+        -------
+        dic_upp: dict
+            Upper triangular tensor, stored as a tensor where the keys are the coordinates of the corresponding value.
+        """
+
         keys = dic.keys()
         dic_upp = dict()
 
@@ -764,10 +800,11 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict, sympy array  # Jonathan: be more precise here
+        tensor: dict or Sympy ImmutableSparseNDimArray
 
         continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-            If None all variables are substituted. This variable is the opposite of 'variables'. # Jonathan: what does it means?
+            Variables which remain symbolic, all other variables are substituted with numerical values.
+            If None all variables are substituted.
 
         Returns
         -------
@@ -1201,7 +1238,8 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
 class SymbolicQgsTensorT4(SymbolicQgsTensor):
     # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
-    # Jonathan: Could be done by raising a warning if so.
+    # TODO: Create a warning about long run-times.
+
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
