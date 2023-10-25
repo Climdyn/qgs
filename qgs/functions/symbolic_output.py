@@ -554,14 +554,17 @@ def _split_equations(eq_dict, f_output, line_len=80):
 
     for n, eq in enumerate(eq_dict.values()):
         # split equations to be a maximum of `line_len`
-        
+
         # split remainder of equation into chunks of length `line_length`
         eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
-        f_output.append('\tF('+str(n+1)+') =\t ' + eq_chunks[0] + "&")
-        for ln in eq_chunks[1:-1]:
-            f_output.append("\t\t&" + ln + "&")
-        
-        f_output.append("\t\t&" + eq_chunks[-1])
+        if len(eq_chunks) > 1:
+            f_output.append('\tF(' + str(n + 1) + ') =\t ' + eq_chunks[0] + "&")
+            for ln in eq_chunks[1:-1]:
+                f_output.append("\t\t&" + ln + "&")
+
+            f_output.append("\t\t&" + eq_chunks[-1])
+        else:
+            f_output.append('\tF(' + str(n + 1) + ') =\t ' + eq_chunks[0])
         f_output.append('')
     return f_output
 
