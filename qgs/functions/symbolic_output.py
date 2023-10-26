@@ -25,7 +25,7 @@ python_lang_translation = {
 }
 
 fortran_lang_translation = {
-    '**': '^'
+    'conjugate': 'CONJG'
     # TODO: may need to add variable for pi
 }
 
@@ -485,8 +485,8 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     sol_ini = list()
 
     for i, v in enumerate(continuation_variables):
-        temp_str = str(v.symbol) + " = PAR(" + str(i) + ")"
-        initial_value = "PAR(" + str(i) + ") = " + str(v) + "  ! Variable: " + str(v.symbol)
+        temp_str = str(v.symbol) + " = PAR(" + str(i+1) + ")"
+        initial_value = "PAR(" + str(i+1) + ") = " + str(v) + "  ! Variable: " + str(v.symbol)
 
         var_list.append(temp_str)
         var_ini.append(initial_value)
