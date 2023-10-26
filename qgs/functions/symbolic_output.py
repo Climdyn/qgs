@@ -341,6 +341,8 @@ def equation_as_function(equations, params, string_output=True, language='python
         a lambdified python function.
     
     """
+    if continuation_variables is None:
+        continuation_variables = list()
 
     eq_dict = format_equations(equations, params, language=language)
 
@@ -480,15 +482,19 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     # make list of parameters
     var_list = list()
     var_ini = list()
+    sol_ini = list()
 
     for i, v in enumerate(continuation_variables):
-
-        temp_str = "PAR(" + str(i) + ") = " + str(v.symbol)
-
-        initial_value = "PAR(" + str(i) + ") = " + str(v) + "   Variable: " + str(v.symbol)
+        temp_str = str(v.symbol) + " = PAR(" + str(i) + ")"
+        initial_value = "PAR(" + str(i) + ") = " + str(v) + "  ! Variable: " + str(v.symbol)
 
         var_list.append(temp_str)
         var_ini.append(initial_value)
+
+    for i in range(1, params.ndim+1):
+        initial_sol = "U(" + str(i) + ") = 0.0d0"
+
+        sol_ini.append(initial_sol)
 
     # Writing model file ################
 
@@ -510,6 +516,9 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
                 auto_file.append(e)
         elif 'INITIALISE PARAMETERS' in ln:
             for iv in var_ini:
+                auto_file.append('\t' + iv)
+        elif 'INITIALISE SOLUTION' in ln:
+            for iv in sol_ini:
                 auto_file.append('\t' + iv)
         else:
             auto_file.append(ln.replace('\n', ''))
@@ -668,7 +677,9 @@ SUBROUTINE STPNT(NDIM,U,PAR,T)
 ! INITIALISE PARAMETERS
 
 \t! Initialize the solution
-\tU = 0.0d0
+
+! INITIALISE SOLUTION
+
 \t! Initialization from a solution file (selection with PAR36)
 \t! open(unit=15,file='',status='old')
 \t! is=int(PAR(36))
