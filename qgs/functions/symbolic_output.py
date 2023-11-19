@@ -533,7 +533,9 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     auto_config = list()
     for ln in lines:
         if '! PARAMETERS' in ln:
-            auto_config.append('parnames = ' + str({i+1: str(v.symbol) for i, v in enumerate(continuation_variables)}))
+            params_dic = {i+1: str(v.symbol) for i, v in enumerate(continuation_variables)}
+            params_dic.update({11: 'T', 12: 'theta', 14: 't', 25: 'T_r'})
+            auto_config.append('parnames = ' + str(params_dic))
 
         elif '! VARIABLES' in ln:
             auto_config.append('unames = ' + str(_variable_names(params)))
