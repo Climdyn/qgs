@@ -533,7 +533,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     auto_config = list()
     for ln in lines:
         if '! PARAMETERS' in ln:
-            auto_config.append('parnames = ' + str({i+1: v.symbol for i, v in enumerate(continuation_variables)}))
+            auto_config.append('parnames = ' + str({i+1: str(v.symbol) for i, v in enumerate(continuation_variables)}))
 
         elif '! VARIABLES' in ln:
             auto_config.append('unames = ' + str(_variable_names(params)))
@@ -542,15 +542,15 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
             auto_config.append('NDIM = ' + str(params.ndim))
 
         elif '! CONTINUATION ORDER' in ln:
-            auto_config.append('ICP = ' + str([v.symbol for v in continuation_variables]))
+            auto_config.append('ICP = ' + str([str(v.symbol) for v in continuation_variables]))
         
         elif '! SOLUTION SAVE' in ln:
             auto_config.append("# ! User to input save locations")
-            auto_config.append('UZR = ' + str({v.symbol: [] for v in continuation_variables}))
+            auto_config.append('UZR = ' + str({str(v.symbol): [] for v in continuation_variables}))
 
         elif '! STOP CONDITIONS' in ln:
             auto_config.append("# ! User to input variable bounds")
-            auto_config.append('UZSTOP = ' + str({v.symbol: [] for v in continuation_variables}))
+            auto_config.append('UZSTOP = ' + str({str(v.symbol): [] for v in continuation_variables}))
         
         else:
             auto_config.append(ln.replace('\n', ''))
@@ -578,6 +578,7 @@ def _split_equations(eq_dict, f_output, line_len=80):
     return f_output
 
 
+# Jonathan: why not use QgParams.var_string instead?
 def _variable_names(params):
     # Function to make the variable names for auto
     num_v = params.number_of_variables
