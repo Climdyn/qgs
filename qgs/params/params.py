@@ -1428,7 +1428,7 @@ class QgParams(Params):
 
             self.atemperature_params.gamma = Parameter(1.e7, units='[J][m^-2][K^-1]', scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
-                                                       return_dimensional=True, symbol=Symbol('gamma_g'))
+                                                       return_dimensional=True, symbol=Symbol('gamma_a'))
             if self.dynamic_T:
                 self.atemperature_params.set_insolation((self.nmod[0] + 1) * [0.e0], None, True)
                 self.atemperature_params.set_insolation(100.0, 0, True)
@@ -1863,7 +1863,7 @@ class QgParams(Params):
                                                        scale_object=self.scale_params,
                                                        description='specific heat capacity of the atmosphere',
                                                        return_dimensional=True,
-                                                       symbol=Symbol('gamma_g'))
+                                                       symbol=Symbol('gamma_a'))
             self.atemperature_params.set_insolation(self.nmod[0] * [0.e0])
             self.atemperature_params.set_insolation(100.0, 0)
             self.atemperature_params.eps = Parameter(0.76e0, input_dimensional=False,
