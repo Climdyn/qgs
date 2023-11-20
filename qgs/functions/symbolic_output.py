@@ -436,7 +436,8 @@ def equation_as_function(equations, params, string_output=True, language='python
     return f_output
 
 
-def create_auto_file(equations, params, continuation_variables, auto_main_template=None, auto_c_template=None):
+def create_auto_file(equations, params, continuation_variables, auto_main_template=None, auto_c_template=None,
+                     initialize_params=False, initialize_solution=False):
     """Creates the auto configuration file and the model file.
     Saves files to specified folder.
 
@@ -454,6 +455,10 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     auto_c_template: str, optional
         The template to be used to generate the AUTO config file.
         If not provided, use the default template.
+    initialize_params: bool, optional
+        Add lines in the AUTO STPNT function to initialize the parameters. Default to `False`.
+    initialize_solution: bool, optional
+        Add lines in the AUTO STPNT function to initialize the solution. Default to `False`.
 
     Returns
     -------
@@ -514,10 +519,10 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
         elif 'EVOLUTION EQUATIONS' in ln:
             for e in equations:
                 auto_file.append(e)
-        elif 'INITIALISE PARAMETERS' in ln:
+        elif 'INITIALISE PARAMETERS' in ln and initialize_params:
             for iv in var_ini:
                 auto_file.append('\t' + iv)
-        elif 'INITIALISE SOLUTION' in ln:
+        elif 'INITIALISE SOLUTION' in ln and initialize_solution:
             for iv in sol_ini:
                 auto_file.append('\t' + iv)
         else:
@@ -805,13 +810,11 @@ SUBROUTINE PVLS(NDIM,U,PAR)
 \tDOUBLE PRECISION :: T
 \tINTEGER :: i
 
-\tIF (first) THEN
-\t\tCALL STPNT(NDIM,U,PAR,T)
-\t\tfirst = .FALSE.
-\tENDIF
+\t!IF (first) THEN
+\t\t!CALL STPNT(NDIM,U,PAR,T)
+\t\t!first = .FALSE.
+\t!ENDIF
 
-\t!PAR(26)=U(44)
-\t!PAR(27)=U(52)
 \tPAR(25)=0.
 \tpi = 4*ATAN(1d0)
 \ti=1
