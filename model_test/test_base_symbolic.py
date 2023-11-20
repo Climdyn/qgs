@@ -54,7 +54,7 @@ class TestBaseSymbolic(unittest.TestCase):
         if len(self.symbolic_values) == 0:
             self.symbolic_outputs()
         self.numerical_outputs()
-        for v, r in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.reference)))):
+        for v, r in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.numerical_values)))):
             self.assertTrue(self.match_flt(v, r), msg=v+' != '+r+' !!!')
 
     def check_numerical_lists(self, cmax=1):
