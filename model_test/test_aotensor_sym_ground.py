@@ -23,7 +23,7 @@ from model_test.test_base_symbolic import TestBaseSymbolic
 real_eps = np.finfo(np.float64).eps
 
 
-class TestSymbolicAOTensor(TestBaseSymbolic):
+class TestSymbolicGroundTensor(TestBaseSymbolic):
     '''
         Test class for the Linear Symbolic Tensor
         The tensor is tested against the reference file, and then the numerical tensor calculated in qgs.
