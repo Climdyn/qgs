@@ -357,15 +357,16 @@ def equation_as_function(equations, params, string_output=True, language='python
             for v in continuation_variables:
                 f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
 
-            for n, eq in enumerate(eq_dict.values()):
-                f_output.append('\tF['+str(n)+'] = ' + str(eq))
+            for n, eq in eq_dict.items():
+                f_output.append('\tF['+str(n-1)+'] = ' + str(eq))
             
             f_output.append('\treturn F')
             f_output = '\n'.join(f_output)
         else:
             # Return a lambdified function
             vec = [Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
-            array_eqs = np.array(list(eq_dict.values()))
+            sorted_dict = dict(sorted(eq_dict.items()))
+            array_eqs = np.array(list(sorted_dict.values()))
             inputs = ['t', vec]
 
             for v in continuation_variables:
@@ -382,8 +383,8 @@ def equation_as_function(equations, params, string_output=True, language='python
         for v in continuation_variables:
             f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
 
-        for n, eq in enumerate(eq_dict.values()):
-            f_output.append('\tdu['+str(n+1)+'] = ' + str(eq))
+        for n, eq in eq_dict.items():
+            f_output.append('\tdu['+str(n)+'] = ' + str(eq))
         
         f_output.append('end')
         f_output = '\n'.join(f_output)
@@ -426,7 +427,7 @@ def equation_as_function(equations, params, string_output=True, language='python
 
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
 
-        for n, eq in enumerate(eq_dict.values()):
+        for n, eq in eq_dict.items():
             f_output.append('F['+str(n+1)+'] = ' + str(eq))
 
         # TODO !!!! Killing output as I have not tested the above code !!!!
@@ -568,7 +569,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
 def _split_equations(eq_dict, f_output, line_len=80):
     """Function to split FORTRAN equations to a set length when producing functions"""
 
-    for n, eq in enumerate(eq_dict.values()):
+    for n, eq in eq_dict.items():
         # split equations to be a maximum of `line_len`
 
         # split remainder of equation into chunks of length `line_length`
@@ -580,7 +581,7 @@ def _split_equations(eq_dict, f_output, line_len=80):
 
             f_output.append("\t\t&" + eq_chunks[-1])
         else:
-            f_output.append('\tF(' + str(n + 1) + ') =\t ' + eq_chunks[0])
+            f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0])
         f_output.append('')
     return f_output
 
