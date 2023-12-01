@@ -428,7 +428,7 @@ def equation_as_function(equations, params, string_output=True, language='python
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
 
         for n, eq in eq_dict.items():
-            f_output.append('F['+str(n+1)+'] = ' + str(eq))
+            f_output.append('F['+str(n+1)+'] = ' + str(eq))  # Jonathan: n+1 or n ?? Should be checked !
 
         # TODO !!!! Killing output as I have not tested the above code !!!!
         f_output = '\n'.join(f_output)
@@ -575,7 +575,7 @@ def _split_equations(eq_dict, f_output, line_len=80):
         # split remainder of equation into chunks of length `line_length`
         eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
         if len(eq_chunks) > 1:
-            f_output.append('\tF(' + str(n + 1) + ') =\t ' + eq_chunks[0] + "&")
+            f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0] + "&")
             for ln in eq_chunks[1:-1]:
                 f_output.append("\t\t&" + ln + "&")
 
