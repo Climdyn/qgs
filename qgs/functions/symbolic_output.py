@@ -544,7 +544,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
             auto_config.append('parnames = ' + str(params_dic))
 
         elif '! VARIABLES' in ln:
-            auto_config.append('unames = ' + str(_variable_names(params)))
+            auto_config.append('unames = ' + str({i+1: params.var_string[i] for i in range(params.ndim)}))
 
         elif '! DIMENSION' in ln:
             auto_config.append('NDIM = ' + str(params.ndim))
@@ -584,38 +584,6 @@ def _split_equations(eq_dict, f_output, line_len=80):
             f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0])
         f_output.append('')
     return f_output
-
-
-# Jonathan: why not use QgParams.var_string instead?
-def _variable_names(params):
-    # Function to make the variable names for auto
-    num_v = params.number_of_variables
-    offset = 1 if params.number_of_variables else 0
-
-    var_list = list()
-    if params.atmospheric_basis is not None:
-        for i in range(num_v[0]):
-            var_list.append('psi' + str(i))
-        
-        for i in range(offset, num_v[1]+offset):
-            var_list.append('theta' + str(i))
-    
-    if params.ground_basis is not None:
-        for i in range(offset, num_v[2] + offset):
-            var_list.append('gT' + str(i))
-    
-    if params.oceanic_basis is not None:
-        for i in range(num_v[2]):
-            var_list.append('A' + str(i))
-
-        for i in range(offset, num_v[3] + offset):
-            var_list.append('T' + str(i))
-    
-    output = dict()
-    for i, v in enumerate(var_list):
-        output[i+1] = v
-    
-    return output
 
 
 # ------------- Default AUTO files templates ----------------
