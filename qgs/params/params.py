@@ -410,6 +410,7 @@ class AtmosphericTemperatureParams(Params):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
+            values = list(values)
         else:
             dim = values
             values = dim * [0.]
@@ -453,6 +454,7 @@ class AtmosphericTemperatureParams(Params):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
+            values = list(values)
         else:
             dim = values
             values = dim * [0.]
@@ -577,6 +579,7 @@ class OceanicTemperatureParams(Params):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
+            values = list(values)
         else:
             dim = values
             values = dim * [0.]
@@ -660,6 +663,7 @@ class GroundParams(Params):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
+            values = list(values)
         else:
             dim = values
             values = dim * [0.]
@@ -744,6 +748,7 @@ class GroundTemperatureParams(Params):
 
         if hasattr(values, "__iter__"):
             dim = len(values)
+            values = list(values)
         else:
             dim = values
             values = dim * [0.]
