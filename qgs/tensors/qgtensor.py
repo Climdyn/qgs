@@ -25,13 +25,13 @@ class QgsTensor(object):
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
 
     Attributes
     ----------
@@ -39,13 +39,13 @@ class QgsTensor(object):
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)
@@ -849,13 +849,13 @@ class QgsTensorDynamicT(QgsTensor):
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
 
     Attributes
     ----------
@@ -863,13 +863,13 @@ class QgsTensorDynamicT(QgsTensor):
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)
@@ -1180,13 +1180,13 @@ class QgsTensorT4(QgsTensorDynamicT):
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
 
     Attributes
     ----------
@@ -1194,13 +1194,13 @@ class QgsTensorT4(QgsTensorDynamicT):
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)

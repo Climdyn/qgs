@@ -29,15 +29,15 @@ class SymbolicQgsTensor(object):
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are
         projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
         The inner product is returned in symbolic or numeric form.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
         The inner product is returned in symbolic or numeric form.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
         The inner product is returned in symbolic or numeric form.
 
     Attributes
@@ -47,13 +47,13 @@ class SymbolicQgsTensor(object):
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are
         projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)
@@ -802,9 +802,9 @@ class SymbolicQgsTensor(object):
         ----------
         tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
 
-        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray, ~sympy.core.symbol.Symbol)
+        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
             Variables which remain symbolic, all other variables are substituted with numerical values.
-            If None all variables are substituted.
+            If `None` all variables are substituted.
 
         Returns
         -------
@@ -889,13 +889,13 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
 
     Attributes
     ----------
@@ -903,13 +903,13 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)
@@ -1249,13 +1249,13 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
         The models parameters to configure the tensor. `None` to initialize an empty tensor. Default to `None`.
     atmospheric_inner_products: None or AtmosphericInnerProducts, optional
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts, optional
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts, optional
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
 
     Attributes
     ----------
@@ -1263,13 +1263,13 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
         The models parameters used to configure the tensor. `None` for an empty tensor.
     atmospheric_inner_products: None or AtmosphericInnerProducts
         The inner products of the atmospheric basis functions on which the model's PDE atmospheric equations are projected.
-        If None, disable the atmospheric tendencies. Default to `None`.
+        If `None`, disable the atmospheric tendencies. Default to `None`.
     oceanic_inner_products: None or OceanicInnerProducts
         The inner products of the oceanic basis functions on which the model's PDE oceanic equations are projected.
-        If None, disable the oceanic tendencies. Default to `None`.
+        If `None`, disable the oceanic tendencies. Default to `None`.
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
-        If None, disable the ground tendencies. Default to `None`.
+        If `None`, disable the ground tendencies. Default to `None`.
     tensor: sparse.COO(float)
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
     jacobian_tensor: sparse.COO(float)
@@ -1482,7 +1482,7 @@ def _parameter_substitutions(params, continuation_variables):
                 subs.pop(cv_i)
         elif hasattr(cv, "symbol"):
             subs.pop(cv.symbol)
-        else:
+        else:  # Try ... who knows...
             subs.pop(cv)
 
     return subs
