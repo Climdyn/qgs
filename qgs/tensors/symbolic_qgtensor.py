@@ -1481,7 +1481,7 @@ def _parameter_substitutions(params, continuation_variables):
         if isinstance(cv, ParametersArray):
             for cv_i in cv.symbols:
                 subs.pop(cv_i)
-        elif hasattr(cv.symbol):
+        elif hasattr(cv, "symbol"):
             subs.pop(cv.symbol)
         else:
             subs.pop(cv)
