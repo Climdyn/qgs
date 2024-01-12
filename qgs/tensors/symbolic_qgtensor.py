@@ -7,7 +7,7 @@
 
 """
 from qgs.functions.symbolic_mul import add_to_dict, symbolic_tensordot
-from qgs.params.params import Parameter, ScalingParameter, ParametersArray
+from qgs.params.params import Parameter, ScalingParameter, ParametersArray, Params
 
 import numpy as np
 from sympy import simplify
@@ -800,9 +800,9 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or Sympy ImmutableSparseNDimArray
+        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
 
-        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
+        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray, ~sympy.core.symbol.Symbol)
             Variables which remain symbolic, all other variables are substituted with numerical values.
             If None all variables are substituted.
 
@@ -842,8 +842,9 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or Sympy ImmutableSparseNDimArray
-            Tensor of model tendencies, either as a dictionary with keys of non-zero coordinates, and values of Sympy Symbols or floats, or as a ImmutableSparseNDimArray.
+        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
+            Tensor of model tendencies, either as a dictionary with keys of non-zero coordinates, and values of ~sympy.core.symbol.Symbol or floats, or as a
+            ~sympy.tensor.array.ImmutableSparseNDimArray .
         dict_opp: bool
             ...
         tol: float
@@ -1467,40 +1468,23 @@ def _parameter_substitutions(params, continuation_variables):
         
     subs = _parameter_values(params)
 
-    if 'scale_params' in params.__dict__.keys():
-        subs.update(_parameter_values(params.scale_params))
+    for obj in params.__dict__.keys():
+        if isinstance(obj, Params):
+            subs.update(_parameter_values(obj))
 
-        # Manually add properties from class
-        subs[params.scale_params.L.symbol] = params.scale_params.L
-        subs[params.scale_params.beta.symbol] = params.scale_params.beta
-
-    if 'atmospheric_params' in params.__dict__.keys():
-        if params.atmospheric_params is not None:
-            subs.update(_parameter_values(params.atmospheric_params))
-
-    if 'atemperature_params' in params.__dict__.keys():
-        if params.atemperature_params is not None:
-            subs.update(_parameter_values(params.atemperature_params))
-
-    if 'oceanic_params' in params.__dict__.keys():
-        if params.oceanic_params is not None:
-            subs.update(_parameter_values(params.oceanic_params))
-
-    if 'ground_params' in params.__dict__.keys():
-        if params.ground_params is not None:
-            subs.update(_parameter_values(params.ground_params))
-
-    if 'gotemperature_params' in params.__dict__.keys():
-        if params.gotemperature_params is not None:
-            subs.update(_parameter_values(params.gotemperature_params))
+    # Manually add properties from class
+    subs[params.scale_params.L.symbol] = params.scale_params.L
+    subs[params.scale_params.beta.symbol] = params.scale_params.beta
 
     # Remove variables in continuation variables
     for cv in continuation_variables:
         if isinstance(cv, ParametersArray):
             for cv_i in cv.symbols:
                 subs.pop(cv_i)
-        else:
+        elif hasattr(cv.symbol):
             subs.pop(cv.symbol)
+        else:
+            subs.pop(cv)
 
     return subs
 
