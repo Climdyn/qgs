@@ -56,7 +56,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     gnd_ip: SymbolicGroundInnerProducts, optional
         Allows for stored inner products to be input
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        The variables to not substitute and to leave in the equations, if None no variables are substituted
+        The variables to not substitute and to leave in the equations, if `None` all variables are substituted.
     language: str
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
         Default to `python`.
@@ -85,6 +85,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     """
     make_ip_subs = True
 
+    # TODO: check this !!!
     if continuation_variables is None:
         make_ip_subs = False
     else:
@@ -331,8 +332,8 @@ def equation_as_function(equations, params, string_output=True, language='python
         - `auto`
         - `mathematica`
         Default to `python`.
-    continuation_variables: ~sympy.sets.sets.Set(~sympy.core.symbol.Symbol) or list(~sympy.core.symbol.Symbol) or None
-        Variables that are not substituted with numerical values. If `None`, no symbols are substituted.
+    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
+        Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
 
     Returns
     -------
@@ -449,7 +450,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        Variables that are not substituted with numerical values. If None, no symbols are substituted
+        Variables that are not substituted with numerical values. If `None`, all symbols are substituted
     auto_main_template: str, optional
         The template to be used to generate the main AUTO file.
         If not provided, use the default template.
