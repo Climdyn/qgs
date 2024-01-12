@@ -1469,7 +1469,7 @@ def _parameter_substitutions(params, continuation_variables):
     subs = _parameter_values(params)
 
     for obj in params.__dict__.keys():
-        if isinstance(obj, Params):
+        if issubclass(obj, Params):
             subs.update(_parameter_values(obj))
 
     # Manually add properties from class
