@@ -1467,9 +1467,8 @@ def _shift_dict_keys(dic, shift):
 def _parameter_substitutions(params, continuation_variables):
         
     subs = _parameter_values(params)
-
-    for obj in params.__dict__.keys():
-        if issubclass(obj, Params):
+    for _, obj in params.__dict__.items():
+        if issubclass(obj.__class__, Params):
             subs.update(_parameter_values(obj))
 
     # Manually add properties from class
