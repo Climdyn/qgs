@@ -1513,3 +1513,17 @@ if __name__ == "__main__":
     dic = add_to_dict(dic, (0, 0), 1)
     dic = add_to_dict(dic, (0, 0), 2)
     print(dic)
+
+    from qgs.params.params import QgParams
+    from qgs.inner_products import symbolic
+
+    params = QgParams({'rr': 287.e0, 'sb': 5.6e-8})
+    params.set_atmospheric_channel_fourier_modes(6, 6, mode="symbolic")
+    params.atmospheric_params.set_params({'sigma': 0.2, 'kd': 0.1, 'kdp': 0.01})
+
+    params.ground_params.set_orography(0.2, 1)
+    params.atemperature_params.set_thetas(0.1, 0)
+
+    aip = symbolic.AtmosphericSymbolicInnerProducts(params, return_symbolic=True, make_substitution=True)
+
+    # sym_aotensor = SymbolicQgsTensor(params=params, atmospheric_inner_products=aip)

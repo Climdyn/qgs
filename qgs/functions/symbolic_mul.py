@@ -27,12 +27,12 @@ def add_to_dict(dic, loc, value):
 def symbolic_tensordot(a, b, axes=2):
     """Compute tensor dot product along specified axes of two sympy symbolic arrays
 
-    This is based on ~numpy.tensordot .
+    This is based on `Numpy`_ :meth:`~numpy.tensordot` .
 
     Parameters
     ----------
-    a, b: Sympy arrays or tensors
-        Tensors to take the dot product of.
+    a, b: ~sympy.tensor.array.DenseNDimArray or ~sympy.tensor.array.SparseNDimArray
+        Arrays to take the dot product of.
 
     axes: int
         Sum over the last `axes` axes of `a` and the first `axes` axes
@@ -42,6 +42,8 @@ def symbolic_tensordot(a, b, axes=2):
     -------
     output: sympy tensor
         The tensor dot product of the input.
+
+    .. _Numpy: https://numpy.org/
 
     """
     as_ = a.shape

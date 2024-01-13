@@ -41,7 +41,8 @@ from qgs.params.params import QgParams
 from qgs.basis.fourier import channel_wavenumbers, basin_wavenumbers
 from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 
-# TODO: Add warnings if trying to connect analytic and symbolic inner products together
+# TODO: - Add warnings if trying to connect analytic and symbolic inner products together
+#       - Allow analytic inner product to be returned as symbolic arrays
 
 
 class AtmosphericAnalyticInnerProducts(AtmosphericInnerProducts):

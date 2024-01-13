@@ -1,6 +1,6 @@
 """
-    Symbolic output module
-    ======================
+    Symbolic tendencies module
+    ==========================
 
     This module provides functions to create a symbolic representation of the tendencies functions of the model
     in various languages and for various external software.
@@ -48,11 +48,11 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     params: QgParams
         The parameters fully specifying the model configuration.
     atm_ip: SymbolicAtmosphericInnerProducts, optional
-        Allows for stored inner products to be input
+        Allows for stored inner products to be input.
     ocn_ip: SymbolicOceanInnerProducts, optional
-        Allows for stored inner products to be input
+        Allows for stored inner products to be input.
     gnd_ip: SymbolicGroundInnerProducts, optional
-        Allows for stored inner products to be input
+        Allows for stored inner products to be input.
     continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
         The variables to not substitute and to leave in the equations, if `None` all variables are substituted.
     language: str
@@ -63,7 +63,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     return_jacobian: bool
         If `True`, return the Jacobian of the model. Default to `False`.
     return_symbolic_eqs: bool
-        If `True`, return the substituted symbolic equations
+        If `True`, return the substituted symbolic equations.
     return_symbolic_qgtensor: bool
         If `True`, return the symbolic tendencies tensor of the model. Default to `False`.
 
@@ -95,7 +95,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
 
     if not make_ip_subs:
         warnings.warn("Calculating inner products symbolically, as the variable 'n' has been specified as a variable, "
-                      "this takes several minutes.")
+                      "this may take a while.")
 
     if params.atmospheric_basis is not None:
         if atm_ip is None:
