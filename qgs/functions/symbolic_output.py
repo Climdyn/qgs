@@ -17,8 +17,6 @@ from qgs.inner_products.symbolic import AtmosphericSymbolicInnerProducts, Oceani
     GroundSymbolicInnerProducts
 from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensor, SymbolicQgsTensorDynamicT, SymbolicQgsTensorT4
 
-import os
-
 python_lang_translation = {
     'sqrt': 'math.sqrt',
     'pi': 'math.pi'
@@ -59,7 +57,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         The variables to not substitute and to leave in the equations, if `None` all variables are substituted.
     language: str
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
-        Default to `python`.
+        Default to 'python'.
     return_inner_products: bool
         If `True`, return the inner products of the model. Default to `False`.
     return_jacobian: bool
@@ -85,9 +83,8 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     """
     make_ip_subs = True
 
-    # TODO: check this !!!
     if continuation_variables is None:
-        make_ip_subs = False
+        make_ip_subs = False   # TODO: check this !!! For me it should be True because if no cv then all subs are done.
     else:
         for cv in continuation_variables:
             try:
