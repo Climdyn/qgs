@@ -651,7 +651,7 @@ class GroundParams(Params):
         if isinstance(value, (float, int)) and pos is not None and self.hk is not None:
             self.hk[pos] = Parameter(value, scale_object=self._scale_params,
                                      description="spectral components "+str(pos+1)+" of the orography",
-                                     return_dimensional=False, input_dimensional=False, symbol=Symbol('hk'))
+                                     return_dimensional=False, input_dimensional=False, symbol=Symbol('hk_'+str(pos+1)))
         elif hasattr(value, "__iter__"):
             self._create_orography(value)
         else:
@@ -669,9 +669,10 @@ class GroundParams(Params):
             values = dim * [0.]
 
         d = ["spectral component "+str(pos+1)+" of the orography" for pos in range(dim)]
+        sy = [Symbol('hk_'+str(pos+1)) for pos in range(dim)]
 
         self.hk = ParametersArray(values, scale_object=self._scale_params,
-                                  description=d, return_dimensional=False, input_dimensional=False, symbols=values)
+                                  description=d, return_dimensional=False, input_dimensional=False, symbols=sy)
 
 
 class GroundTemperatureParams(Params):
