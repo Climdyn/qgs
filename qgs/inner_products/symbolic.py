@@ -32,7 +32,7 @@ from qgs.params.params import QgParams
 from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
 from scipy.integrate import dblquad
-from sympy import ImmutableSparseMatrix, ImmutableSparseNDimArray
+from sympy import ImmutableSparseMatrix, ImmutableSparseNDimArray, lambdify
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 
@@ -1590,7 +1590,7 @@ def _num_apply(ls):
     else:
         num_integrand = integrand[0]
 
-    func = sy.lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
+    func = lambdify((integrand[1][0], integrand[2][0]), num_integrand, 'numpy')
 
     try:
         a = integrand[2][1].subs(ls[3])
