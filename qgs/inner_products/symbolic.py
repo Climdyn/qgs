@@ -32,7 +32,7 @@ from qgs.params.params import QgParams
 from qgs.inner_products.base import AtmosphericInnerProducts, OceanicInnerProducts, GroundInnerProducts
 from qgs.inner_products.definition import StandardSymbolicInnerProductDefinition
 from scipy.integrate import dblquad
-import sympy as sy
+from sympy import ImmutableSparseMatrix, ImmutableSparseNDimArray
 
 # TODO: - Add warnings if trying to connect analytic and symbolic inner products together
 
@@ -265,7 +265,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._d, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._d = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
+                    self._d = ImmutableSparseMatrix(self.natm, noc, output)
                 else:
                     self._d = self._d.to_coo()
 
@@ -275,7 +275,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, noc, output)
+                    self._s = ImmutableSparseMatrix(self.natm, noc, output)
                 else:
                     self._s = self._s.to_coo()
 
@@ -294,7 +294,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
-                        self._v = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, noc, noc, noc, noc))
+                        self._v = ImmutableSparseNDimArray(output, shape=(self.natm, noc, noc, noc, noc))
                     else:
                         self._v = self._v.to_coo()            
 
@@ -359,7 +359,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._s, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._s = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, ngr, output)
+                    self._s = ImmutableSparseMatrix(self.natm, ngr, output)
                 else:
                     self._s = self._s.to_coo()
 
@@ -370,7 +370,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                     output = _parallel_compute(pool, args_list, subs, self._gh, timeout, symbolic_int=not self.mk_subs)
                     if self.return_symbolic:
-                        self._gh = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, ngr))
+                        self._gh = ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, ngr))
                     else:
                         if self._gh is not None:
                             self._gh = self._gh.to_coo()
@@ -390,7 +390,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
-                        self._v = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, ngr, ngr, ngr, ngr))
+                        self._v = ImmutableSparseNDimArray(output, shape=(self.natm, ngr, ngr, ngr, ngr))
                     else:
                         self._v = self._v.to_coo()
 
@@ -440,7 +440,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
                 
                 output = _parallel_compute(pool, args_list, subs, self._a, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._a = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                    self._a = ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
                     self._a = self._a.to_coo()
 
@@ -450,7 +450,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._u, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._u = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                    self._u = ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
                     self._u = self._u.to_coo()
 
@@ -460,7 +460,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._c, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._c = sy.matrices.immutable.ImmutableSparseMatrix(self.natm, self.natm, output)
+                    self._c = ImmutableSparseMatrix(self.natm, self.natm, output)
                 else:
                     self._c = self._c.to_coo()
 
@@ -470,7 +470,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._b, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._b = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
+                    self._b = ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
                 else:
                     self._b = self._b.to_coo()
 
@@ -480,7 +480,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._g, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._g = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
+                    self._g = ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm))
                 else:
                     self._g = self._g.to_coo()
 
@@ -499,7 +499,7 @@ class AtmosphericSymbolicInnerProducts(AtmosphericInnerProducts):
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
-                        self._z = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm, self.natm, self.natm))
+                        self._z = ImmutableSparseNDimArray(output, shape=(self.natm, self.natm, self.natm, self.natm, self.natm))
                     else:
                         self._z = self._z.to_coo()
 
@@ -895,7 +895,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 output = _parallel_compute(pool, args_list, subs, self._K, timeout, symbolic_int=not self.mk_subs)
 
                 if self.return_symbolic:
-                    self._K = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, natm, output)
+                    self._K = ImmutableSparseMatrix(self.noc, natm, output)
                 else:
                     self._K = self._K.to_coo()
 
@@ -906,7 +906,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
                 output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not self.mk_subs)
 
                 if self.return_symbolic:
-                    self._W = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, natm, output)
+                    self._W = ImmutableSparseMatrix(self.noc, natm, output)
                 else:
                     self._W = self._W.to_coo()
 
@@ -925,7 +925,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
-                    self._Z = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, natm, natm, natm, natm))
+                    self._Z = ImmutableSparseNDimArray(output, shape=(self.noc, natm, natm, natm, natm))
                 else:
                     self._Z = self._Z.to_coo()
 
@@ -974,7 +974,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._N, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._N = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
+                    self._N = ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
                     self._N = self._N.to_coo()
 
@@ -983,7 +983,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._M, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._M = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
+                    self._M = ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
                     self._M = self._M.to_coo()
 
@@ -992,7 +992,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._U = sy.matrices.immutable.ImmutableSparseMatrix(self.noc, self.noc, output)
+                    self._U = ImmutableSparseMatrix(self.noc, self.noc, output)
                 else:
                     self._U = self._U.to_coo()
 
@@ -1002,7 +1002,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._O, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._O = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
+                    self._O = ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
                     self._O = self._O.to_coo()
 
@@ -1012,7 +1012,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 output = _parallel_compute(pool, args_list, subs, self._C, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._C = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
+                    self._C = ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc))
                 else:
                     self._C = self._C.to_coo()
 
@@ -1031,7 +1031,7 @@ class OceanicSymbolicInnerProducts(OceanicInnerProducts):
 
                 if self._T4 or self._dynamic_T:
                     if self.return_symbolic:
-                        self._V = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc, self.noc, self.noc))
+                        self._V = ImmutableSparseNDimArray(output, shape=(self.noc, self.noc, self.noc, self.noc, self.noc))
                     else:
                         self._V = self._V.to_coo()
             
@@ -1373,7 +1373,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                              for j in range(natm)]
                 output = _parallel_compute(pool, args_list, subs, self._W, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._W = sy.matrices.immutable.ImmutableSparseMatrix(self.ngr, natm, output)
+                    self._W = ImmutableSparseMatrix(self.ngr, natm, output)
                 else:
                     self._W = self._W.to_coo()
 
@@ -1392,7 +1392,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
-                    self._Z = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.ngr, natm, natm, natm, natm))
+                    self._Z = ImmutableSparseNDimArray(output, shape=(self.ngr, natm, natm, natm, natm))
                 else:
                     self._Z = self._Z.to_coo()
 
@@ -1432,7 +1432,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
                 args_list = [[(i, j), self.ip.symbolic_inner_product, (self._phi(i), self._phi(j))] for i in range(self.ngr) for j in range(self.ngr)]
                 output = _parallel_compute(pool, args_list, subs, self._U, timeout, symbolic_int=not self.mk_subs)
                 if self.return_symbolic:
-                    self._U = sy.matrices.immutable.ImmutableSparseMatrix(self.ngr, self.ngr, output)
+                    self._U = ImmutableSparseMatrix(self.ngr, self.ngr, output)
                 else:
                     self._U = self._U.to_coo()
 
@@ -1452,7 +1452,7 @@ class GroundSymbolicInnerProducts(GroundInnerProducts):
 
             if self._T4 or self._dynamic_T:
                 if self.return_symbolic:
-                    self._V = sy.tensor.array.ImmutableSparseNDimArray(output, shape=(self.ngr, self.ngr, self.ngr, self.ngr, self.ngr))
+                    self._V = ImmutableSparseNDimArray(output, shape=(self.ngr, self.ngr, self.ngr, self.ngr, self.ngr))
                 else:
                     self._V = self._V.to_coo()
 
