@@ -245,17 +245,17 @@ class SymbolicQgsTensor(object):
 
         if aips.stored and go:
             # psi_a part
-            a_inv_mult_c = symbolic_tensordot(a_inv, aips._c[offset:, offset:], axes=1)
+            a_inv_mult_c = a_inv @ aips._c[offset:, offset:]
 
             if gp is not None:
-                hk_sym_arr = ImmutableSparseNDimArray(gp.hk.symbols)
+                hk_sym_arr = ImmutableSparseMatrix(gp.hk.symbols)
 
                 if gp.orographic_basis == "atmospheric":
                     a_inv_mult_g = symbolic_tensordot(a_inv, aips._g[offset:, offset:, offset:], axes=1)
-                    oro = symbolic_tensordot(a_inv_mult_g, hk_sym_arr, axes=1)
+                    oro = symbolic_tensordot(a_inv_mult_g, hk_sym_arr, axes=1)[:, :, 0]
                 else:
                     a_inv_mult_gh = symbolic_tensordot(a_inv, aips._gh[offset:, offset:, offset:], axes=1)
-                    oro = symbolic_tensordot(a_inv_mult_gh, hk_sym_arr, axes=1)
+                    oro = symbolic_tensordot(a_inv_mult_gh, hk_sym_arr, axes=1)[:, :, 0]
 
             a_inv_mult_b = symbolic_tensordot(a_inv, aips._b[offset:, offset:, offset:], axes=1)
             
@@ -285,34 +285,34 @@ class SymbolicQgsTensor(object):
                         sy_arr_dic = add_to_dict(sy_arr_dic, (self._psi_a(i), self._psi_o(j), 0), a_inv_mult_d[i, j] * ap.kd.symbol / 2)
             
             # theta_a part
-            a_theta_mult_u = symbolic_tensordot(a_theta, aips._u, axes=1)
+            a_theta_mult_u = a_theta @ aips._u
             if self.params.Cpa is not None:
-                val_Cpa = symbolic_tensordot(a_theta_mult_u, ImmutableSparseNDimArray(self.params.Cpa.symbolic_expressions), axes=1)
+                val_Cpa = a_theta_mult_u @ ImmutableSparseMatrix(self.params.Cpa.symbolic_expressions)
 
             if atp.hd is not None and atp.thetas is not None:
-                thetas_sym_arr = ImmutableSparseNDimArray(atp.thetas.symbols)
-                val_thetas = symbolic_tensordot(a_theta_mult_u, thetas_sym_arr, axes=1)  # not perfect
+                thetas_sym_arr = ImmutableSparseMatrix(atp.thetas.symbols)
+                val_thetas = a_theta_mult_u @ thetas_sym_arr
 
-            a_theta_mult_a = symbolic_tensordot(a_theta, aips._a[:, offset:], axes=1)
-            a_theta_mult_c = symbolic_tensordot(a_theta, aips._c[:, offset:], axes=1)
-            
+            a_theta_mult_a = a_theta @ aips._a[:, offset:]
+            a_theta_mult_c = a_theta @ aips._c[:, offset:]
+
             a_theta_mult_g = symbolic_tensordot(a_theta, aips._g[:, offset:, offset:], axes=1)
 
             if gp is not None:
                 if gp.orographic_basis == "atmospheric":
-                    oro = symbolic_tensordot(a_theta_mult_g, hk_sym_arr, axes=1)
+                    oro = symbolic_tensordot(a_theta_mult_g, hk_sym_arr, axes=1)[:, :, 0]
                 else:
                     a_theta_mult_gh = symbolic_tensordot(a_theta, aips._gh[:, offset:, offset:], axes=1)
-                    oro = symbolic_tensordot(a_theta_mult_gh, hk_sym_arr, axes=1)
+                    oro = symbolic_tensordot(a_theta_mult_gh, hk_sym_arr, axes=1)[:, :, 0]
 
             a_theta_mult_b = symbolic_tensordot(a_theta, aips._b[:, offset:, offset:], axes=1)
 
             if ocean:
-                a_theta_mult_d = symbolic_tensordot(a_theta, aips._d[:, offset:], axes=1)
-                a_theta_mult_s = symbolic_tensordot(a_theta, aips._s, axes=1)
+                a_theta_mult_d = a_theta @ aips._d[:, offset:]
+                a_theta_mult_s = a_theta @ aips._s
 
             if ground_temp:
-                a_theta_mult_s = symbolic_tensordot(a_theta, aips._s, axes=1)
+                a_theta_mult_s = a_theta @ aips._s
                 
             for i in range(nvar[1]):
                 if self.params.Cpa is not None:
@@ -372,9 +372,9 @@ class SymbolicQgsTensor(object):
 
             if ocean:
                 # psi_o part
-                M_psio_mult_K = symbolic_tensordot(M_psio, bips._K[offset:, offset:], axes=1)
-                M_psio_mult_N = symbolic_tensordot(M_psio, bips._N[offset:, offset:], axes=1)
-                M_psio_mult_M = symbolic_tensordot(M_psio, bips._M[offset:, offset:], axes=1)
+                M_psio_mult_K = M_psio @ bips._K[offset:, offset:]
+                M_psio_mult_N = M_psio @ bips._N[offset:, offset:]
+                M_psio_mult_M = M_psio @ bips._M[offset:, offset:]
                 M_psio_mult_C = symbolic_tensordot(M_psio, bips._C[offset:, offset:, offset:], axes=1)
 
                 for i in range(nvar[2]):
@@ -393,8 +393,9 @@ class SymbolicQgsTensor(object):
                             sy_arr_dic = add_to_dict(sy_arr_dic, (self._psi_o(i), self._psi_o(j), self._psi_o(k)), - M_psio_mult_C[i, j, k])
 
                 # deltaT_o part
-                U_inv_mult_W = symbolic_tensordot(U_inv, bips._W, axes=1)
-                U_inv_mult_W_Cpgo = symbolic_tensordot(U_inv_mult_W, ImmutableSparseNDimArray(self.params.Cpgo.symbolic_expressions), axes=1)
+                U_inv_mult_W = U_inv @ bips._W
+                Cpgo_sym_arr = ImmutableSparseMatrix(self.params.Cpgo.symbolic_expressions)
+                U_inv_mult_W_Cpgo = U_inv_mult_W @ Cpgo_sym_arr
 
                 U_inv_mult_O = symbolic_tensordot(U_inv, bips._O[:, offset:, offset:], axes=1)
                 
@@ -418,8 +419,9 @@ class SymbolicQgsTensor(object):
 
             # deltaT_g part
             if ground_temp:
-                U_inv_mult_W = symbolic_tensordot(U_inv, bips._W, axes=1)
-                U_inv_mult_W_Cpgo = symbolic_tensordot(U_inv_mult_W, ImmutableSparseNDimArray(self.params.Cpgo.symbolic_expressions), axes=1)
+                U_inv_mult_W = U_inv @ bips._W
+                Cpgo_sym_arr = ImmutableSparseMatrix(self.params.Cpgo.symbolic_expressions)
+                U_inv_mult_W_Cpgo = U_inv_mult_W @ Cpgo_sym_arr
                 for i in range(nvar[2]):
                     sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), 0, 0), U_inv_mult_W_Cpgo[i])
 
