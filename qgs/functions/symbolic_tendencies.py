@@ -174,6 +174,10 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True,
                                 continuation_variables=continuation_variables)
 
+    if return_jacobian:
+        func_jac = jacobian_as_function(equations=dict_eq_simplified, params=params, language=language,
+                                        continuation_variables=continuation_variables)
+
     ret = list()
     ret.append(func)
     if return_jacobian:
@@ -287,8 +291,11 @@ def format_equations(equations, params, save_loc=None, language='python', print_
             vector_subs['U_'+str(i)] = Symbol('U('+str(i)+')')
 
     for k in equations.keys():
-        eq = equations[k].subs(vector_subs)
-        eq = eq.evalf()
+        if isinstance(equations[k], float):
+            eq = equations[k]
+        else:
+            eq = equations[k].subs(vector_subs)
+            eq = eq.evalf()
 
         if (language is not None) and print_equations:
             eq = translate_equations(eq, language)
@@ -426,7 +433,118 @@ def equation_as_function(equations, params, string_output=True, language='python
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
 
         for n, eq in eq_dict.items():
-            f_output.append('F['+str(n+1)+'] = ' + str(eq))  # Jonathan: n+1 or n ?? Should be checked !
+            f_output.append('F['+str(n)+'] = ' + str(eq))
+
+        # TODO !!!! Killing output as I have not tested the above code !!!!
+        f_output = '\n'.join(f_output)
+        f_output = None
+
+    return f_output
+
+
+def jacobian_as_function(equations, params, language='python', continuation_variables=None):
+    """Converts the symbolic equations of the jacobain to a function in string format in the language syntax specified,
+    or a lambdified python function.
+
+    Parameters
+    ----------
+    equations: dict(~sympy.core.expr.Expr)
+        Dictionary of the substituted symbolic model equations.
+    params: QgParams
+        The parameters fully specifying the model configuration.
+    language: str
+        Language syntax that the equations are returned in. Options are:
+        - `python`
+        - `fortran`
+        - `julia`
+        - `auto`
+        - `mathematica`
+        Default to `python`.
+    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
+        Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
+
+    Returns
+    -------
+    f_output: callable or str
+        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is
+        a lambdified python function.
+
+    """
+    if continuation_variables is None:
+        continuation_variables = list()
+
+    eq_dict = format_equations(equations, params, language=language)
+
+    f_output = list()
+    if language == 'python':
+        f_output.append('def jac(t, U, **kwargs):')
+        f_output.append('\t#Jacobian function of the qgs model')
+        f_output.append('\tJ = np.zeros((len(U), len(U)))')
+
+        for v in continuation_variables:
+            f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+
+        for n, eq in eq_dict.items():
+            f_output.append('\tJ[' + str(n[0] - 1) + ', ' + str(n[1] - 1) + '] = ' + str(eq))
+
+        f_output.append('\treturn J')
+        f_output = '\n'.join(f_output)
+
+    if language == 'julia':
+        eq_dict = translate_equations(eq_dict, language='julia')
+
+        f_output.append('function jac!(du, U, p, t)')
+        f_output.append('\t#Jacobian function of the qgs model')
+
+        for v in continuation_variables:
+            f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+
+        for n, eq in eq_dict.items():
+            f_output.append('\tdu[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + str(eq))
+
+        f_output.append('end')
+        f_output = '\n'.join(f_output)
+
+    if language == 'fortran':
+        eq_dict = translate_equations(eq_dict, language='fortran')
+
+        f_var = ''
+        if len(continuation_variables) > 0:
+            for fv in continuation_variables:
+                f_var += str(fv.symbol) + ', '
+            f_output.append('SUBROUTINE FUNC(NDIM, t, U, JAC, ' + f_var[:-2] + ')')
+        else:
+            f_output.append('SUBROUTINE FUNC(NDIM, t, U, JAC)')
+
+        f_output.append('\t!Jacobian function of the qgs model')
+        f_output.append('\tINTEGER, INTENT(IN) :: NDIM')
+        f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)')
+        f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: JAC(NDIM)')
+
+        for v in continuation_variables:
+            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol))
+
+        f_output.append('')
+
+        f_output = _split_equations(eq_dict, f_output)
+
+        f_output.append('END SUBROUTINE')
+        f_output = '\n'.join(f_output)
+
+    if language == 'auto':
+        eq_dict = translate_equations(eq_dict, language='fortran')
+
+        eq_dict = _split_equations(eq_dict, f_output, two_dim=True)
+        f_output = create_auto_file(eq_dict, params, continuation_variables)
+
+    if language == 'mathematica':
+        # TODO: This function needs testing before release
+        eq_dict = translate_equations(eq_dict, language='mathematica')
+
+        f_output.append('jac = Array[' + str(len(eq_dict)) + ']')
+
+        for n, eq in eq_dict.items():
+            f_output.append('jac[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + str(eq))
 
         # TODO !!!! Killing output as I have not tested the above code !!!!
         f_output = '\n'.join(f_output)
@@ -564,7 +682,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     return '\n'.join(auto_file), '\n'.join(auto_config)
 
 
-def _split_equations(eq_dict, f_output, line_len=80):
+def _split_equations(eq_dict, f_output, line_len=80, two_dim=False):
     """Function to split FORTRAN equations to a set length when producing functions"""
 
     for n, eq in eq_dict.items():
@@ -573,13 +691,19 @@ def _split_equations(eq_dict, f_output, line_len=80):
         # split remainder of equation into chunks of length `line_length`
         eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
         if len(eq_chunks) > 1:
-            f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0] + "&")
+            if two_dim:
+                f_output.append('\tJAC(' + str(n[0]) + ', ' + str(n[1]) + ') =\t ' + eq_chunks[0] + "&")
+            else:
+                f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0] + "&")
             for ln in eq_chunks[1:-1]:
                 f_output.append("\t\t&" + ln + "&")
 
             f_output.append("\t\t&" + eq_chunks[-1])
         else:
-            f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0])
+            if two_dim:
+                f_output.append('\tJAC(' + str(n[0]) + ', ' + str(n[1]) + ') =\t ' + eq_chunks[0])
+            else:
+                f_output.append('\tF(' + str(n) + ') =\t ' + eq_chunks[0])
         f_output.append('')
     return f_output
 
