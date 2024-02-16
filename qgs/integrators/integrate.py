@@ -299,7 +299,7 @@ def integrate_adaptative_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_
 
     >>> from numba import njit
     >>> import numpy as np
-    >>> from qgs.integrators.integrate import integrate_runge_kutta
+    >>> from qgs.integrators.integrate import integrate_adaptative_runge_kutta
     >>> a = 0.25
     >>> F = 16.
     >>> G = 3.
@@ -313,19 +313,19 @@ def integrate_adaptative_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_
     ...     return np.array([xx, yy, zz])
     >>> # no ic
     >>> # write_steps is 1 by default
-    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1)  # 101 steps
+    >>> tt, traj = integrate_adaptative_runge_kutta(fL84, t0=0., t=10., dt=0.1)  # 101 steps
     >>> print(traj.shape)
     (3, 101)
     >>> # 1 ic
     >>> ic = 0.1 * np.random.randn(3)
-    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
+    >>> tt, traj = integrate_adaptative_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
     >>> print(ic.shape)
     (3,)
     >>> print(traj.shape)
     (3, 101)
     >>> # 4 ic
     >>> ic = 0.1 * np.random.randn(4, 3)
-    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
+    >>> tt, traj = integrate_adaptative_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
     >>> print(ic.shape)
     (4, 3)
     >>> print(traj.shape)
@@ -465,6 +465,130 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
         recorded_traj[i_traj, :, -1] = y
 
     return recorded_traj[:, :, ::time_direction]
+
+@njit
+def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol):
+
+    n_traj = ic.shape[0]
+    n_dim = ic.shape[1]
+
+    s = len(b)
+
+    if write_steps == 0:
+        n_records = 1
+    else:
+        tot = time[::write_steps]
+        n_records = len(tot)
+        if tot[-1] != time[-1]:
+            n_records += 1
+
+    recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    if time_direction == -1:
+        directed_time = reverse(time)
+    else:
+        directed_time = time
+
+    for i_traj in range(n_traj):
+        y = ic[i_traj].copy()
+        n_sub_step = 1
+        iw = 0
+        for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
+
+            dts = dt / n_sub_step
+            if write_steps > 0 and np.mod(ti, write_steps) == 0:
+                recorded_traj[i_traj, :, iw] = y
+                iw += 1
+
+            ns = 0
+            yt = y.copy()
+            ki = np.zeros((s, n_dim))
+            while True:
+                ys = yt.copy()
+                for i in range(s):
+                    ki[i] = yt
+                steps, rt, k = _broyden_good(f, ki, tt, dts, yt, c, a, tol=tol)
+                y_new = yt + dts * b @ k
+                yt = y_new
+
+                steps, rt, ks = _broyden_good(f, ki, tt, dts, ys, c, a, tol=tol)
+                ys_new = ys + dts * bs @ ks
+                ys = ys_new
+
+                err = np.linalg.norm(yt - ys)
+                ns += 1
+
+                if err > tol:
+                    dts = dts / 2
+                    n_sub_step = n_sub_step * 2
+                    yt = y.copy()
+                    ns = 0
+                elif ns >= n_sub_step:
+                    if n_sub_step // 2 >= 1:
+                        n_sub_step = n_sub_step // 2
+                    y = yt
+                    break
+
+        recorded_traj[i_traj, :, -1] = y
+
+    return recorded_traj[:, :, ::time_direction]
+
+
+@njit
+def _implicit_k(f, k, t, dt, y, c, a):
+    res = _implicit_f(f, k, t, dt, y, c, a)
+    return np.ravel(k - res)
+
+
+@njit
+def _implicit_f(f, k, t, dt, y, c, a):
+    s = k.shape[0]
+    res = np.zeros_like(k)
+    for i in range(s):
+        y_s = y + dt * a[i] @ k
+        res[i] = f(t + c[i] * dt, y_s)
+    return res
+
+
+@njit
+def _jacobian_estimate(f, k, t, dt, y, c, a, dk=1.e-8):
+    s = k.shape[0]
+    n = k.shape[1]
+    fk = _implicit_k(f, k, t, dt, y, c, a)
+    jac = np.zeros((s * n, s * n))
+    idx = 0
+    for r in range(s):
+        for j in range(n):
+            Dkj = np.zeros_like(k)
+            Dkj[r, j] = dk
+            k_plus = k + Dkj
+            jac[:, idx] = (_implicit_k(f, k_plus, t, dt, y, c, a) - fk) / dk
+            idx += 1
+    return jac
+
+
+@njit
+def _broyden_good(f, k, t, dt, y, c, a, tol=1.e-10, max_iters=50):
+    steps = 0
+
+    kk = k.copy()
+
+    ff = _implicit_k(f, kk, t, dt, y, c, a)
+    jac = _jacobian_estimate(f, kk, t, dt, y, c, a, tol)
+
+    while np.linalg.norm(ff) > tol and steps < max_iters:
+        s = np.linalg.solve(jac, -1 * ff)
+
+        kk = np.ravel(kk) + s
+        kk = kk.reshape(k.shape)
+        newf = _implicit_k(f, kk, t, dt, y, c, a)
+        z = newf - ff
+
+        jac = jac + (np.outer((z - np.dot(jac, s)), s)) / (np.dot(s, s))
+
+        ff = newf
+        steps += 1
+
+    return steps, t, kk
 
 @njit
 def _tangent_linear_system(fjac, t, xs, x, adjoint):
