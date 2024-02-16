@@ -223,6 +223,249 @@ def _integrate_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, c, a
     return recorded_traj[:, :, ::time_direction]
 
 
+def integrate_adaptative_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=None, bs=None, c=None, a=None, tol=1.e-6):
+    """
+    Integrate the ordinary differential equations (ODEs)
+
+    .. math:: \\dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
+
+    with a specified `adaptative Runge-Kutta method`_. The function :math:`\\boldsymbol{f}` should
+    be a `Numba`_ jitted function. This function must have a signature ``f(t, x)`` where ``x`` is
+    the state value and ``t`` is the time.
+
+    .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods 
+    .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    .. _Numba: https://numba.pydata.org/
+
+    Parameters
+    ----------
+    f: callable
+        The `Numba`_-jitted function :math:`\\boldsymbol{f}`.
+        Should have the signature``f(t, x)`` where ``x`` is the state value and ``t`` is the time.
+    t0: float
+        Initial time of the time integration. Corresponds to the initial condition.
+        Important if the ODEs are non-autonomous.
+    t: float
+        Final time of the time integration. Corresponds to the final condition.
+        Important if the ODEs are non-autonomous.
+    dt: float
+        Timestep of the integration.
+    ic: None or ~numpy.ndarray(float), optional
+        Initial (or final) conditions of the system. Can be a 1D or a 2D array:
+
+        * 1D: Provide a single initial condition.
+          Should be of shape (`n_dim`,) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`.
+        * 2D: Provide an ensemble of initial condition.
+          Should be of shape (`n_traj`, `n_dim`) where `n_dim` = :math:`\\mathrm{dim}(\\boldsymbol{x})`,
+          and where `n_traj` is the number of initial conditions.
+
+        If `None`, use a zero initial condition. Default to `None`.
+        If the `forward` argument is `False`, it specifies final conditions.
+    forward: bool, optional
+        Whether to integrate the ODEs forward or backward in time. In case of backward integration, the
+        initial condition `ic` becomes a final condition. Default to forward integration.
+    write_steps: int, optional
+        Save the state of the integration in memory every `write_steps` steps. The other intermediary
+        steps are lost. It determines the size of the returned objects. Default is 1.
+        Set to 0 to return only the final state.
+    b: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+        If `None`, use the Fehlberg RK4(5) method coefficients. Default to `None`.
+    bs: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ .
+        If `None`, use the Fehlberg RK4(5) method coefficients. Default to `None`.
+    c: None or ~numpy.ndarray, optional
+        Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
+        If `None`, use the Fehlberg RK4(5) method coefficients. Default to `None`.
+    a: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
+        If `None`, use the Fehlberg RK4(5) method coefficients. Default to `None`.
+    tol: float, optional
+        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ .
+        Default to `1.e-6`.
+
+    Returns
+    -------
+    time, traj: ~numpy.ndarray
+        The result of the integration:
+
+        * **time:** Time at which the state of the system was saved. Array of shape (`n_step`,) where
+          `n_step` is the number of saved states of the integration.
+        * **traj:** Saved dynamical system states. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
+          a 2D array of shape (`n_dim`, `n_steps`) is returned instead.
+
+    Examples
+    --------
+
+    >>> from numba import njit
+    >>> import numpy as np
+    >>> from qgs.integrators.integrate import integrate_runge_kutta
+    >>> a = 0.25
+    >>> F = 16.
+    >>> G = 3.
+    >>> b = 6.
+    >>> # Lorenz 84 example
+    >>> @njit
+    ... def fL84(t, x):
+    ...     xx = -x[1] ** 2 - x[2] ** 2 - a * x[0] + a * F
+    ...     yy = x[0] * x[1] - b * x[0] * x[2] - x[1] + G
+    ...     zz = b * x[0] * x[1] + x[0] * x[2] - x[2]
+    ...     return np.array([xx, yy, zz])
+    >>> # no ic
+    >>> # write_steps is 1 by default
+    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1)  # 101 steps
+    >>> print(traj.shape)
+    (3, 101)
+    >>> # 1 ic
+    >>> ic = 0.1 * np.random.randn(3)
+    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
+    >>> print(ic.shape)
+    (3,)
+    >>> print(traj.shape)
+    (3, 101)
+    >>> # 4 ic
+    >>> ic = 0.1 * np.random.randn(4, 3)
+    >>> tt, traj = integrate_runge_kutta(fL84, t0=0., t=10., dt=0.1, ic=ic)  # 101 steps
+    >>> print(ic.shape)
+    (4, 3)
+    >>> print(traj.shape)
+    (4, 3, 101)
+    """
+
+    if ic is None:
+        i = 1
+        while True:
+            ic = np.zeros(i)
+            try:
+                x = f(0., ic)
+            except:
+                i += 1
+            else:
+                break
+
+        i = len(f(0., ic))
+        ic = np.zeros(i)
+
+    if len(ic.shape) == 1:
+        ic = ic.reshape((1, -1))
+
+    # Default is RK4(5)
+    if a is None and b is None and bs is None and c is None:
+        c = np.array([0., 0.25, 3./8, 12./13, 1., 0.5])
+        b = np.array([16./135, 0., 6656./12825, 28561./56430, -9./50, 2./55])
+        bs = np.array([25./216, 0., 1408./2565, 2197./4104, -1./5, 0.])
+        a = np.zeros((len(c), len(b)))
+        a[1, 0] = 0.25
+        a[2, 0] = 3./32
+        a[2, 1] = 9./32
+        a[3, 0] = 1932./2197
+        a[3, 1] = -7200./2197
+        a[3, 2] = 7296./2197
+        a[4, 0] = 439./216
+        a[4, 1] = -8
+        a[4, 2] = 3680./513
+        a[4, 3] = -845./4104
+        a[5, 0] = -8./27
+        a[5, 1] = 2
+        a[5, 2] = -3544./2565
+        a[5, 3] = 1859./4104
+        a[5, 4] = -11./40
+
+    if forward:
+        time_direction = 1
+    else:
+        time_direction = -1
+
+    time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
+
+    recorded_traj = _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
+
+    if write_steps > 0:
+        if forward:
+            if time[::write_steps][-1] == time[-1]:
+                return time[::write_steps], np.squeeze(recorded_traj)
+            else:
+                return np.concatenate((time[::write_steps], np.full((1,), t))), np.squeeze(recorded_traj)
+        else:
+            rtime = reverse(time[::-write_steps])
+            if rtime[0] == time[0]:
+                return rtime, np.squeeze(recorded_traj)
+            else:
+                return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj)
+    else:
+        return time[-1], np.squeeze(recorded_traj)
+
+@njit
+def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol):
+
+    n_traj = ic.shape[0]
+    n_dim = ic.shape[1]
+
+    s = len(b)
+
+    if write_steps == 0:
+        n_records = 1
+    else:
+        tot = time[::write_steps]
+        n_records = len(tot)
+        if tot[-1] != time[-1]:
+            n_records += 1
+
+    recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    if time_direction == -1:
+        directed_time = reverse(time)
+    else:
+        directed_time = time
+
+    for i_traj in range(n_traj):
+        y = ic[i_traj].copy()
+        k = np.zeros((s, n_dim))
+        ks = np.zeros((s, n_dim))
+        n_sub_step = 1
+        iw = 0
+        for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
+
+            dts = dt / n_sub_step
+            if write_steps > 0 and np.mod(ti, write_steps) == 0:
+                recorded_traj[i_traj, :, iw] = y
+                iw += 1
+
+            ns = 0
+            yt = y.copy()
+            while True:
+                ys = yt.copy()
+                k.fill(0.)
+                for i in range(s):
+                    y_s = yt + dts * a[i] @ k
+                    k[i] = f(tt + c[i] * dts, y_s)
+                y_new = yt + dts * b @ k
+                yt = y_new
+
+                ks.fill(0.)
+                for i in range(s):
+                    ys_s = ys + dts * a[i] @ ks
+                    ks[i] = f(tt + c[i] * dts, ys_s)
+                ys_new = ys + dts * bs @ ks
+                ys = ys_new
+
+                err = np.linalg.norm(yt - ys)
+                ns += 1
+
+                if err > tol:
+                    dts = dts / 2
+                    n_sub_step = n_sub_step * 2
+                    yt = y.copy()
+                    ns = 0
+                elif ns >= n_sub_step:
+                    if n_sub_step // 2 >= 1:
+                        n_sub_step = n_sub_step // 2
+                    y = yt
+                    break
+
+        recorded_traj[i_traj, :, -1] = y
+
+    return recorded_traj[:, :, ::time_direction]
+
 @njit
 def _tangent_linear_system(fjac, t, xs, x, adjoint):
     if adjoint:
