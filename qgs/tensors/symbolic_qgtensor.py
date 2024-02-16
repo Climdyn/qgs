@@ -754,7 +754,6 @@ class SymbolicQgsTensor(object):
             new_pos[1] = orig_order[i+1]
             new_pos[i+1] = orig_order[1]
             for key in keys:
-
                 dic_jac = add_to_dict(dic_jac, tuple(key[i] for i in new_pos), dic[key])
         
         return dic_jac

@@ -81,8 +81,9 @@ def symbolic_sparse_mult2(dic, vec_a):
 
     for key in dic.keys():
         coo1, coo2, coo3 = key
-        val = vec_a[coo3] * dic[key]
-        res = add_to_dict(res, (coo1, coo2), val)
+        if coo1 > 0 and coo2 > 0:
+            val = vec_a[coo3] * dic[key]
+            res = add_to_dict(res, (coo1, coo2), val)
 
     return res
 
@@ -115,8 +116,9 @@ def symbolic_sparse_mult3(dic, vec_a, vec_b):
 
     for key in dic.keys():
         coo1, coo2, coo3 = key
-        val = vec_a[coo2] * vec_b[coo3] * dic[key]
-        res = add_to_dict(res, coo1, val)
+        if coo1 > 0:
+            val = vec_a[coo2] * vec_b[coo3] * dic[key]
+            res = add_to_dict(res, coo1, val)
 
     return res
 
@@ -151,8 +153,9 @@ def symbolic_sparse_mult4(dic, vec_a, vec_b, vec_c):
 
     for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
-        val = vec_a[coo3] * vec_b[coo4] * vec_c[coo5] * dic[key]
-        res = add_to_dict(res, (coo1, coo2), val)
+        if coo1 > 0 and coo2 > 0:
+            val = vec_a[coo3] * vec_b[coo4] * vec_c[coo5] * dic[key]
+            res = add_to_dict(res, (coo1, coo2), val)
 
     return res
 
@@ -189,7 +192,8 @@ def symbolic_sparse_mult5(dic, vec_a, vec_b, vec_c, vec_d):
 
     for key in dic.keys():
         coo1, coo2, coo3, coo4, coo5 = key
-        val = vec_a[coo2] * vec_b[coo3] * vec_c[coo4] * vec_d[coo5] * dic[key]
-        res = add_to_dict(res, coo1, val)
+        if coo1 > 0:
+            val = vec_a[coo2] * vec_b[coo3] * vec_c[coo4] * vec_d[coo5] * dic[key]
+            res = add_to_dict(res, coo1, val)
 
     return res

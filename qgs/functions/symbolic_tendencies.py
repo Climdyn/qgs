@@ -181,7 +181,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     ret = list()
     ret.append(func)
     if return_jacobian:
-        ret.append(dict_eq_simplified)
+        ret.append(func_jac)
     if return_inner_products:
         ret.append((aip, oip, gip))
     if return_symbolic_eqs:
