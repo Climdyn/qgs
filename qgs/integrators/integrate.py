@@ -92,11 +92,13 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
         Default to `None`.
     bs: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
         If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
         If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
         Default to `None`.
     tol: float, optional
-        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ .
+        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
         Default to `1.e-6`.
     method: str, optional
         Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
@@ -492,7 +494,7 @@ def _zeros_func(t, x):
 
 def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
                                forward=True, adjoint=False, inverse=False, boundary=None,
-                               write_steps=1, b=None, c=None, a=None):
+                               write_steps=1, b=None, c=None, a=None, bs=None, tol=1.e-6, method='explicit'):
     """Integrate simultaneously the ordinary differential equations (ODEs)
 
     .. math:: \dot{\\boldsymbol{x}} = \\boldsymbol{f}(t, \\boldsymbol{x})
@@ -510,6 +512,8 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
     the state value and ``t`` is the time.
 
     .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+    .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
     .. _Numba: https://numba.pydata.org/
     .. _fundamental matrix of solutions: https://en.wikipedia.org/wiki/Fundamental_matrix_(linear_differential_equation)
 
@@ -582,13 +586,35 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         Set to 0 to return only the final state.
     b: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     c: None or ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     a: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
+    bs: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
+    tol: float, optional
+        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        Default to `1.e-6`.
+    method: str, optional
+        Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+        Default to `explicit`.
 
     Returns
     -------
@@ -752,12 +778,43 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
 
     # Default is RK4
     if a is None and b is None and c is None:
-        c = np.array([0., 0.5, 0.5, 1.])
-        b = np.array([1./6, 1./3, 1./3, 1./6])
-        a = np.zeros((len(c), len(b)))
-        a[1, 0] = 0.5
-        a[2, 1] = 0.5
-        a[3, 2] = 1.
+        if method == 'implicit':
+            sq36 = np.sqrt(3.) / 6
+            c = np.array([0.5 - sq36, 0.5 + sq36])
+            b = np.array([0.5, 0.5])
+            bs = np.array([0.5 + 3 * sq36, 0.5 - 3 * sq36])
+            a = np.zeros((len(c), len(b)))
+            a[0, 0] = 0.25
+            a[0, 1] = 0.25 - sq36
+            a[1, 0] = 0.25 + sq36
+            a[0, 1] = 0.25
+        elif method == 'adaptative':
+            c = np.array([0., 0.25, 3. / 8, 12. / 13, 1., 0.5])
+            b = np.array([16. / 135, 0., 6656. / 12825, 28561. / 56430, -9. / 50, 2. / 55])
+            bs = np.array([25. / 216, 0., 1408. / 2565, 2197. / 4104, -1. / 5, 0.])
+            a = np.zeros((len(c), len(b)))
+            a[1, 0] = 0.25
+            a[2, 0] = 3. / 32
+            a[2, 1] = 9. / 32
+            a[3, 0] = 1932. / 2197
+            a[3, 1] = -7200. / 2197
+            a[3, 2] = 7296. / 2197
+            a[4, 0] = 439. / 216
+            a[4, 1] = -8
+            a[4, 2] = 3680. / 513
+            a[4, 3] = -845. / 4104
+            a[5, 0] = -8. / 27
+            a[5, 1] = 2
+            a[5, 2] = -3544. / 2565
+            a[5, 3] = 1859. / 4104
+            a[5, 4] = -11. / 40
+        else:
+            c = np.array([0., 0.5, 0.5, 1.])
+            b = np.array([1./6, 1./3, 1./3, 1./6])
+            a = np.zeros((len(c), len(b)))
+            a[1, 0] = 0.5
+            a[2, 1] = 0.5
+            a[3, 2] = 1.
 
     if forward:
         time_direction = 1
@@ -773,9 +830,14 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
     if inverse:
         inv *= -1.
 
-    recorded_traj, recorded_fmatrix = _integrate_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
-                                                                      time_direction, write_steps,
-                                                                      b, c, a, adjoint, inv, boundary)
+    if method == 'adaptative':
+        recorded_traj, recorded_fmatrix = _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
+                                                                          time_direction, write_steps,
+                                                                          b, bs, c, a, tol, adjoint, inv, boundary)
+    else:
+        recorded_traj, recorded_fmatrix = _integrate_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
+                                                                          time_direction, write_steps,
+                                                                          b, c, a, adjoint, inv, boundary)
 
     if len(tg_ic_sav.shape) == 2:
         if recorded_fmatrix.shape[1:3] != tg_ic_sav.shape:
@@ -860,6 +922,97 @@ def _integrate_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_direction, wr
                 fm_new += dt * b[j] * km[j]
             y = y_new
             fm = fm_new
+
+        recorded_traj[i_traj, :, -1] = y
+        recorded_fmatrix[i_traj, :, :, -1] = fm
+
+    return recorded_traj[:, :, ::time_direction], recorded_fmatrix[:, :, :, ::time_direction]
+
+@njit
+def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_direction, write_steps, b, bs, c, a, tol,
+                                               adjoint, inverse, boundary):
+
+    n_traj = ic.shape[0]
+    n_dim = ic.shape[1]
+
+    s = len(b)
+
+    if write_steps == 0:
+        n_records = 1
+    else:
+        tot = time[::write_steps]
+        n_records = len(tot)
+        if tot[-1] != time[-1]:
+            n_records += 1
+    recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    recorded_fmatrix = np.zeros((n_traj, tg_ic.shape[1], tg_ic.shape[2], n_records))
+    if time_direction == -1:
+        directed_time = reverse(time)
+    else:
+        directed_time = time
+
+    for i_traj in range(n_traj):
+        y = ic[i_traj].copy()
+        fm = tg_ic[i_traj].copy()
+        recorded_traj[i_traj, :, 0] = ic[i_traj]
+        recorded_fmatrix[i_traj, :, :, 0] = tg_ic[i_traj]
+        k = np.zeros((s, n_dim))
+        km = np.zeros((s, tg_ic.shape[1], tg_ic.shape[2]))
+        ks = np.zeros((s, n_dim))
+        n_sub_step = 1
+        iw = 0
+        for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
+
+            dts = dt / n_sub_step
+            if write_steps > 0 and np.mod(ti, write_steps) == 0:
+                recorded_traj[i_traj, :, iw] = y
+                recorded_fmatrix[i_traj, :, :, iw] = fm
+                iw += 1
+
+            ns = 0
+            yt = y.copy()
+            fmt = fm.copy()
+            while True:
+                ys = yt.copy()
+                k.fill(0.)
+                for i in range(s):
+                    y_s = yt + dts * a[i] @ k
+                    k[i] = f(tt + c[i] * dts, y_s)
+                    km_s = fmt.copy()
+                    for j in range(len(a[i])):
+                        km_s += dts * a[i, j] * km[j]
+                    hom = inverse * _tangent_linear_system(fjac, tt + c[i] * dts, y_s, km_s, adjoint)
+                    inhom = boundary(tt + c[i] * dts, y_s)
+                    km[i] = (hom.T + inhom.T).T
+                y_new = yt + dts * b @ k
+                fm_new = fmt.copy()
+                for j in range(len(b)):
+                    fm_new += dts * b[j] * km[j]
+                fmt = fm_new
+                yt = y_new
+
+                ks.fill(0.)
+                for i in range(s):
+                    ys_s = ys + dts * a[i] @ ks
+                    ks[i] = f(tt + c[i] * dts, ys_s)
+                ys_new = ys + dts * bs @ ks
+                ys = ys_new
+
+                err = np.linalg.norm(yt - ys)
+                ns += 1
+
+                if err > tol:
+                    dts = dts / 2
+                    n_sub_step = n_sub_step * 2
+                    yt = y.copy()
+                    fmt = fm.copy()
+                    ns = 0
+                elif ns >= n_sub_step:
+                    if n_sub_step // 2 >= 1:
+                        n_sub_step = n_sub_step // 2
+                    y = yt
+                    fm = fmt
+                    break
 
         recorded_traj[i_traj, :, -1] = y
         recorded_fmatrix[i_traj, :, :, -1] = fm
