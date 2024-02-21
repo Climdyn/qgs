@@ -944,7 +944,6 @@ def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_di
         recorded_fmatrix[i_traj, :, :, 0] = tg_ic[i_traj]
         k = np.zeros((s, n_dim))
         km = np.zeros((s, tg_ic.shape[1], tg_ic.shape[2]))
-        ks = np.zeros((s, n_dim))
         n_sub_step = 1
         iw = 0
         for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
@@ -959,7 +958,6 @@ def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_di
             yt = y.copy()
             fmt = fm.copy()
             while True:
-                ys = yt.copy()
                 k.fill(0.)
                 for i in range(s):
                     y_s = yt + dts * a[i] @ k
@@ -970,19 +968,12 @@ def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_di
                     hom = inverse * _tangent_linear_system(fjac, tt + c[i] * dts, y_s, km_s, adjoint)
                     inhom = boundary(tt + c[i] * dts, y_s)
                     km[i] = (hom.T + inhom.T).T
-                y_new = yt + dts * b @ k
+                ys = yt + dts * bs @ k
+                yt = yt + dts * b @ k
                 fm_new = fmt.copy()
                 for j in range(len(b)):
                     fm_new += dts * b[j] * km[j]
                 fmt = fm_new
-                yt = y_new
-
-                ks.fill(0.)
-                for i in range(s):
-                    ys_s = ys + dts * a[i] @ ks
-                    ks[i] = f(tt + c[i] * dts, ys_s)
-                ys_new = ys + dts * bs @ ks
-                ys = ys_new
 
                 err = np.linalg.norm(yt - ys)
                 ns += 1
