@@ -308,7 +308,6 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
     for i_traj in range(n_traj):
         y = ic[i_traj].copy()
         k = np.zeros((s, n_dim))
-        ks = np.zeros((s, n_dim))
         n_sub_step = 1
         iw = 0
         for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
@@ -321,20 +320,12 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
             ns = 0
             yt = y.copy()
             while True:
-                ys = yt.copy()
                 k.fill(0.)
                 for i in range(s):
                     y_s = yt + dts * a[i] @ k
                     k[i] = f(tt + c[i] * dts, y_s)
-                y_new = yt + dts * b @ k
-                yt = y_new
-
-                ks.fill(0.)
-                for i in range(s):
-                    ys_s = ys + dts * a[i] @ ks
-                    ks[i] = f(tt + c[i] * dts, ys_s)
-                ys_new = ys + dts * bs @ ks
-                ys = ys_new
+                ys = yt + dts * bs @ k
+                yt = yt + dts * b @ k
 
                 err = np.linalg.norm(yt - ys)
                 ns += 1
@@ -391,16 +382,11 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
             yt = y.copy()
             ki = np.zeros((s, n_dim))
             while True:
-                ys = yt.copy()
                 for i in range(s):
                     ki[i] = yt
                 steps, rt, k = _broyden_good(f, ki, tt, dts, yt, c, a, tol=tol)
-                y_new = yt + dts * b @ k
-                yt = y_new
-
-                steps, rt, ks = _broyden_good(f, ki, tt, dts, ys, c, a, tol=tol)
-                ys_new = ys + dts * bs @ ks
-                ys = ys_new
+                ys = yt + dts * bs @ k
+                yt = yt + dts * b @ k
 
                 err = np.linalg.norm(yt - ys)
                 ns += 1
