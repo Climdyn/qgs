@@ -372,6 +372,7 @@ class AtmosphericTemperatureParams(Params):
         self.T0 = None
         self.sc = None
         self.hlambda = None
+        self.dynamic_T = None
 
         self.set_params(dic)
 
@@ -394,7 +395,7 @@ class AtmosphericTemperatureParams(Params):
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
             offset = 1
-            if dynamic_T:
+            if self.dynamic_T or dynamic_T:
                 offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere",
@@ -418,6 +419,7 @@ class AtmosphericTemperatureParams(Params):
         offset = 1
         if dynamic_T:
             offset = 0
+            self.dynamic_T = True
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
         sy = [Symbol('C_a'+str(pos+offset)) for pos in range(dim)]
 
@@ -543,6 +545,7 @@ class OceanicTemperatureParams(Params):
         self.C = None
 
         self.T0 = None
+        self.dynamic_T = None
 
         self.set_params(dic)
 
@@ -563,7 +566,7 @@ class OceanicTemperatureParams(Params):
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
             offset = 1
-            if dynamic_T:
+            if self.dynamic_T or dynamic_T:
                 offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean",
@@ -587,6 +590,7 @@ class OceanicTemperatureParams(Params):
         offset = 1
         if dynamic_T:
             offset = 0
+            self.dynamic_T = True
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
@@ -711,6 +715,7 @@ class GroundTemperatureParams(Params):
         self.C = None
 
         self.T0 = None
+        self.dynamic_T = None
 
         self.set_params(dic)
 
@@ -733,7 +738,7 @@ class GroundTemperatureParams(Params):
 
         if isinstance(value, (float, int)) and pos is not None and self.C is not None:
             offset = 1
-            if dynamic_T:
+            if self.dynamic_T or dynamic_T:
                 offset = 0
             self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ground",
@@ -757,6 +762,7 @@ class GroundTemperatureParams(Params):
         offset = 1
         if dynamic_T:
             offset = 0
+            self.dynamic_T = True
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ground" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 

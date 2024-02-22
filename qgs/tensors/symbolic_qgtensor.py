@@ -218,8 +218,7 @@ class SymbolicQgsTensor(object):
                 M_psio = dict()
                 for i in range(offset, nvar[3]):
                     for j in range(offset, nvar[3]):
-                        M_psio[(i - offset, j - offset)] = bips.M(i, j) + self.params.G.symbolic_expression \
-                                                           * bips.U(i, j)
+                        M_psio[(i - offset, j - offset)] = bips.M(i, j) + self.params.G.symbolic_expression * bips.U(i, j)
 
                 M_psio = ImmutableSparseMatrix(nvar[2], nvar[2], M_psio)
                 M_psio = M_psio.inverse()
@@ -1047,18 +1046,18 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
                     for jj in range(nvar[3]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.params.T4LSBpa.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.params.T4sbpa.symbolic_expression * val)
                     else:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.params.T4LSBpa.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.params.T4sbpa.symbolic_expression * val)
                     
                 for m in range(nvar[3]):
                     val = 0
                     for jj in range(nvar[3]):
                         val += U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), - self.params.T4LSBpgo.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), - self.params.T4sbpgo.symbolic_expression * val)
                     else:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), -4 * self.params.T4LSBpgo.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m)), -4 * self.params.T4sbpgo.symbolic_expression * val)
 
         if ground_temp:
             # deltaT_g part
@@ -1069,18 +1068,18 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
                     for jj in range(nvar[2]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.params.T4LSBpa.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), self.params.T4sbpa.symbolic_expression * val)
                     else:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.params.T4LSBpa.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m)), 4 * self.params.T4sbpa.symbolic_expression * val)
 
                 for m in range(nvar[2]):
                     val = 0 
                     for jj in range(nvar[2]):
                         val += U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -self.params.T4LSBpgo.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -self.params.T4sbpgo.symbolic_expression * val)
                     else:
-                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -4 * self.params.T4LSBpgo.symbolic_expression * val)
+                        sy_arr_dic = add_to_dict(sy_arr_dic, (self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m)), -4 * self.params.T4sbpgo.symbolic_expression * val)
                     
         return sy_arr_dic
 
@@ -1181,18 +1180,18 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
                     for jj in range(nvar[3]):
                         val += U_inv[i, jj] * bips.Z(jj, j, k, ell, m)
                     if m == 0:
-                        sy_arr_dic[(self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.params.T4LSBpa.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.params.T4sbpa.symbolic_expression * val
                     else:
-                        sy_arr_dic[(self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.params.T4LSBpa.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_o(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.params.T4sbpa.symbolic_expression * val
 
                 for m in range(nvar[3]):
                     val = 0
                     for jj in range(nvar[3]):
                         val -= U_inv[i, jj] * bips.V(jj, j, k, ell, m)
                     if m == 0:
-                        sy_arr_dic[(self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = self.params.T4LSBpgo.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = self.params.T4sbpgo.symbolic_expression * val
                     else:
-                        sy_arr_dic[(self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = 4 * self.params.T4LSBpgo.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_o(i), self._deltaT_o(j), self._deltaT_o(k), self._deltaT_o(ell), self._deltaT_o(m))] = 4 * self.params.T4sbpgo.symbolic_expression * val
 
         # deltaT_g part
         if ground_temp:
@@ -1204,18 +1203,18 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
                     for jj in range(nvar[2]):
                         val += U_inv[i, jj] * bips._Z[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.params.T4LSBpa.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = self.params.T4sbpa.symbolic_expression * val
                     else:
-                        sy_arr_dic[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.params.T4LSBpa.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_g(i), self._theta_a(j), self._theta_a(k), self._theta_a(ell), self._theta_a(m))] = 4 * self.params.T4sbpa.symbolic_expression * val
 
                 for m in range(nvar[2]):
                     val = 0
                     for jj in range(nvar[2]):
                         val -= U_inv[i, jj] * bips._V[jj, j, k, ell, m]
                     if m == 0:
-                        sy_arr_dic[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.params.T4LSBpgo.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = self.params.T4sbpgo.symbolic_expression * val
                     else:
-                        sy_arr_dic[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = 4 * self.params.T4LSBpgo.symbolic_expression * val
+                        sy_arr_dic[(self._deltaT_g(i), self._deltaT_g(j), self._deltaT_g(k), self._deltaT_g(ell), self._deltaT_g(m))] = 4 * self.params.T4sbpgo.symbolic_expression * val
 
         return sy_arr_dic
 
