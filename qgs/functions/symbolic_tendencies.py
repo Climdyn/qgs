@@ -171,7 +171,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         if return_jacobian:
             dict_eq_simplified = dict_eq
 
-    func = equation_as_function(equations=eq_simplified, params=params, language=language, string_output=True,
+    func = equation_as_function(equations=eq_simplified, params=params, language=language,
                                 continuation_variables=continuation_variables)
 
     if return_jacobian:
@@ -316,7 +316,7 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         return equation_dict
 
 
-def equation_as_function(equations, params, string_output=True, language='python', continuation_variables=None):
+def equation_as_function(equations, params, language='python', continuation_variables=None):
     """Converts the symbolic equations to a function in string format in the language syntax specified,
     or a lambdified python function.
     
@@ -326,8 +326,6 @@ def equation_as_function(equations, params, string_output=True, language='python
         Dictionary of the substituted symbolic model equations.
     params: QgParams
         The parameters fully specifying the model configuration.
-    string_output: bool
-        If `True`, returns a lambdified python function, if `False` returns a string function. Defaults to `True`.
     language: str
         Language syntax that the equations are returned in. Options are:
         - `python`
@@ -342,8 +340,7 @@ def equation_as_function(equations, params, string_output=True, language='python
     Returns
     -------
     f_output: callable or str
-        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is
-        a lambdified python function.
+        Output is a function as a string in the specified language syntax.
     
     """
     if continuation_variables is None:
@@ -353,41 +350,36 @@ def equation_as_function(equations, params, string_output=True, language='python
 
     f_output = list()
     if language == 'python':
-        if string_output:
+        f_output.append('@njit')
+        func_def_str = 'def f(t, U'
+        for v in continuation_variables:
+            func_def_str += ', ' + str(v.symbol)
 
-            f_output.append('def f(t, U, **kwargs):')
-            f_output.append('\t#Tendency function of the qgs model')
-            f_output.append('\tF = np.empty_like(U)')
+        f_output.append(func_def_str + '):' )
 
-            for v in continuation_variables:
-                f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+        f_output.append('\t# Tendency function of the qgs model')
+        for v in continuation_variables:
+            f_output.append('\t# ' + str(v.symbol) + ":\t" + str(v.description))
 
-            for n, eq in eq_dict.items():
-                f_output.append('\tF['+str(n-1)+'] = ' + str(eq))
-            
-            f_output.append('\treturn F')
-            f_output = '\n'.join(f_output)
-        else:
-            # Return a lambdified function
-            vec = [Symbol('U['+str(i-1)+']') for i in range(1, params.ndim+1)]
-            sorted_dict = dict(sorted(eq_dict.items()))
-            array_eqs = np.array(list(sorted_dict.values()))
-            inputs = ['t', vec]
+        f_output.append('')
+        f_output.append('\tF = np.empty_like(U)')
 
-            for v in continuation_variables:
-                inputs.append(v.symbol)
+        for n, eq in eq_dict.items():
+            f_output.append('\tF['+str(n-1)+'] = ' + str(eq))
 
-            f_output = lambdify(inputs, array_eqs)
+        f_output.append('\treturn F')
+        f_output = '\n'.join(f_output)
 
     if language == 'julia':
         eq_dict = translate_equations(eq_dict, language='julia')
 
         f_output.append('function f!(du, U, p, t)')
-        f_output.append('\t#Tendency function of the qgs model')
+        f_output.append('\t# Tendency function of the qgs model')
 
-        for v in continuation_variables:
-            f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+        for i, v in enumerate(continuation_variables):
+            f_output.append('\t' + str(v.symbol) + " = p[" + str(i+1) + "] " + "\t# " + str(v.description))
 
+        f_output.append('')
         for n, eq in eq_dict.items():
             f_output.append('\tdu['+str(n)+'] = ' + str(eq))
         
@@ -398,20 +390,17 @@ def equation_as_function(equations, params, string_output=True, language='python
         eq_dict = translate_equations(eq_dict, language='fortran')
 
         f_var = ''
-        if len(continuation_variables) > 0:
-            for fv in continuation_variables:
-                f_var += str(fv.symbol) + ', '
-            f_output.append('SUBROUTINE FUNC(NDIM, t, U, F, ' + f_var[:-2] + ')')
-        else:
-            f_output.append('SUBROUTINE FUNC(NDIM, t, U, F)')
+        for fv in continuation_variables:
+            f_var += ', ' + str(fv.symbol)
+        f_output.append('SUBROUTINE FUNC(NDIM, t, U, F' + f_var + ')')
 
-        f_output.append('\t!Tendency function of the qgs model')
+        f_output.append('\t! Tendency function of the qgs model')
         f_output.append('\tINTEGER, INTENT(IN) :: NDIM')
         f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)')
         f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: F(NDIM)')
 
         for v in continuation_variables:
-            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol))
+            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol) + "\t! " + str(v.description))
 
         f_output.append('')
 
@@ -466,8 +455,7 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
     Returns
     -------
     f_output: callable or str
-        If string_output is `True`, output is a function in the specified language syntax, if `False` the output is
-        a lambdified python function.
+        Output is a function as a string in the specified language syntax
 
     """
     if continuation_variables is None:
@@ -477,13 +465,20 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
 
     f_output = list()
     if language == 'python':
-        f_output.append('def jac(t, U, **kwargs):')
-        f_output.append('\t#Jacobian function of the qgs model')
-        f_output.append('\tJ = np.zeros((len(U), len(U)))')
+        f_output.append('@njit')
+        func_def_str = 'def jac(t, U'
+        for v in continuation_variables:
+            func_def_str += ', ' + str(v.symbol)
+
+        f_output.append(func_def_str + '):')
+
+        f_output.append('\t# Jacobian function of the qgs model')
 
         for v in continuation_variables:
-            f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+            f_output.append('\t# ' + str(v.symbol) + ":\t" + str(v.description))
 
+        f_output.append('')
+        f_output.append('\tJ = np.zeros((len(U), len(U)))')
         for n, eq in eq_dict.items():
             f_output.append('\tJ[' + str(n[0] - 1) + ', ' + str(n[1] - 1) + '] = ' + str(eq))
 
@@ -494,11 +489,12 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         eq_dict = translate_equations(eq_dict, language='julia')
 
         f_output.append('function jac!(du, U, p, t)')
-        f_output.append('\t#Jacobian function of the qgs model')
+        f_output.append('\t# Jacobian function of the qgs model')
 
-        for v in continuation_variables:
-            f_output.append('\t' + str(v.symbol) + " = kwargs['" + str(v.symbol) + "']")
+        for i, v in enumerate(continuation_variables):
+            f_output.append('\t' + str(v.symbol) + " = p[" + str(i+1) + "]")
 
+        f_output.append('')
         for n, eq in eq_dict.items():
             f_output.append('\tdu[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + str(eq))
 
@@ -509,24 +505,22 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         eq_dict = translate_equations(eq_dict, language='fortran')
 
         f_var = ''
-        if len(continuation_variables) > 0:
-            for fv in continuation_variables:
-                f_var += str(fv.symbol) + ', '
-            f_output.append('SUBROUTINE FUNC(NDIM, t, U, JAC, ' + f_var[:-2] + ')')
-        else:
-            f_output.append('SUBROUTINE FUNC(NDIM, t, U, JAC)')
 
-        f_output.append('\t!Jacobian function of the qgs model')
+        for fv in continuation_variables:
+            f_var += ', ' + str(fv.symbol)
+        f_output.append('SUBROUTINE FUNC(NDIM, t, U, JAC' + f_var + ')')
+
+        f_output.append('\t! Jacobian function of the qgs model')
         f_output.append('\tINTEGER, INTENT(IN) :: NDIM')
         f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: U(NDIM), PAR(*)')
-        f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: JAC(NDIM)')
+        f_output.append('\tDOUBLE PRECISION, INTENT(OUT) :: JAC(NDIM, NDIM)')
 
         for v in continuation_variables:
-            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol))
+            f_output.append('\tDOUBLE PRECISION, INTENT(IN) :: ' + str(v.symbol) + "\t! " + str(v.description))
 
         f_output.append('')
 
-        f_output = _split_equations(eq_dict, f_output)
+        f_output = _split_equations(eq_dict, f_output, two_dim=True)
 
         f_output.append('END SUBROUTINE')
         f_output = '\n'.join(f_output)
