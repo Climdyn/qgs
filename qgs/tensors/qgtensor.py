@@ -977,7 +977,6 @@ class QgsTensorDynamicT(QgsTensor):
                         sparse_arrays_full_dict[self._theta_a(i)].append(self._shift_tensor_coordinates(- par.T4LSBpgo * val, self._deltaT_o(0)))
 
             if ground_temp:
-
                 if par.T4LSBpgo is not None:
                     val = sp.tensordot(a_theta[i], aips._v, axes=1)
                     if val.nnz > 0:

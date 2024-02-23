@@ -49,7 +49,8 @@ class TestSymbolicAOTensorDynT(TestBaseSymbolic):
         aip = symbolic.AtmosphericSymbolicInnerProducts(params, return_symbolic=True, make_substitution=True)
         oip = symbolic.OceanicSymbolicInnerProducts(params, return_symbolic=True, make_substitution=True)
 
-        aip.connect_to_ocean(oip)
+        if not aip.connected_to_ocean:
+            aip.connect_to_ocean(oip)
 
         sym_aotensor = SymbolicQgsTensorDynamicT(params=params, atmospheric_inner_products=aip, oceanic_inner_products=oip)
         
@@ -76,7 +77,8 @@ class TestSymbolicAOTensorDynT(TestBaseSymbolic):
         aip = symbolic.AtmosphericSymbolicInnerProducts(params, return_symbolic=False)
         oip = symbolic.OceanicSymbolicInnerProducts(params, return_symbolic=False)
 
-        aip.connect_to_ocean(oip)
+        if not aip.connected_to_ocean:
+            aip.connect_to_ocean(oip)
 
         num_aotensor = QgsTensorDynamicT(params=params, atmospheric_inner_products=aip, oceanic_inner_products=oip)
 
