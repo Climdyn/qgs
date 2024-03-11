@@ -97,7 +97,7 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
         If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
         Default to `None`.
     tol: float, optional
-        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
         Only used when one of these two methods is set as `method`.
         Default to `1.e-6`.
     method: str, optional
@@ -595,7 +595,7 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
         Default to `None`.
     tol: float, optional
-        Tolererance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
         Only used when one of these two methods is set as `method`.
         Default to `1.e-6`.
     method: str, optional
@@ -818,8 +818,12 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
 
     if method == 'adaptative':
         recorded_traj, recorded_fmatrix = _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
-                                                                          time_direction, write_steps,
-                                                                          b, bs, c, a, tol, adjoint, inv, boundary)
+                                                                                     time_direction, write_steps,
+                                                                                     b, bs, c, a, tol, adjoint, inv, boundary)
+    elif method == 'implicit':
+        recorded_traj, recorded_fmatrix = _integrate_implicit_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
+                                                                                   time_direction, write_steps,
+                                                                                   b, bs, c, a, tol, adjoint, inv, boundary)
     else:
         recorded_traj, recorded_fmatrix = _integrate_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic,
                                                                           time_direction, write_steps,
@@ -979,6 +983,156 @@ def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_di
                 ns += 1
 
                 if err > tol:
+                    dts = dts / 2
+                    n_sub_step = n_sub_step * 2
+                    yt = y.copy()
+                    fmt = fm.copy()
+                    ns = 0
+                elif ns >= n_sub_step:
+                    if n_sub_step // 2 >= 1:
+                        n_sub_step = n_sub_step // 2
+                    y = yt
+                    fm = fmt
+                    break
+
+        recorded_traj[i_traj, :, -1] = y
+        recorded_fmatrix[i_traj, :, :, -1] = fm
+
+    return recorded_traj[:, :, ::time_direction], recorded_fmatrix[:, :, :, ::time_direction]
+
+
+@njit
+def _implicit_k_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint):
+    res = _implicit_f_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint)
+    return np.ravel(k - res)
+
+
+@njit
+def _implicit_f_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint):
+    s = k.shape[0]
+    res = np.zeros_like(k)
+    fm_s = fm.copy()
+    for i in range(s):
+        y_s = y + dt * a[i] @ k[:, 0]
+        for j in range(a.shape[1]):
+            fm_s += dt * a[i, j] * k[j, 1:]
+
+        hom = inverse * _tangent_linear_system(fjac, t + c[i] * dt, y_s, fm_s, adjoint)
+        inhom = boundary(tt + c[i] * dt, y_s)
+        res[i] = np.concatenate((f(t + c[i] * dt, y_s)[np.newaxis, :], (hom.T + inhom.T).T), axis=0)
+    return res
+
+
+@njit
+def _jacobian_estimate_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint, dk=1.e-8):
+    s = k.shape[0]
+    p = k.shape[1]
+    n = k.shape[2]
+    fk = _implicit_k_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint)
+    jac = np.zeros((s * p * n, s * p * n))
+    idx = 0
+    for r in range(s):
+        for l in range(p):
+            for j in range(n):
+                Dkj = np.zeros_like(k)
+                Dkj[r, l, j] = dk
+                k_plus = k + Dkj
+                jac[:, idx] = (_implicit_k_tgls(f, fjac, k_plus, t, dt, y, fm, c, a, boundary, inverse, adjoint) - fk) / dk
+                idx += 1
+    return jac
+
+
+@njit
+def _broyden_good_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint, tol=1.e-10, max_iters=50):
+    steps = 0
+
+    kk = k.copy()
+
+    ff = _implicit_k_tgls(f, fjac, kk, t, dt, y, fm, c, a, boundary, inverse, adjoint)
+    jac = _jacobian_estimate_tgls(f, fjac, kk, t, dt, y, fm, c, a, boundary, inverse, adjoint, tol)
+
+    while np.linalg.norm(ff) > tol and steps < max_iters:
+        s = np.linalg.solve(jac, -1 * ff)
+
+        kk = np.ravel(kk) + s
+        kk = kk.reshape(k.shape)
+        newf = _implicit_k_tgls(f, fjac, kk, t, dt, y, fm, c, a, boundary, inverse, adjoint)
+        z = newf - ff
+
+        jac = jac + (np.outer((z - np.dot(jac, s)), s)) / (np.dot(s, s))
+
+        ff = newf
+        steps += 1
+
+    return steps, t, kk
+
+
+@njit
+def _integrate_implicit_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_direction, write_steps, b, bs, c, a, tol,
+                                             adjoint, inverse, boundary):
+
+    n_traj = ic.shape[0]
+    n_dim = ic.shape[1]
+
+    s = len(b)
+
+    if write_steps == 0:
+        n_records = 1
+    else:
+        tot = time[::write_steps]
+        n_records = len(tot)
+        if tot[-1] != time[-1]:
+            n_records += 1
+    recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    recorded_fmatrix = np.zeros((n_traj, tg_ic.shape[1], tg_ic.shape[2], n_records))
+    if time_direction == -1:
+        directed_time = reverse(time)
+    else:
+        directed_time = time
+
+    for i_traj in range(n_traj):
+        y = ic[i_traj].copy()
+        fm = tg_ic[i_traj].copy()
+        recorded_traj[i_traj, :, 0] = ic[i_traj]
+        recorded_fmatrix[i_traj, :, :, 0] = tg_ic[i_traj]
+        n_sub_step = 1
+        iw = 0
+        for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
+
+            dts = dt / n_sub_step
+            if write_steps > 0 and np.mod(ti, write_steps) == 0:
+                recorded_traj[i_traj, :, iw] = y
+                recorded_fmatrix[i_traj, :, :, iw] = fm
+                iw += 1
+
+            ns = 0
+            yt = y.copy()
+            fmt = fm.copy()
+            ki = np.zeros((s, tg_ic.shape[1] + 1, tg_ic.shape[2]))
+            while True:
+                for i in range(s):
+                    ki[i, 0] = yt
+                    ki[i, 1:] = fmt
+                steps, rt, k = _broyden_good_tgls(f, fjac, ki, tt, dts, yt, fmt, c, a, boundary, inverse, adjoint, tol=tol)
+
+                ys = yt + dts * bs @ k[:, 0]
+                yt = yt + dts * b @ k[:, 0]
+
+                fm_new = fmt.copy()
+                for j in range(len(b)):
+                    fm_new += dts * bs[j] * k[j, 1:]
+                fms = fm_new
+
+                fm_new = fmt.copy()
+                for j in range(len(b)):
+                    fm_new += dts * b[j] * k[j, 1:]
+                fmt = fm_new
+
+                err = np.linalg.norm(yt - ys)
+                err_fm = np.linalg.norm(fmt - fms)
+                ns += 1
+
+                if err > tol or err_fm > tol:
                     dts = dts / 2
                     n_sub_step = n_sub_step * 2
                     yt = y.copy()
