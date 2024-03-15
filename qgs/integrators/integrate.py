@@ -1013,13 +1013,13 @@ def _implicit_f_tgls(f, fjac, k, t, dt, y, fm, c, a, boundary, inverse, adjoint)
     res = np.zeros_like(k)
     fm_s = fm.copy()
     for i in range(s):
-        y_s = y + dt * a[i] @ k[:, 0]
+        y_s = y + dt * a[i] @ k[:, :, 0]
         for j in range(a.shape[1]):
-            fm_s += dt * a[i, j] * k[j, 1:]
+            fm_s += dt * a[i, j] * k[j, :, 1:]
 
         hom = inverse * _tangent_linear_system(fjac, t + c[i] * dt, y_s, fm_s, adjoint)
-        inhom = boundary(tt + c[i] * dt, y_s)
-        res[i] = np.concatenate((f(t + c[i] * dt, y_s)[np.newaxis, :], (hom.T + inhom.T).T), axis=0)
+        inhom = boundary(t + c[i] * dt, y_s)
+        res[i] = np.concatenate((f(t + c[i] * dt, y_s)[:, np.newaxis], (hom.T + inhom.T).T), axis=1)
     return res
 
 
@@ -1108,24 +1108,24 @@ def _integrate_implicit_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_dire
             ns = 0
             yt = y.copy()
             fmt = fm.copy()
-            ki = np.zeros((s, tg_ic.shape[1] + 1, tg_ic.shape[2]))
+            ki = np.zeros((s, tg_ic.shape[1], tg_ic.shape[2] + 1))
             while True:
                 for i in range(s):
-                    ki[i, 0] = yt
-                    ki[i, 1:] = fmt
+                    ki[i, :, 0] = yt
+                    ki[i, :, 1:] = fmt
                 steps, rt, k = _broyden_good_tgls(f, fjac, ki, tt, dts, yt, fmt, c, a, boundary, inverse, adjoint, tol=tol)
 
-                ys = yt + dts * bs @ k[:, 0]
-                yt = yt + dts * b @ k[:, 0]
+                ys = yt + dts * bs @ k[:, :, 0]
+                yt = yt + dts * b @ k[:, :, 0]
 
                 fm_new = fmt.copy()
                 for j in range(len(b)):
-                    fm_new += dts * bs[j] * k[j, 1:]
+                    fm_new += dts * bs[j] * k[j, :, 1:]
                 fms = fm_new
 
                 fm_new = fmt.copy()
                 for j in range(len(b)):
-                    fm_new += dts * b[j] * k[j, 1:]
+                    fm_new += dts * b[j] * k[j, :, 1:]
                 fmt = fm_new
 
                 err = np.linalg.norm(yt - ys)
