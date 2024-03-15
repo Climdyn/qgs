@@ -20,7 +20,8 @@
 import multiprocessing
 import numpy as np
 from numba import njit
-from qgs.integrators.integrate import _integrate_runge_kutta_jit, _integrate_runge_kutta_tgls_jit, _zeros_func
+from qgs.integrators.integrate import (_integrate_runge_kutta_jit, _integrate_adaptative_runge_kutta_jit, _integrate_implicit_runge_kutta_jit,
+                                       _integrate_runge_kutta_tgls_jit, _integrate_adaptative_runge_kutta_tgls_jit, _integrate_implicit_runge_kutta_tgls_jit, _zeros_func)
 from qgs.functions.util import reverse
 
 
@@ -32,6 +33,8 @@ class RungeKuttaIntegrator(object):
     with a set of :class:`TrajectoryProcess` and a specified `Runge-Kutta method`_.
 
     .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+    .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
 
     Parameters
     ----------
@@ -40,16 +43,38 @@ class RungeKuttaIntegrator(object):
         cores available. Default to `None`.
     b: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     c: None or ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     a: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
+    bs: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     number_of_dimensions: None or int, optional
         Allow to hardcode the dynamical system dimension. If `None`, evaluate the dimension from the
         callable :attr:`func`. Default to `None`.
+    tol: float, optional
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        Default to `1.e-6`.
+    method: str, optional
+        Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+        Default to `explicit`.
 
     Attributes
     ----------
@@ -57,6 +82,8 @@ class RungeKuttaIntegrator(object):
         Number of :class:`TrajectoryProcess` workers (threads) to use.
     b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
@@ -72,9 +99,14 @@ class RungeKuttaIntegrator(object):
         Store the integrator initial conditions.
     func: callable
         Last function :math:`\\boldsymbol{f}` used by the integrator to integrate.
+    tol: float
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+    method: str
+        Method used to integrate. Can be `explicit`, `adaptative` or `implicit`.
     """
 
-    def __init__(self, num_threads=None, b=None, c=None, a=None, number_of_dimensions=None):
+    def __init__(self, num_threads=None, b=None, bs=None, c=None, a=None, number_of_dimensions=None, tol=1.e-6, method='explicit'):
 
         if num_threads is None:
             self.num_threads = multiprocessing.cpu_count()
@@ -83,16 +115,49 @@ class RungeKuttaIntegrator(object):
 
         # Default is RK4
         if a is None and b is None and c is None:
-            self.c = np.array([0., 0.5, 0.5, 1.])
-            self.b = np.array([1./6, 1./3, 1./3, 1./6])
-            self.a = np.zeros((len(self.c), len(self.b)))
-            self.a[1, 0] = 0.5
-            self.a[2, 1] = 0.5
-            self.a[3, 2] = 1.
+            if method == 'implicit':
+                sq36 = np.sqrt(3.) / 6
+                self.c = np.array([0.5 - sq36, 0.5 + sq36])
+                self.b = np.array([0.5, 0.5])
+                self.bs = np.array([0.5 + 3 * sq36, 0.5 - 3 * sq36])
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[0, 0] = 0.25
+                self.a[0, 1] = 0.25 - sq36
+                self.a[1, 0] = 0.25 + sq36
+                self.a[0, 1] = 0.25
+            elif method == 'adaptative':
+                self.c = np.array([0., 0.25, 3. / 8, 12. / 13, 1., 0.5])
+                self.b = np.array([16. / 135, 0., 6656. / 12825, 28561. / 56430, -9. / 50, 2. / 55])
+                self.bs = np.array([25. / 216, 0., 1408. / 2565, 2197. / 4104, -1. / 5, 0.])
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[1, 0] = 0.25
+                self.a[2, 0] = 3. / 32
+                self.a[2, 1] = 9. / 32
+                self.a[3, 0] = 1932. / 2197
+                self.a[3, 1] = -7200. / 2197
+                self.a[3, 2] = 7296. / 2197
+                self.a[4, 0] = 439. / 216
+                self.a[4, 1] = -8
+                self.a[4, 2] = 3680. / 513
+                self.a[4, 3] = -845. / 4104
+                self.a[5, 0] = -8. / 27
+                self.a[5, 1] = 2
+                self.a[5, 2] = -3544. / 2565
+                self.a[5, 3] = 1859. / 4104
+                self.a[5, 4] = -11. / 40
+            else:
+                self.c = np.array([0., 0.5, 0.5, 1.])
+                self.b = np.array([1./6, 1./3, 1./3, 1./6])
+                self.bs = None
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[1, 0] = 0.5
+                self.a[2, 1] = 0.5
+                self.a[3, 2] = 1.
         else:
             self.a = a
             self.b = b
             self.c = c
+            self.bs = bs
 
         self.ic = None
         self._time = None
@@ -102,6 +167,8 @@ class RungeKuttaIntegrator(object):
         self.n_records = 0
         self._write_steps = 0
         self._time_direction = 1
+        self.method = method
+        self.tol = tol
 
         self.func = None
 
@@ -134,8 +201,8 @@ class RungeKuttaIntegrator(object):
         self._traj_queue = multiprocessing.Queue()
 
         for i in range(self.num_threads):
-            self._processes_list.append(TrajectoryProcess(i, self.func, self.b, self.c, self.a,
-                                                          self._ics_queue, self._traj_queue))
+            self._processes_list.append(TrajectoryProcess(i, self.func, self.b, self.bs, self.c, self.a,
+                                                          self._ics_queue, self._traj_queue, self.method, self.tol))
 
         for process in self._processes_list:
             process.daemon = True
@@ -164,15 +231,20 @@ class RungeKuttaIntegrator(object):
             self.ic = None
         self.start()
 
-    def set_bca(self, b=None, c=None, a=None, ic_init=True):
+    def set_bca(self, b=None, bs=None, c=None, a=None, ic_init=True):
         """Set the coefficients of the `Runge-Kutta method`_ and restart the integrator. s
 
         .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+        .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+        .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
 
         Parameters
         ----------
         b: None or ~numpy.ndarray, optional
             Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+            If `None`, does not reinitialize these coefficients.
+        bs: None or ~numpy.ndarray
+            Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
             If `None`, does not reinitialize these coefficients.
         c: None or ~numpy.ndarray, optional
             Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
@@ -189,6 +261,8 @@ class RungeKuttaIntegrator(object):
             self.a = a
         if b is not None:
             self.b = b
+        if bs is not None:
+            self.bs = bs
         if c is not None:
             self.c = c
         if ic_init:
@@ -454,6 +528,8 @@ class TrajectoryProcess(multiprocessing.Process):
     """:class:`RungeKuttaIntegrator`'s workers class. Allows to multi-thread time integration.
 
     .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+    .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
     .. _Numba: https://numba.pydata.org/
 
     Parameters
@@ -462,16 +538,23 @@ class TrajectoryProcess(multiprocessing.Process):
         Number identifying the worker.
     func: callable
         `Numba`_-jitted function to integrate assigned to the worker.
-    b: ~numpy.ndarray, optional
+    b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
-    c: ~numpy.ndarray, optional
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+    c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-    a: ~numpy.ndarray, optional
+    a: ~numpy.ndarray
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
     ics_queue: multiprocessing.JoinableQueue
         Queue to which the worker ask for initial conditions and parameters input.
     traj_queue: multiprocessing.Queue
         Queue to which the worker returns the integration results.
+    method: str
+        Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+    tol: float
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
 
     Attributes
     ----------
@@ -481,12 +564,19 @@ class TrajectoryProcess(multiprocessing.Process):
         `Numba`_-jitted function to integrate assigned to the worker.
     b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
+    method: str
+        Method used to integrate: `explicit`, `adaptative` or `implicit`.
+    tol: float, optional
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
     """
-    def __init__(self, processID, func, b, c, a, ics_queue, traj_queue):
+    def __init__(self, processID, func, b, bs, c, a, ics_queue, traj_queue, method, tol):
 
         super().__init__()
         self.processID = processID
@@ -495,7 +585,10 @@ class TrajectoryProcess(multiprocessing.Process):
         self.func = func
         self.a = a
         self.b = b
+        self.bs = bs
         self.c = c
+        self.method = method
+        self.tol = tol
 
     def run(self):
         """Main worker computing routine. Perform the time integration with the fetched initial conditions and parameters."""
@@ -504,8 +597,15 @@ class TrajectoryProcess(multiprocessing.Process):
 
             args = self._ics_queue.get()
 
-            recorded_traj = _integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
-                                                       self.b, self.c, self.a)
+            if self.method == 'adaptative':
+                recorded_traj = _integrate_adaptative_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                                                                      self.b, self.bs, self.c, self.a, self.tol)
+            elif self.method == 'implicit':
+                recorded_traj = _integrate_implicit_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                                                                    self.b, self.bs, self.c, self.a, self.tol)
+            else:
+                recorded_traj = _integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                                                           self.b, self.c, self.a)
 
             self._traj_queue.put((args[0], recorded_traj))
 
@@ -1226,7 +1326,7 @@ if __name__ == "__main__":
     tt, re = integrator.get_trajectories()
     print(tt)
     print(r[0, :, -1], re[0])
-    plt.show(block=False)
+    # plt.show(block=False)
 
     a = 0.25
     F = 16.
@@ -1260,7 +1360,7 @@ if __name__ == "__main__":
     plt.figure()
     plt.plot(tt, traj[0])
     plt.plot(ttb, trajb[0])
-    plt.show(block=False)
+    # plt.show(block=False)
 
     plt.title('Lorenz 63 - Forward then backward')
 
@@ -1274,7 +1374,7 @@ if __name__ == "__main__":
     plt.figure()
     plt.plot(tt, traj[0])
     plt.plot(ttb, trajb[0])
-    plt.show(block=False)
+    # plt.show(block=False)
 
     plt.title('Lorenz 63 - Backward then forward')
     integrator.terminate()
