@@ -83,7 +83,8 @@ class RungeKuttaIntegrator(object):
     b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
     bs: None or ~numpy.ndarray
-        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_
+        and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
@@ -100,13 +101,15 @@ class RungeKuttaIntegrator(object):
     func: callable
         Last function :math:`\\boldsymbol{f}` used by the integrator to integrate.
     tol: float
-        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_
+        and `implicit Runge-Kutta method`_ .
         Only used when one of these two methods is set as `method`.
     method: str
         Method used to integrate. Can be `explicit`, `adaptative` or `implicit`.
     """
 
-    def __init__(self, num_threads=None, b=None, bs=None, c=None, a=None, number_of_dimensions=None, tol=1.e-6, method='explicit'):
+    def __init__(self, num_threads=None, b=None, bs=None, c=None, a=None, number_of_dimensions=None, tol=1.e-6,
+                 method='explicit'):
 
         if num_threads is None:
             self.num_threads = multiprocessing.cpu_count()
@@ -243,7 +246,8 @@ class RungeKuttaIntegrator(object):
             Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
             If `None`, does not reinitialize these coefficients.
         bs: None or ~numpy.ndarray, optional
-            Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+            Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_
+            and `implicit Runge-Kutta method`_ .
             If `None`, does not reinitialize these coefficients.
         c: None or ~numpy.ndarray, optional
             Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .

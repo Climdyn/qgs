@@ -17,6 +17,8 @@
     .. _Lyapunov vectors: https://en.wikipedia.org/wiki/Lyapunov_vector
     .. _exponents: https://en.wikipedia.org/wiki/Lyapunov_exponent
     .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+    .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
     .. _Numba: https://numba.pydata.org/
 
 
@@ -61,16 +63,38 @@ class LyapunovsEstimator(object):
         cores available. Default to `None`.
     b: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
+    bs: None or ~numpy.ndarray, optional
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     c: None or ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     a: None or ~numpy.ndarray, optional
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
-        If `None`, use the classic RK4 method coefficients. Default to `None`.
+        If `None` and `method` is set to `explicit`, use the classic RK4 method coefficients.
+        If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
+        If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        Default to `None`.
     number_of_dimensions: None or int, optional
         Allow to hardcode the dynamical system dimension. If `None`, evaluate the dimension from the
         callable :attr:`func`. Default to `None`.
+    tol: float, optional
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+        Default to `1.e-6`.
+    method: str, optional
+        Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+        Default to `explicit`.
 
     Attributes
     ----------
@@ -78,6 +102,9 @@ class LyapunovsEstimator(object):
         Number of :class:`LyapProcess` workers (threads) to use.
     b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_
+        and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
@@ -97,27 +124,66 @@ class LyapunovsEstimator(object):
         Last function :math:`\\boldsymbol{f}` used by the estimator.
     func_jac: callable
         Last Jacobian matrix function :math:`\\boldsymbol{J}` used by the estimator.
+    tol: float
+        Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_
+        and `implicit Runge-Kutta method`_ .
+        Only used when one of these two methods is set as `method`.
+    method: str
+        Method used to integrate. Can be `explicit`, `adaptative` or `implicit`.
     """
 
-    def __init__(self, num_threads=None, b=None, c=None, a=None, number_of_dimensions=None):
+    def __init__(self, num_threads=None, b=None, bs=None, c=None, a=None, number_of_dimensions=None, tol=1.e-6,
+                 method='explicit'):
 
         if num_threads is None:
             self.num_threads = multiprocessing.cpu_count()
         else:
             self.num_threads = num_threads
 
-        # Default is RK4
         if a is None and b is None and c is None:
-            self.c = np.array([0., 0.5, 0.5, 1.])
-            self.b = np.array([1./6, 1./3, 1./3, 1./6])
-            self.a = np.zeros((len(self.c), len(self.b)))
-            self.a[1, 0] = 0.5
-            self.a[2, 1] = 0.5
-            self.a[3, 2] = 1.
+            if method == 'implicit':
+                sq36 = np.sqrt(3.) / 6
+                self.c = np.array([0.5 - sq36, 0.5 + sq36])
+                self.b = np.array([0.5, 0.5])
+                self.bs = np.array([0.5 + 3 * sq36, 0.5 - 3 * sq36])
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[0, 0] = 0.25
+                self.a[0, 1] = 0.25 - sq36
+                self.a[1, 0] = 0.25 + sq36
+                self.a[0, 1] = 0.25
+            elif method == 'adaptative':
+                self.c = np.array([0., 0.25, 3. / 8, 12. / 13, 1., 0.5])
+                self.b = np.array([16. / 135, 0., 6656. / 12825, 28561. / 56430, -9. / 50, 2. / 55])
+                self.bs = np.array([25. / 216, 0., 1408. / 2565, 2197. / 4104, -1. / 5, 0.])
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[1, 0] = 0.25
+                self.a[2, 0] = 3. / 32
+                self.a[2, 1] = 9. / 32
+                self.a[3, 0] = 1932. / 2197
+                self.a[3, 1] = -7200. / 2197
+                self.a[3, 2] = 7296. / 2197
+                self.a[4, 0] = 439. / 216
+                self.a[4, 1] = -8
+                self.a[4, 2] = 3680. / 513
+                self.a[4, 3] = -845. / 4104
+                self.a[5, 0] = -8. / 27
+                self.a[5, 1] = 2
+                self.a[5, 2] = -3544. / 2565
+                self.a[5, 3] = 1859. / 4104
+                self.a[5, 4] = -11. / 40
+            else:
+                self.c = np.array([0., 0.5, 0.5, 1.])
+                self.b = np.array([1./6, 1./3, 1./3, 1./6])
+                self.bs = self.b
+                self.a = np.zeros((len(self.c), len(self.b)))
+                self.a[1, 0] = 0.5
+                self.a[2, 1] = 0.5
+                self.a[3, 2] = 1.
         else:
             self.a = a
             self.b = b
             self.c = c
+            self.bs = bs
 
         self.ic = None
         self._time = None
@@ -131,6 +197,9 @@ class LyapunovsEstimator(object):
         self.n_records = 0
         self.n_vec = 0
         self.write_steps = 0
+        self.method = method
+        self.tol = tol
+        self._method_num = _method_number[method]
 
         self._adjoint = False
         self._forward = -1
@@ -168,22 +237,28 @@ class LyapunovsEstimator(object):
         self._lyap_queue = multiprocessing.Queue()
 
         for i in range(self.num_threads):
-            self._processes_list.append(LyapProcess(i, self.func, self.func_jac, self.b, self.c, self.a,
+            self._processes_list.append(LyapProcess(i, self.func, self.func_jac, self.b, self.bs, self.c, self.a,
                                                     self._ics_queue, self._lyap_queue))
 
         for process in self._processes_list:
             process.daemon = True
             process.start()
 
-    def set_bca(self, b=None, c=None, a=None, ic_init=True):
+    def set_bca(self, b=None, bs=None, c=None, a=None, ic_init=True):
         """Set the coefficients of the `Runge-Kutta method`_ and restart the estimator.
 
         .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+        .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+        .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
 
         Parameters
         ----------
         b: None or ~numpy.ndarray, optional
             Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+            If `None`, does not reinitialize these coefficients.
+        bs: None or ~numpy.ndarray, optional
+            Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_
+            and `implicit Runge-Kutta method`_ .
             If `None`, does not reinitialize these coefficients.
         c: None or ~numpy.ndarray, optional
             Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
@@ -199,6 +274,8 @@ class LyapunovsEstimator(object):
             self.a = a
         if b is not None:
             self.b = b
+        if bs is not None:
+            self.bs = bs
         if c is not None:
             self.c = c
         if ic_init:
@@ -347,7 +424,7 @@ class LyapunovsEstimator(object):
 
         for i in range(self.n_traj):
             self._ics_queue.put((i, self._pretime, self._time, mdt, self.ic[i], self.n_vec, self.write_steps,
-                                 self._forward, self._adjoint, self._inverse))
+                                 self._forward, self._adjoint, self._inverse, self._method_num, self.tol))
 
         self._ics_queue.join()
 
@@ -406,6 +483,8 @@ class LyapProcess(multiprocessing.Process):
         `Numba`_-jitted Jacobian matrix function to integrate assigned to the worker.
     b: ~numpy.ndarray, optional
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray, optional
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray, optional
@@ -425,12 +504,14 @@ class LyapProcess(multiprocessing.Process):
         `Numba`_-jitted Jacobian matrix function to integrate assigned to the worker.
     b: ~numpy.ndarray
         Vector of coefficients :math:`b_i` of the `Runge-Kutta method`_ .
+    bs: None or ~numpy.ndarray
+        Vector of coefficients :math:`b_i^\ast` of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
     c: ~numpy.ndarray
         Matrix of coefficients :math:`c_{i,j}` of the `Runge-Kutta method`_ .
     a: ~numpy.ndarray
         Vector of coefficients :math:`a_i` of the `Runge-Kutta method`_ .
     """
-    def __init__(self, processID, func, func_jac, b, c, a, ics_queue, lyap_queue):
+    def __init__(self, processID, func, func_jac, b, bs, c, a, ics_queue, lyap_queue):
 
         super().__init__()
         self.processID = processID
@@ -440,6 +521,7 @@ class LyapProcess(multiprocessing.Process):
         self.func_jac = func_jac
         self.a = a
         self.b = b
+        self.bs = bs
         self.c = c
 
     def run(self):
@@ -454,13 +536,15 @@ class LyapProcess(multiprocessing.Process):
                                                                                        args[1], args[2], args[3],
                                                                                        args[4][np.newaxis, :], args[5],
                                                                                        args[6], args[8], args[9],
-                                                                                       self.b, self.c, self.a)
+                                                                                       self.b, self.bs, self.c, self.a,
+                                                                                       args[10], args[11])
             else:
                 recorded_traj, recorded_exp, recorded_vec = _compute_forward_lyap_jit(self.func, self.func_jac,
                                                                                       args[1], args[2], args[3],
                                                                                       args[4][np.newaxis, :], args[5],
                                                                                       args[6], args[8], args[9],
-                                                                                      self.b, self.c, self.a)
+                                                                                      self.b, self.bs, self.c, self.a,
+                                                                                      args[10], args[11])
 
             self._lyap_queue.put((args[0], np.squeeze(recorded_traj), np.squeeze(recorded_exp),
                                   np.squeeze(recorded_vec)))
@@ -469,16 +553,26 @@ class LyapProcess(multiprocessing.Process):
 
 
 @njit
-def _compute_forward_lyap_jit(f, fjac, time, posttime, mdt, ic, n_vec, write_steps, adjoint, inverse, b, c, a):
+def _compute_forward_lyap_jit(f, fjac, time, posttime, mdt, ic, n_vec, write_steps, adjoint, inverse, b, bs, c, a,
+                              method, tol):
+    if method == 0:
+        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, c, a)
+    elif method == 1:
+        ttraj = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b,
+                                                                bs, c, a, tol)
+    else:
+        ttraj = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, bs,
+                                                              c, a, tol)
 
-    ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, c, a)
     recorded_traj, recorded_exp, recorded_vec = _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt,
-                                                                               n_vec, write_steps, adjoint, inverse, b, c, a)
+                                                                               n_vec, write_steps, adjoint, inverse,
+                                                                               b, bs, c, a, method, tol)
     return recorded_traj, recorded_exp, recorded_vec
 
 
 @njit
-def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, write_steps, adjoint, inverse, b, c, a):
+def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, write_steps, adjoint, inverse,
+                                   b, bs, c, a, method, tol):
 
     traj = ttraj[:, :, :len(time)]
     posttraj = ttraj[:, :, len(time)-1:]
@@ -515,8 +609,17 @@ def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, w
 
             y[0] = posttraj[i_traj, :, -1-ti]
             subtime = np.concatenate((np.arange(tt + dt, tt, mdt), np.full((1,), tt)))
-            y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0, b, c, a,
-                                                                    adjoint, inverse, integrate._zeros_func)
+            if method == 0:
+                y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0, b, c, a,
+                                                                        adjoint, inverse, integrate._zeros_func)
+            elif method == 1:
+                y_new, prop = integrate._integrate_adaptative_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0,
+                                                                                   b, bs, c, a, tol, adjoint, inverse,
+                                                                                   integrate._zeros_func)
+            else:
+                y_new, prop = integrate._integrate_implicit_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0,
+                                                                                 b, bs, c, a, tol, adjoint, inverse,
+                                                                                 integrate._zeros_func)
 
             q_new = prop[0, :, :, 0] @ q
             qr = np.linalg.qr(q_new)
@@ -537,8 +640,17 @@ def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, w
                 iw -= 1
 
             subtime = np.concatenate((np.arange(tt + dt, tt, mdt), np.full((1,), tt)))
-            y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0, b, c, a,
-                                                                    adjoint, inverse, integrate._zeros_func)
+            if method == 0:
+                y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0, b, c, a,
+                                                                        adjoint, inverse, integrate._zeros_func)
+            elif method == 1:
+                y_new, prop = integrate._integrate_adaptative_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0,
+                                                                                   b, bs, c, a, tol, adjoint, inverse,
+                                                                                   integrate._zeros_func)
+            else:
+                y_new, prop = integrate._integrate_implicit_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, -1, 0,
+                                                                                 b, bs, c, a, tol, adjoint, inverse,
+                                                                                 integrate._zeros_func)
 
             q_new = prop[0, :, :, 0] @ q
             qr = np.linalg.qr(q_new)
@@ -553,16 +665,26 @@ def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, w
 
 
 @njit
-def _compute_backward_lyap_jit(f, fjac, pretime, time, mdt, ic, n_vec, write_steps, adjoint, inverse, b, c, a):
+def _compute_backward_lyap_jit(f, fjac, pretime, time, mdt, ic, n_vec, write_steps, adjoint, inverse, b, bs, c, a,
+                               method, tol):
 
-    ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, c, a)
+    if method == 0:
+        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, c, a)
+    elif method == 1:
+        ttraj = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b,
+                                                                bs, c, a, tol)
+    else:
+        ttraj = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, bs,
+                                                              c, a, tol)
     recorded_traj, recorded_exp, recorded_vec = _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt,
-                                                                                n_vec, write_steps, adjoint, inverse, b, c, a)
+                                                                                n_vec, write_steps, adjoint, inverse,
+                                                                                b, bs, c, a, method, tol)
     return recorded_traj, recorded_exp, recorded_vec
 
 
 @njit
-def _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt, n_vec, write_steps, adjoint, inverse, b, c, a):
+def _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt, n_vec, write_steps, adjoint, inverse,
+                                    b, bs, c, a, method, tol):
 
     pretraj = ttraj[:, :, :len(pretime)]
     traj = ttraj[:, :, (len(pretime)-1):]
@@ -596,8 +718,18 @@ def _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt, n_vec, w
         for ti, (tt, dt) in enumerate(zip(pretime[:-1], np.diff(pretime))):
 
             subtime = np.concatenate((np.arange(tt, tt + dt, mdt), np.full((1,), tt + dt)))
-            y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0, b, c, a,
-                                                                    adjoint, inverse, integrate._zeros_func)
+            if method == 0:
+                y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0, b, c, a,
+                                                                        adjoint, inverse, integrate._zeros_func)
+            elif method == 1:
+                y_new, prop = integrate._integrate_adaptative_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0,
+                                                                                   b, bs, c, a, tol, adjoint, inverse,
+                                                                                   integrate._zeros_func)
+            else:
+                y_new, prop = integrate._integrate_implicit_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0,
+                                                                                 b, bs, c, a, tol, adjoint, inverse,
+                                                                                 integrate._zeros_func)
+
             y[0] = pretraj[i_traj, :, ti+1]
             q_new = prop[0, :, :, 0] @ q
             qr = np.linalg.qr(q_new)
@@ -617,8 +749,18 @@ def _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt, n_vec, w
                 iw += 1
 
             subtime = np.concatenate((np.arange(tt, tt + dt, mdt), np.full((1,), tt + dt)))
-            y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0, b, c, a,
-                                                                    adjoint, inverse, integrate._zeros_func)
+            if method == 0:
+                y_new, prop = integrate._integrate_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0, b, c, a,
+                                                                        adjoint, inverse, integrate._zeros_func)
+            elif method == 1:
+                y_new, prop = integrate._integrate_adaptative_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0,
+                                                                                   b, bs, c, a, tol, adjoint, inverse,
+                                                                                   integrate._zeros_func)
+            else:
+                y_new, prop = integrate._integrate_implicit_runge_kutta_tgls_jit(f, fjac, subtime, y, Id, 1, 0,
+                                                                                 b, bs, c, a, tol, adjoint, inverse,
+                                                                                 integrate._zeros_func)
+
             y[0] = traj[i_traj, :, ti+1]
             q_new = prop[0, :, :, 0] @ q
             qr = np.linalg.qr(q_new)
@@ -1329,6 +1471,12 @@ def _compute_clv_sub_jit(f, fjac, pretime, time, aftertime, mdt, ic, write_steps
     return recorded_traj, recorded_exp, recorded_vec, bvec, fvec
 
 
+_method_number = {
+    'explicit': 0,
+    'adaptative': 1,
+    'implicit': 2,
+}
+
 if __name__ == "__main__":
 
     a = 0.25
@@ -1386,16 +1534,16 @@ if __name__ == "__main__":
     lyapint.compute_lyapunovs(0., 20000., 30000., 0.01, 0.01, ic, write_steps=1, forward=True, adjoint=False, inverse=False) #, n_vec=2)
     ftl, ftraj, fexp, fvec = lyapint.get_lyapunovs()
 
-    print('Computing Covariant Lyapunovs')
-
-    clvint = CovariantLyapunovsEstimator()
-    # clvint.set_func(fL84, DfL84)
-    clvint.set_func(fL63, DfL63)
-    clvint.compute_clvs(0., 10000., 20000., 30000., 0.01, 0.01, ic, write_steps=1) #, n_vec=2)
-    ctl, ctraj, cexp, cvec = clvint.get_clvs()
-
-    clvint.compute_clvs(0., 10000., 20000., 30000., 0.01, 0.01, ic, write_steps=10, method=1, backward_vectors=True) #, n_vec=2)
-    ctl2, ctraj2, cexp2, cvec2 = clvint.get_clvs()
+    # print('Computing Covariant Lyapunovs')
+    #
+    # clvint = CovariantLyapunovsEstimator()
+    # # clvint.set_func(fL84, DfL84)
+    # clvint.set_func(fL63, DfL63)
+    # clvint.compute_clvs(0., 10000., 20000., 30000., 0.01, 0.01, ic, write_steps=1) #, n_vec=2)
+    # ctl, ctraj, cexp, cvec = clvint.get_clvs()
+    #
+    # clvint.compute_clvs(0., 10000., 20000., 30000., 0.01, 0.01, ic, write_steps=10, method=1, backward_vectors=True) #, n_vec=2)
+    # ctl2, ctraj2, cexp2, cvec2 = clvint.get_clvs()
 
     lyapint.terminate()
-    clvint.terminate()
+    # clvint.terminate()
