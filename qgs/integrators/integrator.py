@@ -20,8 +20,8 @@
 import multiprocessing
 import numpy as np
 from numba import njit
-from qgs.integrators.integrate import (_integrate_runge_kutta_jit, _integrate_adaptative_runge_kutta_jit, _integrate_implicit_runge_kutta_jit,
-                                       _integrate_runge_kutta_tgls_jit, _integrate_adaptative_runge_kutta_tgls_jit, _integrate_implicit_runge_kutta_tgls_jit, _zeros_func)
+import qgs.integrators.integrate as integrate
+
 from qgs.functions.util import reverse
 
 
@@ -601,14 +601,17 @@ class TrajectoryProcess(multiprocessing.Process):
             args = self._ics_queue.get()
 
             if self.method == 'adaptative':
-                recorded_traj, _ = _integrate_adaptative_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
-                                                                      self.b, self.bs, self.c, self.a, self.tol)
+                recorded_traj, _ = \
+                    integrate._integrate_adaptative_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3],
+                                                                    args[4], self.b, self.bs, self.c, self.a, self.tol)
             elif self.method == 'implicit':
-                recorded_traj, _ = _integrate_implicit_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
-                                                                    self.b, self.bs, self.c, self.a, self.tol)
+                recorded_traj, _ = \
+                    integrate._integrate_implicit_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3],
+                                                                  args[4], self.b, self.bs, self.c, self.a, self.tol)
             else:
-                recorded_traj = _integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
-                                                           self.b, self.c, self.a)
+                recorded_traj = \
+                    integrate._integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                                                         self.b, self.c, self.a)
 
             self._traj_queue.put((args[0], recorded_traj))
 
@@ -1138,7 +1141,7 @@ class RungeKuttaTglsIntegrator(object):
         self._adjoint = adjoint
 
         if boundary is None:
-            self._boundary = _zeros_func
+            self._boundary = integrate._zeros_func
         else:
             self._boundary = boundary
 
@@ -1352,20 +1355,23 @@ class TglsTrajectoryProcess(multiprocessing.Process):
             args = self._ics_queue.get()
 
             if self.method == 'adaptative':
-                recorded_traj, recorded_fmatrix = _integrate_adaptative_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
-                                                                                             args[3][np.newaxis, ...], args[4], args[5],
-                                                                                             self.b, self.bs, self.c, self.a, self.tol,
-                                                                                             args[6], args[7], args[8])
+                recorded_traj, recorded_fmatrix = \
+                    integrate._integrate_adaptative_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
+                                                                         args[3][np.newaxis, ...], args[4], args[5],
+                                                                         self.b, self.bs, self.c, self.a, self.tol,
+                                                                         args[6], args[7], args[8])
             elif self.method == 'implicit':
-                recorded_traj, recorded_fmatrix = _integrate_implicit_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
-                                                                                           args[3][np.newaxis, ...], args[4], args[5],
-                                                                                           self.b, self.bs, self.c, self.a, self.tol,
-                                                                                           args[6], args[7], args[8])
+                recorded_traj, recorded_fmatrix = \
+                    integrate._integrate_implicit_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
+                                                                       args[3][np.newaxis, ...], args[4], args[5],
+                                                                       self.b, self.bs, self.c, self.a, self.tol,
+                                                                       args[6], args[7], args[8])
             else:
-                recorded_traj, recorded_fmatrix = _integrate_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
-                                                                                  args[3][np.newaxis, ...], args[4], args[5],
-                                                                                  self.b, self.c, self.a,
-                                                                                  args[6], args[7], args[8])
+                recorded_traj, recorded_fmatrix = \
+                    integrate._integrate_runge_kutta_tgls_jit(self.func, self.func_jac, args[1], args[2][np.newaxis, ...],
+                                                              args[3][np.newaxis, ...], args[4], args[5],
+                                                              self.b, self.c, self.a,
+                                                              args[6], args[7], args[8])
 
             self._traj_queue.put((args[0], recorded_traj, recorded_fmatrix))
 
