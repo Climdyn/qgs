@@ -555,14 +555,14 @@ class LyapProcess(multiprocessing.Process):
 @njit
 def _compute_forward_lyap_jit(f, fjac, time, posttime, mdt, ic, n_vec, write_steps, adjoint, inverse, b, bs, c, a,
                               method, tol):
-    if method == 0:
-        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, c, a)
+    if method == 2:
+        ttraj, _ = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b,
+                                                                 bs, c, a, tol)
     elif method == 1:
-        ttraj = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b,
-                                                                bs, c, a, tol)
+        ttraj, _ = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b,
+                                                                   bs, c, a, tol)
     else:
-        ttraj = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, bs,
-                                                              c, a, tol)
+        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((time[:-1], posttime)), ic, 1, 1, b, c, a)
 
     recorded_traj, recorded_exp, recorded_vec = _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt,
                                                                                n_vec, write_steps, adjoint, inverse,
@@ -668,14 +668,15 @@ def _compute_forward_lyap_traj_jit(f, fjac, time, posttime, ttraj, mdt, n_vec, w
 def _compute_backward_lyap_jit(f, fjac, pretime, time, mdt, ic, n_vec, write_steps, adjoint, inverse, b, bs, c, a,
                                method, tol):
 
-    if method == 0:
-        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, c, a)
+    if method == 2:
+        ttraj, _ = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b,
+                                                                 bs, c, a, tol)
     elif method == 1:
-        ttraj = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b,
-                                                                bs, c, a, tol)
+        ttraj, _ = integrate._integrate_adaptative_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b,
+                                                                   bs, c, a, tol)
     else:
-        ttraj = integrate._integrate_implicit_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, bs,
-                                                              c, a, tol)
+        ttraj = integrate._integrate_runge_kutta_jit(f, np.concatenate((pretime[:-1], time)), ic, 1, 1, b, c, a)
+
     recorded_traj, recorded_exp, recorded_vec = _compute_backward_lyap_traj_jit(f, fjac, pretime, time, ttraj, mdt,
                                                                                 n_vec, write_steps, adjoint, inverse,
                                                                                 b, bs, c, a, method, tol)

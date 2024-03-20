@@ -217,9 +217,9 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
     time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
 
     if method == 'adaptative':
-        recorded_traj = _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
+        recorded_traj, _ = _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
     elif method == 'implicit':
-        recorded_traj = _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
+        recorded_traj, _ = _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
     else:
         recorded_traj = _integrate_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, c, a)
 
@@ -300,6 +300,7 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
             n_records += 1
 
     recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    recorded_dt = np.zeros((n_traj, n_records))
     if time_direction == -1:
         directed_time = reverse(time)
     else:
@@ -310,11 +311,13 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
         k = np.zeros((s, n_dim))
         n_sub_step = 1
         iw = 0
+        dts = 0.
         for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
 
             dts = dt / n_sub_step
             if write_steps > 0 and np.mod(ti, write_steps) == 0:
                 recorded_traj[i_traj, :, iw] = y
+                recorded_dt[i_traj, iw] = dts
                 iw += 1
 
             ns = 0
@@ -342,8 +345,9 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
                     break
 
         recorded_traj[i_traj, :, -1] = y
+        recorded_dt[i_traj, -1] = dts
 
-    return recorded_traj[:, :, ::time_direction]
+    return recorded_traj[:, :, ::time_direction], recorded_dt[:, ::time_direction]
 
 @njit
 def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol):
@@ -362,6 +366,7 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
             n_records += 1
 
     recorded_traj = np.zeros((n_traj, n_dim, n_records))
+    recorded_dt = np.zeros((n_traj, n_records))
     if time_direction == -1:
         directed_time = reverse(time)
     else:
@@ -371,11 +376,13 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
         y = ic[i_traj].copy()
         n_sub_step = 1
         iw = 0
+        dts = 0.
         for ti, (tt, dt) in enumerate(zip(directed_time[:-1], np.diff(directed_time))):
 
             dts = dt / n_sub_step
             if write_steps > 0 and np.mod(ti, write_steps) == 0:
                 recorded_traj[i_traj, :, iw] = y
+                recorded_dt[i_traj, iw] = dts
                 iw += 1
 
             ns = 0
@@ -403,8 +410,9 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
                     break
 
         recorded_traj[i_traj, :, -1] = y
+        recorded_dt[i_traj, -1] = dts
 
-    return recorded_traj[:, :, ::time_direction]
+    return recorded_traj[:, :, ::time_direction], recorded_dt[:, ::time_direction]
 
 
 @njit
@@ -762,7 +770,6 @@ def integrate_runge_kutta_tgls(f, fjac, t0, t, dt, ic=None, tg_ic=None,
         if tg_ic.shape[1] != ic.shape[1]:
             tg_ic = np.swapaxes(tg_ic, 1, 2)
 
-    # Default is RK4
     if a is None and b is None and c is None:
         if method == 'implicit':
             sq36 = np.sqrt(3.) / 6

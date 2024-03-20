@@ -601,10 +601,10 @@ class TrajectoryProcess(multiprocessing.Process):
             args = self._ics_queue.get()
 
             if self.method == 'adaptative':
-                recorded_traj = _integrate_adaptative_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                recorded_traj, _ = _integrate_adaptative_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
                                                                       self.b, self.bs, self.c, self.a, self.tol)
             elif self.method == 'implicit':
-                recorded_traj = _integrate_implicit_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
+                recorded_traj, _ = _integrate_implicit_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
                                                                     self.b, self.bs, self.c, self.a, self.tol)
             else:
                 recorded_traj = _integrate_runge_kutta_jit(self.func, args[1], args[2][np.newaxis, :], args[3], args[4],
