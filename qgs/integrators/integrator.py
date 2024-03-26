@@ -234,7 +234,7 @@ class RungeKuttaIntegrator(object):
         self.start()
 
     def set_bca(self, b=None, bs=None, c=None, a=None, ic_init=True):
-        """Set the coefficients of the `Runge-Kutta method`_ and restart the integrator. s
+        """Set the coefficients of the `Runge-Kutta method`_ and restart the integrator.
 
         .. _Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
         .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
@@ -270,6 +270,34 @@ class RungeKuttaIntegrator(object):
             self.c = c
         if ic_init:
             self.ic = None
+        self.start()
+
+    def set_tolerance(self, tol):
+        """Set the tolerance of the `implicit Runge-Kutta method`_ or `adaptative Runge-Kutta method`_, and restart the integrator.
+
+        .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+        .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
+
+        Parameters
+        ----------
+        tol: float
+            Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+            Only used when one of these two methods is set as `method`.
+        """
+
+        self.tol = tol
+        self.start()
+
+    def set_method(self, method):
+        """Set the integration method and restart the integrator.
+
+        Parameters
+        ----------
+        method: str
+            Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+        """
+
+        self.method = method
         self.start()
 
     def initialize(self, convergence_time, dt, pert_size=0.01, reconvergence_time=None, forward=True,
@@ -889,6 +917,34 @@ class RungeKuttaTglsIntegrator(object):
             self.c = c
         if ic_init:
             self.ic = None
+        self.start()
+
+    def set_tolerance(self, tol):
+        """Set the tolerance of the `implicit Runge-Kutta method`_ or `adaptative Runge-Kutta method`_, and restart the integrator.
+
+        .. _adaptative Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Adaptive_Runge%E2%80%93Kutta_methods
+        .. _implicit Runge-Kutta method: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Implicit_Runge%E2%80%93Kutta_methods
+
+        Parameters
+        ----------
+        tol: float
+            Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
+            Only used when one of these two methods is set as `method`.
+        """
+
+        self.tol = tol
+        self.start()
+
+    def set_method(self, method):
+        """Set the integration method and restart the integrator.
+
+        Parameters
+        ----------
+        method: str
+            Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
+        """
+
+        self.method = method
         self.start()
 
     def initialize(self, convergence_time, dt, pert_size=0.01, reconvergence_time=None, forward=True,
