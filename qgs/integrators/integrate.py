@@ -26,7 +26,8 @@ import numpy as np
 from qgs.functions.util import reverse
 
 
-def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=None, c=None, a=None, bs=None, tol=1.e-6, method='explicit'):
+def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=None, c=None, a=None, bs=None, tol=1.e-6, method='explicit',
+                          return_dt=False):
     """
     Integrate the ordinary differential equations (ODEs)
 
@@ -101,18 +102,24 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
         Only used when one of these two methods is set as `method`.
         Default to `1.e-6`.
     method: str, optional
-        Method to use to integrate. Can be `explicit`, `adaptative` or `implicit`.
-        Default to `explicit`.
+        Method to use to integrate. Can be 'explicit', adaptative' or 'implicit'.
+        Default to 'explicit'.
+    return_dt: bool, optional
+        Returns or not the timestep length being used for each integration interval.
+        Only applies if `method` is set to 'adaptative' or 'implicit'.
+        Default to `False`.
 
     Returns
     -------
-    time, traj: ~numpy.ndarray
+    time, traj, timestep: ~numpy.ndarray
         The result of the integration:
 
         * **time:** Time at which the state of the system was saved. Array of shape (`n_step`,) where
           `n_step` is the number of saved states of the integration.
         * **traj:** Saved dynamical system states. 3D array of shape (`n_traj`, `n_dim`, `n_steps`). If `n_traj` = 1,
           a 2D array of shape (`n_dim`, `n_steps`) is returned instead.
+        * **timestep:** Timestep length being used for each integration interval. Only returned if `return_dt` is set to `True`.
+          Array of shape (`n_step`,) where `n_step` is the number of saved states of the integration.
 
     Examples
     --------
@@ -217,26 +224,43 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
     time = np.concatenate((np.arange(t0, t, dt), np.full((1,), t)))
 
     if method == 'adaptative':
-        recorded_traj, _ = _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
+        recorded_traj, dts = _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
     elif method == 'implicit':
-        recorded_traj, _ = _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
+        recorded_traj, dts = _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, bs, c, a, tol)
     else:
         recorded_traj = _integrate_runge_kutta_jit(f, time, ic, time_direction, write_steps, b, c, a)
+        dts = None
 
     if write_steps > 0:
         if forward:
             if time[::write_steps][-1] == time[-1]:
-                return time[::write_steps], np.squeeze(recorded_traj)
+                if return_dt and dts is not None:
+                    return time[::write_steps], np.squeeze(recorded_traj), np.squeeze(dts[::write_steps])
+                else:
+                    return time[::write_steps], np.squeeze(recorded_traj)
             else:
-                return np.concatenate((time[::write_steps], np.full((1,), t))), np.squeeze(recorded_traj)
+                if return_dt and dts is not None:
+                    return np.concatenate((time[::write_steps], np.full((1,), t))), np.squeeze(recorded_traj), np.squeeze(dts[::write_steps])
+                else:
+                    return np.concatenate((time[::write_steps], np.full((1,), t))), np.squeeze(recorded_traj)
         else:
             rtime = reverse(time[::-write_steps])
+            rdts = dts[::-write_steps]
             if rtime[0] == time[0]:
-                return rtime, np.squeeze(recorded_traj)
+                if return_dt and dts is not None:
+                    return rtime, np.squeeze(recorded_traj), np.squeeze(rdts)
+                else:
+                    return rtime, np.squeeze(recorded_traj)
             else:
-                return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj)
+                if return_dt and dts is not None:
+                    return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj), np.squeeze(rdts)
+                else:
+                    return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj)
     else:
-        return time[-1], np.squeeze(recorded_traj)
+        if return_dt and dts is not None:
+            return time[-1], np.squeeze(recorded_traj), np.squeeze(dts[..., -1])
+        else:
+            return time[-1], np.squeeze(recorded_traj)
 
 
 @njit
