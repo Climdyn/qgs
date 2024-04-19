@@ -389,7 +389,7 @@ class AtmosphericTemperatureParams(Params):
 
         self._scale_params = scale_params
 
-        self.hd = Parameter(0.045, input_dimensional=False, units='[s]', scale_object=scale_params,
+        self.hd = Parameter(0.045, input_dimensional=False, units='[s^-1]', scale_object=scale_params,
                             description="Newtonian cooling coefficient")
         self.thetas = None  # Radiative equilibrium mean temperature decomposition on the model's modes
 

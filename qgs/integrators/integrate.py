@@ -245,14 +245,15 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
                     return np.concatenate((time[::write_steps], np.full((1,), t))), np.squeeze(recorded_traj)
         else:
             rtime = reverse(time[::-write_steps])
-            rdts = dts[::-write_steps]
             if rtime[0] == time[0]:
                 if return_dt and dts is not None:
+                    rdts = dts[::-write_steps]
                     return rtime, np.squeeze(recorded_traj), np.squeeze(rdts)
                 else:
                     return rtime, np.squeeze(recorded_traj)
             else:
                 if return_dt and dts is not None:
+                    rdts = dts[::-write_steps]
                     return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj), np.squeeze(rdts)
                 else:
                     return np.concatenate((np.full((1,), t0), rtime)), np.squeeze(recorded_traj)
@@ -358,12 +359,12 @@ def _integrate_adaptative_runge_kutta_jit(f, time, ic, time_direction, write_ste
                 ns += 1
 
                 if err > tol:
-                    dts = dts / 2
                     n_sub_step = n_sub_step * 2
+                    dts = dt / n_sub_step
                     yt = y.copy()
                     ns = 0
                 elif ns >= n_sub_step:
-                    if n_sub_step // 2 >= 1:
+                    if err < tol / 2 and n_sub_step // 2 >= 1:
                         n_sub_step = n_sub_step // 2
                     y = yt
                     break
@@ -423,12 +424,12 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
                 ns += 1
 
                 if err > tol:
-                    dts = dts / 2
                     n_sub_step = n_sub_step * 2
+                    dts = dt / n_sub_step
                     yt = y.copy()
                     ns = 0
                 elif ns >= n_sub_step:
-                    if n_sub_step // 2 >= 1:
+                    if err < tol / 2 and n_sub_step // 2 >= 1:
                         n_sub_step = n_sub_step // 2
                     y = yt
                     break
@@ -1014,13 +1015,13 @@ def _integrate_adaptative_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_di
                 ns += 1
 
                 if err > tol:
-                    dts = dts / 2
                     n_sub_step = n_sub_step * 2
+                    dts = dt / n_sub_step
                     yt = y.copy()
                     fmt = fm.copy()
                     ns = 0
                 elif ns >= n_sub_step:
-                    if n_sub_step // 2 >= 1:
+                    if err < tol / 2 and n_sub_step // 2 >= 1:
                         n_sub_step = n_sub_step // 2
                     y = yt
                     fm = fmt
@@ -1164,13 +1165,13 @@ def _integrate_implicit_runge_kutta_tgls_jit(f, fjac, time, ic, tg_ic, time_dire
                 ns += 1
 
                 if err > tol or err_fm > tol:
-                    dts = dts / 2
                     n_sub_step = n_sub_step * 2
+                    dts = dt / n_sub_step
                     yt = y.copy()
                     fmt = fm.copy()
                     ns = 0
                 elif ns >= n_sub_step:
-                    if n_sub_step // 2 >= 1:
+                    if (err < tol / 2 or err_fm < tol / 2) and n_sub_step // 2 >= 1:
                         n_sub_step = n_sub_step // 2
                     y = yt
                     fm = fmt
