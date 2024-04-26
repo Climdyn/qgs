@@ -96,6 +96,7 @@ def integrate_runge_kutta(f, t0, t, dt, ic=None, forward=True, write_steps=1, b=
         Only used when one of these two methods is set as `method`.
         If `None` and `method` is set to `adaptative`, use the Fehlberg RK4(5) method coefficients.
         If `None` and `method` is set to `implicit`, use the 4th order Gauss-Legendre collocation method coefficients.
+        If a zero array is provided and `method` is set to `implicit`, deactivate the error estimation mechanism.
         Default to `None`.
     tol: float, optional
         Tolerance for the error between the two orders of the `adaptative Runge-Kutta method`_ and `implicit Runge-Kutta method`_ .
@@ -397,6 +398,9 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
     else:
         directed_time = time
 
+    bs_test = np.zeros_like(bs)
+    all_close = np.allclose(bs, bs_test, 1.e-5, 1.e-8, False)
+
     for i_traj in range(n_traj):
         y = ic[i_traj].copy()
         n_sub_step = 1
@@ -417,10 +421,13 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
                 for i in range(s):
                     ki[i] = yt
                 steps, rt, k = _broyden_good(f, ki, tt, dts, yt, c, a, tol=tol)
-                ys = yt + dts * bs @ k
                 yt = yt + dts * b @ k
+                if not all_close:
+                    ys = yt + dts * bs @ k
+                    err = np.linalg.norm(yt - ys)
+                else:
+                    err = 0.
 
-                err = np.linalg.norm(yt - ys)
                 ns += 1
 
                 if err > tol:
@@ -429,7 +436,7 @@ def _integrate_implicit_runge_kutta_jit(f, time, ic, time_direction, write_steps
                     yt = y.copy()
                     ns = 0
                 elif ns >= n_sub_step:
-                    if err < tol / 2 and n_sub_step // 2 >= 1:
+                    if not all_close and err < tol / 2 and n_sub_step // 2 >= 1:
                         n_sub_step = n_sub_step // 2
                     y = yt
                     break
