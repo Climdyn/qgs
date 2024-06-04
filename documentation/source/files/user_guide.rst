@@ -462,7 +462,33 @@ This concludes the initialization of qgs, the function :meth:`f` hence produced 
 An example of the construction exposed here, along with plots of the trajectories generated, can be found in the section :ref:`files/examples/manual:Manual setting of the basis`.
 See also the following section for the possible usages.
 
-4. Using qgs (once configured)
+
+4. Symbolic outputs 
+-------------------
+
+If the user wants to generate the model tendencies with non-fixed parameters, use the tendencies in another programming language, or use their own integrator in python, the qgs framework can use `Sympy`_ to proform the above calculations symbolically rather than numerically.  
+
+To return the tendencies including specified parameter values, or to format the tendencies in another programming language, the qgs model is configured as shown in section :ref:`files/user_guide:Configuration of qgs`, however the **Symbolic** inner product is always used in this pipeline. To create the symbolic tendencies, the instance of :class:`.QgParams` is passed to the function :func:`.create_symbolic_tendencies`:
+
+.. code:: ipython3
+
+    from qgs.functions.symbolic_tendencies import create_symbolic_equations
+
+    parameters = [model_parameters.par1, model_parameters.par2, model_parameters.par3]
+
+    f = create_symbolic_equations(model_parameters, continuation_variables=parameters, language='python')
+
+The varibale :meth:`f` is a string of the model tendencies, formatted in the programming language specified by the keyword :meth:`language`. The model tendencies will contain the specified :meth:`continuation_variables` as free parameters. 
+
+Currently the framework can format the equations in the following programming languages:
+* :meth:`python`
+* :meth:`julia`
+* :meth:`fortran`
+* :meth:`mathematica`
+* :meth:`auto`
+
+
+1. Using qgs (once configured)
 ---------------------------------
 
 Once the function :math:`\boldsymbol{f}` giving the model's tendencies has been obtained, it is possible to use it with
@@ -482,7 +508,7 @@ the qgs built-in integrator to obtain the model's trajectories:
 
 Note that it is also possible to use other ordinary differential equations integrators available on the market, see for instance the :ref:`files/examples/diffeq_example:Example of DiffEqPy usage`.
 
-4.1 Analyzing the model's output with diagnostics
+5.1 Analyzing the model's output with diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. include:: diagnostic.rst
@@ -524,7 +550,7 @@ Note that it is also possible to use other ordinary differential equations integ
 
 More diagnostics will be implemented soon.
 
-4.2 Toolbox
+5.2 Toolbox
 ^^^^^^^^^^^
 
 The toolbox regroups submodules to make specific analysis with the model and are available in the :mod:`qgs.toolbox` module.
@@ -536,7 +562,7 @@ Presently, the list of submodules available is the following:
 
 More submodules will be implemented soon.
 
-4.2.1 Lyapunov toolbox
+5.2.1 Lyapunov toolbox
 """"""""""""""""""""""
 
 This module allows you to integrate the model and simultaneously obtain the *local* `Lyapunov vectors`_ and `exponents`_.
@@ -555,10 +581,10 @@ See also :cite:`user-KP2012` for a description of these methods.
 
 Some example notebooks on how to use this module are available in the `notebooks/lyapunov <../../../../notebooks/lyapunov>`_ folder.
 
-5. Developers information
+6. Developers information
 -------------------------
 
-5.1 Running the test
+6.1 Running the test
 ^^^^^^^^^^^^^^^^^^^^^
 
 The model core tensors can be tested by running `pytest`_ in the main folder: ::
