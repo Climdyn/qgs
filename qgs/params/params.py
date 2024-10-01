@@ -50,7 +50,8 @@ from qgs.params.parameter import Parameter
 from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
-from sympy import simplify
+from sympy import simplify, Symbol
+
 
 # TODO: - store model version in a variable somewhere
 #       - force the user to define the aspect ratio n at parameter object instantiation
@@ -1244,6 +1245,7 @@ class QgParams(Params):
             vr.append(vr[-1] + ngoc)
             if self._oceanic_basis is not None:
                 vr.append(vr[-1] + ngoc)
+            #TODO Do not need this +1???
             if self.dynamic_T:
                 vr[-1] += 1
         return vr
@@ -1396,12 +1398,14 @@ class QgParams(Params):
         self._oms = None
         self._gms = None
 
+        if basis[0] == 1 or basis[0] == Symbol("1"):
+            del basis[0]
         self._ground_basis = basis
         self._number_of_ground_modes = len(basis)
         self._number_of_oceanic_modes = 0
+
         if self.dynamic_T:
             self._ground_basis.functions.insert(0, simplify("1"))
-
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
             self.atemperature_params.thetas = None
@@ -1691,10 +1695,10 @@ class QgParams(Params):
 
         Parameters
         ----------
-        nxmax: int
-            Maximum x-wavenumber to fill the spectral block up to.
-        nymax: int
-            Maximum :math:`y`-wavenumber to fill the spectral block up to.
+        nxmax: int, optionql
+            Maximum x-wavenumber to fill the spectral block up to. Default to `None`.
+        nymax: int, optionql
+            Maximum :math:`y`-wavenumber to fill the spectral block up to. Default to `None`.
         auto: bool, optional
             Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
             Default is `True`.
@@ -1702,6 +1706,10 @@ class QgParams(Params):
             Mode to set the inner products: Either `analytic` or `symbolic`.
             `analytic` for inner products computed with formula or `symbolic` using `Sympy`_.
             Default to `analytic`.
+
+        Notes
+        -----
+        If both `nxmax` and `nymax` are `None`, default to the atmospheric basis configuration if available.
 
         Examples
         --------
