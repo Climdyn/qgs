@@ -1245,7 +1245,6 @@ class QgParams(Params):
             vr.append(vr[-1] + ngoc)
             if self._oceanic_basis is not None:
                 vr.append(vr[-1] + ngoc)
-            #TODO Do not need this +1???
             if self.dynamic_T:
                 vr[-1] += 1
         return vr
@@ -1695,9 +1694,9 @@ class QgParams(Params):
 
         Parameters
         ----------
-        nxmax: int, optionql
+        nxmax: int, optional
             Maximum x-wavenumber to fill the spectral block up to. Default to `None`.
-        nymax: int, optionql
+        nymax: int, optional
             Maximum :math:`y`-wavenumber to fill the spectral block up to. Default to `None`.
         auto: bool, optional
             Automatically instantiate the parameters container needed to describe the atmospheric models parameters.
