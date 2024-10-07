@@ -684,7 +684,6 @@ def _split_equations(eq_dict, f_output, line_len=80, two_dim=False):
     """Function to split FORTRAN equations to a set length when producing functions"""
 
     for n, eq in eq_dict.items():
-        print(eq)
         # split equations to be a maximum of `line_len`
 
         # split remainder of equation into chunks of length `line_length`
