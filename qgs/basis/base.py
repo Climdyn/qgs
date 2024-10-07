@@ -54,6 +54,9 @@ class Basis(ABC):
     def __len__(self):
         return self.functions.__len__()
 
+    def __delitem__(self, key):
+        self.functions.__delitem__(key)
+
     def append(self, item):
         self.functions.append(item)
 
