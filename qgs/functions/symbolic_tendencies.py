@@ -23,7 +23,8 @@ python_lang_translation = {
 }
 
 fortran_lang_translation = {
-    'conjugate': 'CONJG'
+    'conjugate': 'CONJG',
+    'epsilon': 'eps'  # Remove conflict for EPSILON function in fortran
     # TODO: may need to add variable for pi
 }
 
@@ -369,6 +370,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
 
         f_output.append('\treturn F')
         f_output = '\n'.join(f_output)
+        f_output = translate_equations(f_output, language='python')
 
     if language == 'julia':
         eq_dict = translate_equations(eq_dict, language='julia')
@@ -385,6 +387,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
         
         f_output.append('end')
         f_output = '\n'.join(f_output)
+        f_output = translate_equations(f_output, language='julia')
 
     if language == 'fortran':
         eq_dict = translate_equations(eq_dict, language='fortran')
@@ -408,6 +411,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
         
         f_output.append('END SUBROUTINE')
         f_output = '\n'.join(f_output)
+        f_output = translate_equations(f_output, language='fortran')
 
     if language == 'auto':
         eq_dict = translate_equations(eq_dict, language='fortran')
@@ -680,6 +684,7 @@ def _split_equations(eq_dict, f_output, line_len=80, two_dim=False):
     """Function to split FORTRAN equations to a set length when producing functions"""
 
     for n, eq in eq_dict.items():
+        print(eq)
         # split equations to be a maximum of `line_len`
 
         # split remainder of equation into chunks of length `line_length`
