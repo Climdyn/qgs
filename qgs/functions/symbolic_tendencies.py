@@ -197,7 +197,7 @@ def translate_equations(equations, language='python'):
 
     Parameters
     ----------
-    equations: dict(~sympy.core.expr.Expr)
+    equations: dict(string)
         Dictionary of the symbolic model equations.
     language: string
         Language syntax that the equations are returned in. Options are:
@@ -227,11 +227,16 @@ def translate_equations(equations, language='python'):
     if isinstance(equations, dict):
         str_eq = dict()
         for key in equations.keys():
-            temp_str = str(equations[key])
-            # TODO: This only works for single array, not jacobian
+            temp_str = equations[key]
             for k in translator.keys():
                 temp_str = temp_str.replace(k, translator[k])
             str_eq[key] = temp_str
+    elif isinstance(equations, list):
+        str_eq = list()
+        for eq in equations:
+            for k in translator.keys():
+                eq = eq.replace(k, translator[k])
+            str_eq.append(eq)
     else:
         temp_str = str(equations)
         for k in translator.keys():
@@ -317,6 +322,27 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         return equation_dict
 
 
+def equations_to_string(equations):
+    """
+    Converts the symbolic equations, held in a dict format, to a dict of strings.
+
+    Parameters
+    ----------
+    equations: dict(~sympy.core.expr.Expr)
+        Dictionary of the substituted symbolic model equations.
+
+    Returns
+    -------
+    dict(~string)
+        Dictionary of the substituted symbolic model equations.
+    """
+
+    str_eq = dict()
+    for key in equations.keys():
+        str_eq[key] = str(equations[key])
+    return str_eq
+
+
 def equation_as_function(equations, params, language='python', continuation_variables=None):
     """Converts the symbolic equations to a function in string format in the language syntax specified,
     or a lambdified python function.
@@ -348,6 +374,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
         continuation_variables = list()
 
     eq_dict = format_equations(equations, params, language=language)
+    eq_dict = equations_to_string(eq_dict)
 
     f_output = list()
     if language == 'python':
@@ -366,15 +393,13 @@ def equation_as_function(equations, params, language='python', continuation_vari
         f_output.append('\tF = np.empty_like(U)')
 
         for n, eq in eq_dict.items():
-            f_output.append('\tF['+str(n-1)+'] = ' + str(eq))
+            f_output.append('\tF['+str(n-1)+'] = ' + eq)
 
         f_output.append('\treturn F')
-        f_output = '\n'.join(f_output)
         f_output = translate_equations(f_output, language='python')
+        f_output = '\n'.join(f_output)
 
     if language == 'julia':
-        eq_dict = translate_equations(eq_dict, language='julia')
-
         f_output.append('function f!(du, U, p, t)')
         f_output.append('\t# Tendency function of the qgs model')
 
@@ -383,15 +408,13 @@ def equation_as_function(equations, params, language='python', continuation_vari
 
         f_output.append('')
         for n, eq in eq_dict.items():
-            f_output.append('\tdu['+str(n)+'] = ' + str(eq))
+            f_output.append('\tdu['+str(n)+'] = ' + eq)
         
         f_output.append('end')
-        f_output = '\n'.join(f_output)
         f_output = translate_equations(f_output, language='julia')
+        f_output = '\n'.join(f_output)
 
     if language == 'fortran':
-        eq_dict = translate_equations(eq_dict, language='fortran')
-
         f_var = ''
         for fv in continuation_variables:
             f_var += ', ' + str(fv.symbol)
@@ -410,25 +433,25 @@ def equation_as_function(equations, params, language='python', continuation_vari
         f_output = _split_equations(eq_dict, f_output)
         
         f_output.append('END SUBROUTINE')
-        f_output = '\n'.join(f_output)
         f_output = translate_equations(f_output, language='fortran')
+        f_output = '\n'.join(f_output)
 
     if language == 'auto':
-        eq_dict = translate_equations(eq_dict, language='fortran')
-
         eq_dict = _split_equations(eq_dict, f_output)
-        f_output = create_auto_file(eq_dict, params, continuation_variables)
-        
+        auto_file, auto_config = create_auto_file(eq_dict, params, continuation_variables)
+        auto_file, auto_config = (
+            translate_equations(auto_file, language='fortran'), translate_equations(auto_config, language='fortran'))
+        f_output = ['\n'.join(auto_file), '\n'.join(auto_config)]
+
     if language == 'mathematica':
         # TODO: This function needs testing before release
-        eq_dict = translate_equations(eq_dict, language='mathematica')
-
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
 
         for n, eq in eq_dict.items():
             f_output.append('F['+str(n)+'] = ' + str(eq))
 
         # TODO !!!! Killing output as I have not tested the above code !!!!
+        eq_dict = translate_equations(eq_dict, language='mathematica')
         f_output = '\n'.join(f_output)
         f_output = None
 
@@ -466,6 +489,7 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         continuation_variables = list()
 
     eq_dict = format_equations(equations, params, language=language)
+    eq_dict = equations_to_string(eq_dict)
 
     f_output = list()
     if language == 'python':
@@ -490,8 +514,6 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         f_output = '\n'.join(f_output)
 
     if language == 'julia':
-        eq_dict = translate_equations(eq_dict, language='julia')
-
         f_output.append('function jac!(du, U, p, t)')
         f_output.append('\t# Jacobian function of the qgs model')
 
@@ -503,11 +525,10 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
             f_output.append('\tdu[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + str(eq))
 
         f_output.append('end')
+        eq_dict = translate_equations(eq_dict, language='julia')
         f_output = '\n'.join(f_output)
 
     if language == 'fortran':
-        eq_dict = translate_equations(eq_dict, language='fortran')
-
         f_var = ''
 
         for fv in continuation_variables:
@@ -527,24 +548,26 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         f_output = _split_equations(eq_dict, f_output, two_dim=True)
 
         f_output.append('END SUBROUTINE')
+        eq_dict = translate_equations(eq_dict, language='fortran')
         f_output = '\n'.join(f_output)
 
     if language == 'auto':
-        eq_dict = translate_equations(eq_dict, language='fortran')
-
         eq_dict = _split_equations(eq_dict, f_output, two_dim=True)
-        f_output = create_auto_file(eq_dict, params, continuation_variables)
+        auto_file, auto_config = create_auto_file(eq_dict, params, continuation_variables)
+        auto_file, auto_config = (
+            translate_equations(auto_file, language='fortran'), translate_equations(auto_config, language='fortran'))
+        f_output = ['\n'.join(auto_file), '\n'.join(auto_config)]
 
     if language == 'mathematica':
         # TODO: This function needs testing before release
-        eq_dict = translate_equations(eq_dict, language='mathematica')
 
         f_output.append('jac = Array[' + str(len(eq_dict)) + ']')
 
         for n, eq in eq_dict.items():
-            f_output.append('jac[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + str(eq))
+            f_output.append('jac[' + str(n[0]) + ', ' + str(n[1]) + '] = ' + eq)
 
         # TODO !!!! Killing output as I have not tested the above code !!!!
+        eq_dict = translate_equations(eq_dict, language='mathematica')
         f_output = '\n'.join(f_output)
         f_output = None
 
@@ -677,7 +700,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
         else:
             auto_config.append(ln.replace('\n', ''))
 
-    return '\n'.join(auto_file), '\n'.join(auto_config)
+    return auto_file, auto_config
 
 
 def _split_equations(eq_dict, f_output, line_len=80, two_dim=False):
