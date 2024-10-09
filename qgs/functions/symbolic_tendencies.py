@@ -197,8 +197,8 @@ def translate_equations(equations, language='python'):
 
     Parameters
     ----------
-    equations: dict(string)
-        Dictionary of the symbolic model equations.
+    equations: dict(string), list, string
+        Dictionary, list, or string of the symbolic model equations.
     language: string
         Language syntax that the equations are returned in. Options are:
         - `python`
@@ -237,11 +237,12 @@ def translate_equations(equations, language='python'):
             for k in translator.keys():
                 eq = eq.replace(k, translator[k])
             str_eq.append(eq)
-    else:
-        temp_str = str(equations)
+    elif isinstance(equations, str):
+        str_eq = equations
         for k in translator.keys():
-            temp_str = temp_str.replace(k, translator[k])
-        str_eq = temp_str
+            str_eq = str_eq.replace(k, translator[k])
+    else:
+        raise warnings.warn("Expected a dict, list, or string input")
 
     return str_eq
 
@@ -708,9 +709,11 @@ def _split_equations(eq_dict, f_output, line_len=80, two_dim=False):
 
     for n, eq in eq_dict.items():
         # split equations to be a maximum of `line_len`
-
         # split remainder of equation into chunks of length `line_length`
-        eq_chunks = [eq[x: x + line_len] for x in range(0, len(eq), line_len)]
+
+        # First translate the equation to ensure variable names are not split across rows
+        eq_translated = translate_equations(eq, language='fortran')
+        eq_chunks = [eq_translated[x: x + line_len] for x in range(0, len(eq_translated), line_len)]
         if len(eq_chunks) > 1:
             if two_dim:
                 f_output.append('\tJAC(' + str(n[0]) + ', ' + str(n[1]) + ') =\t ' + eq_chunks[0] + "&")
