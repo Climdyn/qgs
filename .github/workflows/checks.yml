@@ -45,6 +45,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
+          use-mamba: true
           activate-environment: qgs
           environment-file: environment.yml
           auto-activate-base: false
