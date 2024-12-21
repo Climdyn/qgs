@@ -19,7 +19,8 @@ from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensor, SymbolicQgsTensorDy
 
 python_lang_translation = {
     'sqrt': 'math.sqrt',
-    'pi': 'math.pi'
+    'pi': 'math.pi',
+    'lambda': 'lmda' # Remove conflict for lambda function in python
 }
 
 fortran_lang_translation = {
