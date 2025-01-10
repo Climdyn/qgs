@@ -455,7 +455,7 @@ class SymbolicQgsTensor(object):
                             if gp.orographic_basis == "atmospheric":
                                 for jj in range(nvar[0]):
                                     for kk in range(nvar[0]):
-                                        oro += a_inv[i, jj] * aips.g(offset + jj, j, offset + kk) * ap.kd.symbol
+                                        oro += a_inv[i, jj] * aips.g(offset + jj, j, offset + kk) * hk_sym_arr[kk]
                             else:
                                 for jj in range(nvar[0]):
                                     for kk in range(nvar[0]):
