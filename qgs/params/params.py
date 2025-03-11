@@ -1433,9 +1433,9 @@ class QgParams(Params):
         self._ground_basis = basis
         self._number_of_ground_modes = len(basis)
         self._number_of_oceanic_modes = 0
+
         if self.dynamic_T:
             self._ground_basis.functions.insert(0, simplify("1"))
-
         if self.atemperature_params is not None:
             # disable the Newtonian cooling
             self.atemperature_params.thetas = None
@@ -1745,7 +1745,6 @@ class QgParams(Params):
         Notes
         -----
         If both `nxmax` and `nymax` are `None`, default to the atmospheric basis configuration if available.
-
 
         Examples
         --------
