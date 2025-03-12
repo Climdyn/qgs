@@ -37,29 +37,25 @@ class TestBaseSymbolic(unittest.TestCase):
         self.numerical_values.append(s)
 
     def check_lists_flt(self):
-        if len(self.symbolic_values) == 0:
-            self.symbolic_outputs()
+        self.symbolic_outputs()
         self.load_ref_from_file()
         for v, r in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.reference)))):
             self.assertTrue(self.match_flt(v, r), msg=v+' != '+r+' !!!')
 
     def check_lists(self, cmax=1):
-        if len(self.symbolic_values) == 0:
-            self.symbolic_outputs()
+        self.symbolic_outputs()
         self.load_ref_from_file()
         for v, r in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.reference)))):
             self.assertTrue(self.match_str(v, r, cmax), msg=v+' != '+r+' !!!')
 
     def check_numerical_lists_flt(self):
-        if len(self.symbolic_values) == 0:
-            self.symbolic_outputs()
+        self.symbolic_outputs()
         self.numerical_outputs()
         for v, r in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.numerical_values)))):
             self.assertTrue(self.match_flt(v, r), msg=v+' != '+r+' !!!')
 
     def check_numerical_lists(self, cmax=1):
-        if len(self.symbolic_values) == 0:
-            self.symbolic_outputs()
+        self.symbolic_outputs()
         self.numerical_outputs()
         for v, r, in zip(list(reversed(sorted(self.symbolic_values))), list(reversed(sorted(self.numerical_values)))):
             self.assertTrue(self.match_str(v, r, cmax), msg=v+' != '+r+' !!!')
