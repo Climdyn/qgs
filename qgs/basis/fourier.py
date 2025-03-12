@@ -21,7 +21,7 @@ from qgs.basis.base import SymbolicBasis
 from sympy import symbols, sin, cos, sqrt
 
 _x, _y = symbols('x y')
-_n = symbols('n', real=True, nonnegative=True)
+_n = symbols('n', positive=True)
 
 
 class ChannelFourierBasis(SymbolicBasis):

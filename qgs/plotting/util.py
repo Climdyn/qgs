@@ -21,7 +21,7 @@ def std_plot(x, mean, std, ax=None, **kwargs):
     std: ~numpy.ndarray
         1D array of standard deviation values to represent, should have the same shape as mean.
     ax: None or ~matplotlib.axes.Axes
-        A `matplotlib`_ axes instance to plot the values. If None, create one.
+        A `matplotlib`_ axes instance to plot the values. If `None`, create one.
     kwargs: dict
         Keyword arguments to be given to the plot routine.
 

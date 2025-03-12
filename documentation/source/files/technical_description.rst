@@ -94,6 +94,20 @@ The computational flow is as follows:
 
     Sketch of the computational flow.
 
+
+Generating Symbolic Equations
+-----------------------------
+Using `Sympy`_ qgs offers the functionality to return the ordinary differential equations of the projected model as a string, with any parameters the user chooses to be returned as varibales in the equations. In addition, the resulting equations can be returned already formatted in the programming language of the users' choice. This allows the qgs framework to feed directly into pipelines in other programming languages. Currently the framework can return the model equations in the following languages:
+
+* Python
+* Julia
+* Fortran-90
+* Mathematica
+* AUTO-p07 continuation software
+
+This also allows the user to specify their own integration method for solving the model equations in python.
+
+
 Additional technical information
 --------------------------------
 
@@ -102,6 +116,8 @@ Additional technical information
 
 * qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.
+
+* The symbolic output functionality of the qgs model relies on `Sympy`_ to perform the tensor calculations. This library is significantly slower than the numerical equivilent and as a result it is currently only feasible to generate the symbolic model equations for model resolutions up to :math:`4x4`. 
 
 References
 ----------
