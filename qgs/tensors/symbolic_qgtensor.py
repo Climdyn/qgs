@@ -54,9 +54,9 @@ class SymbolicQgsTensor(object):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -800,16 +800,20 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
+        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray
+            Tensor of model tendencies, either as
 
-        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
+            - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
+            - or a sparse Sympy tensor
+
+        continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
             Variables which remain symbolic, all other variables are substituted with numerical values.
             If `None` all variables are substituted.
 
         Returns
         -------
-        ten_out: dict
-            Dictionary of the substituted tensor of the model tendencies, with coordinates and value
+        ten_out: dict(float)
+            Dictionary of the substituted tensor of the model tendencies, with coordinates and numerical values
         """
 
         if continuation_variables is None:
@@ -842,14 +846,19 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
-            Tensor of model tendencies, either as a dictionary with keys of non-zero coordinates, and values of ~sympy.core.symbol.Symbol or floats, or as a
-            ~sympy.tensor.array.ImmutableSparseNDimArray .
+        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray
+            Tensor of model tendencies, either as
+
+            - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
+            - or a sparse Sympy tensor
+
         dict_opp: bool
             ...
         tol: float
             ...
         """
+        # TODO: Docstring need to be completed here
+
         if tensor is None:
             if dict_opp:
                 temp_ten = self.tensor_dic
@@ -910,9 +919,9 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -1270,9 +1279,9 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -1451,9 +1460,9 @@ def _shift_dict_keys(dic, shift):
 
     Parameters
     ----------
-    dic: dictionary
+    dic: dict
 
-    shift: Tuple
+    shift: tuple
     """
 
     shifted_dic = dict()
