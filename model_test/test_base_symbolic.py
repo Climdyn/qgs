@@ -13,6 +13,7 @@ import numpy as np
 
 real_eps = np.finfo(np.float64).eps
 
+
 class TestBaseSymbolic(unittest.TestCase):
 
     reference = list()

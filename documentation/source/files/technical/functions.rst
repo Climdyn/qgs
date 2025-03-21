@@ -10,5 +10,11 @@ The functions module contains utility functions used by the model, as well as so
 .. automodule:: qgs.functions.tendencies
     :members:
 
+.. automodule:: qgs.functions.symbolic_mul
+    :members:
+
+.. automodule:: qgs.functions.symbolic_tendencies
+    :members:
+
 .. automodule:: qgs.functions.util
     :members:

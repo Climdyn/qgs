@@ -11,3 +11,7 @@ Module holding the model's tendencies tensor encoding each of their additive ter
 .. automodule:: qgs.tensors.atmo_thermo_tensor
     :show-inheritance:
     :members:
+
+.. automodule:: qgs.tensors.symbolic_qgtensor
+    :show-inheritance:
+    :members:
