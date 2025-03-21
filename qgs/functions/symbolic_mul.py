@@ -14,8 +14,8 @@ def add_to_dict(dic, loc, value):
     """Adds `value` to dictionary `dic`, with the dictionary key of `loc`.
     If the dictionary did not have a key of `loc` before, a new key is made.
 
-    # Jonathan: Add parameters descriptions
     """
+    # TODO: add parameters description
     
     try:
         dic[loc] += value
@@ -29,6 +29,8 @@ def symbolic_tensordot(a, b, axes=2):
 
     This is based on `Numpy`_ :meth:`~numpy.tensordot` .
 
+    .. _Numpy: https://numpy.org/
+
     Parameters
     ----------
     a, b: ~sympy.tensor.array.DenseNDimArray or ~sympy.tensor.array.SparseNDimArray
@@ -40,10 +42,8 @@ def symbolic_tensordot(a, b, axes=2):
 
     Returns
     -------
-    output: sympy tensor
+    output: Sympy tensor
         The tensor dot product of the input.
-
-    .. _Numpy: https://numpy.org/
 
     """
     as_ = a.shape
