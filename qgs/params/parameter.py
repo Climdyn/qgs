@@ -998,7 +998,7 @@ class ParametersArray(np.ndarray):
     description: str or list(str) or array(str), optional
         String or an iterable of strings, describing the parameters.
         If an iterable, should have the same length or shape as `values`.
-    symbols ~sympy.core.symbol.Symbol or list(~sympy.core.symbol.Symbol) or ~numpy.ndarray(~sympy.core.symbol.Symbol), optional
+    symbols: ~sympy.core.symbol.Symbol or list(~sympy.core.symbol.Symbol) or ~numpy.ndarray(~sympy.core.symbol.Symbol), optional
         A `Sympy`_ symbol or an iterable of symbols, to represent the parameters in symbolic expressions.
         If an iterable, should have the same length or shape as `values`.
     symbolic_expressions: ~sympy.core.expr.Expr or list(~sympy.core.expr.Expr) or ~numpy.ndarray(~sympy.core.expr.Expr), optional
