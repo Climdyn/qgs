@@ -39,10 +39,10 @@ mathematica_lang_translation = {
 }
 
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None,
-                              language='python', return_inner_products=False, return_jacobian=False,
-                              return_symbolic_eqs=False, return_symbolic_qgtensor=False):
-    """Function to output the raw symbolic functions of the qgs model.
+def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None,
+                               language='python', return_inner_products=False, return_jacobian=False,
+                               return_symbolic_eqs=False, return_symbolic_qgtensor=False):
+    """Function to output the raw symbolic tendencies of the qgs model.
 
     Parameters
     ----------
@@ -263,11 +263,13 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         Location to save the outputs as a .txt file.
     language: str
         Language syntax that the equations are returned in. Options are:
+
         - `python`
         - `fortran`
         - `julia`
         - `auto`
         - `mathematica`
+
         Default to `python`.
     print_equations: bool
         If `True`, equations are printed by the function, if `False`, equation strings are returned by the function.
