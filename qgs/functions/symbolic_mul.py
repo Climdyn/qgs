@@ -8,20 +8,7 @@
 """
 
 from sympy import tensorproduct, tensorcontraction
-
-
-def add_to_dict(dic, loc, value):
-    """Adds `value` to dictionary `dic`, with the dictionary key of `loc`.
-    If the dictionary did not have a key of `loc` before, a new key is made.
-
-    """
-    # TODO: add parameters description
-    
-    try:
-        dic[loc] += value
-    except:
-        dic[loc] = value
-    return dic
+from qgs.functions.util import add_to_dict
 
 
 def symbolic_tensordot(a, b, axes=2):

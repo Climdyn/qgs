@@ -55,7 +55,9 @@ def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, co
     gnd_ip: GroundSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
     continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
-        The variables to not substitute and to leave in the equations, if `None` all variables are substituted.
+        The variables to not substitute and to leave in the equations, if `None`, no variables are substituted.
+        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
+        Default to `None'.
     language: str
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
         Default to 'python'.
@@ -85,7 +87,7 @@ def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, co
     make_ip_subs = True
 
     if continuation_variables is None:
-        make_ip_subs = False   # TODO: check this !!! For me it should be True because if no cv then all subs are done.
+        make_ip_subs = False
     else:
         for cv in continuation_variables:
             try:
@@ -373,11 +375,11 @@ def equation_as_function(equations, params, language='python', continuation_vari
 
     Returns
     -------
-    f_output: callable or str
+    f_output: str
         Output is a function as a string in the specified language syntax.
     
     """
-    # TODO: f_output seems to be always a list of string here. To check !!
+
     if continuation_variables is None:
         continuation_variables = list()
 
@@ -492,11 +494,11 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
 
     Returns
     -------
-    f_output: callable or str
+    f_output: str
         Output is a function as a string in the specified language syntax
 
     """
-    # TODO: f_output seems to be always a list of string here. To check !!
+
     if continuation_variables is None:
         continuation_variables = list()
 
@@ -621,11 +623,6 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     """
 
     # TODO: There is some weird double tab spacings in the output, and I am not sure why
-
-    # User passes the equations, with the variables to leave as variables.
-    # The existing model parameters are used to populate the auto file
-    # The variables given as `continuation_variables` remain in the equations.
-    # There is a limit of 1-10 remaining variables
 
     if (len(continuation_variables) < 1) or (len(continuation_variables) > 10):
         raise ValueError("Too many variables for auto file")

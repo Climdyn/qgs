@@ -6,7 +6,8 @@
     equations.
 
 """
-from qgs.functions.symbolic_mul import add_to_dict, symbolic_tensordot
+from qgs.functions.symbolic_mul import symbolic_tensordot
+from qgs.functions.util import add_to_dict
 from qgs.params.params import Parameter, ScalingParameter, ParametersArray, Params
 
 import numpy as np
@@ -1247,9 +1248,6 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
 
 class SymbolicQgsTensorT4(SymbolicQgsTensor):
-    # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
-    # TODO: Create a warning about long run-times.
-
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
