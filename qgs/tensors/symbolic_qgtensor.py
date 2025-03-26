@@ -847,18 +847,20 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray
+        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray or `None`
             Tensor of model tendencies, either as
 
             - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
             - or a sparse Sympy tensor
 
+            If `None`, defaults to the stored tensor.
+            Defaults to `None`.
+
         dict_opp: bool
-            ...
+            If `True`, returns the unsimplified symbolic expressions, if `False` the simplified expressions are returned.
         tol: float
-            ...
+            The tolerance to allow for numerical errors when finding non-zero values.
         """
-        # TODO: Docstring need to be completed here
 
         if tensor is None:
             if dict_opp:
@@ -1230,7 +1232,6 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
     def compute_tensor(self):
         """Routine to compute the tensor."""
-        # gathering
         if self.params.T4:
             # TODO: Make a proper error message for here
             raise ValueError("Parameters are set for T4 version, set dynamic_T=True")
@@ -1427,7 +1428,6 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
 
     def compute_tensor(self):
         """Routine to compute the tensor."""
-        # gathering
         if not self.params.T4:
             raise ValueError("Parameters are not set for T4 version")
 
@@ -1444,10 +1444,8 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
 
 
 def _kronecker_delta(i, j):
-
     if i == j:
         return 1
-
     else:
         return 0
 
@@ -1459,8 +1457,10 @@ def _shift_dict_keys(dic, shift):
     Parameters
     ----------
     dic: dict
+        Dictionary representing a tensor.
 
     shift: tuple
+        A tuple that represents the shift in the tensor indices.
     """
 
     shifted_dic = dict()
@@ -1472,13 +1472,16 @@ def _shift_dict_keys(dic, shift):
 
 
 def _parameter_substitutions(params, continuation_variables):
-        
+    """
+    Returns the set of parameters values that are the be substitutes,
+    removing the parameters given in `continuation_variables`.
+    """
     subs = _parameter_values(params)
     for _, obj in params.__dict__.items():
         if issubclass(obj.__class__, Params):
             subs.update(_parameter_values(obj))
 
-    # Manually add properties from class
+    # Manually add properties from scaling class
     subs[params.scale_params.L.symbol] = params.scale_params.L
     subs[params.scale_params.beta.symbol] = params.scale_params.beta
 
