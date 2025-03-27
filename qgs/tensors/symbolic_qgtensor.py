@@ -1473,7 +1473,7 @@ def _shift_dict_keys(dic, shift):
 
 def _parameter_substitutions(params, continuation_variables):
     """
-    Returns the set of parameters values that are the be substituted,
+    Returns a dict of parameters values that are to be substituted,
     removing the parameters given in `continuation_variables`.
     """
 
@@ -1492,7 +1492,7 @@ def _parameter_substitutions(params, continuation_variables):
         else:  # Try ... who knows...
             subs.remove(cv)
 
-    # make the remaining items into a dict
+    # make the remaining items into a dict to pass to sympy subs function
     sub_dic = {}
     for p in subs:
         if p.symbol is not None:

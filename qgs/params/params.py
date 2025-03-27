@@ -1330,7 +1330,7 @@ class QgParams(Params):
         return 1 / (self.scale_params.f0 * c)
 
     def _parameter_values(self, obj=None):
-        """Function produces a dictionary of the symbol and the corresponding numerical value"""
+        """Function produces a list of the values in the parameters class, or any class passed"""
 
         subs = list()
         iter_vals = obj.__dict__.values() if obj is not None else self.__dict__.values()
@@ -1350,12 +1350,12 @@ class QgParams(Params):
     @property
     def _all_items(self):
         """
-        Function to return a dict of all symbols that represent parameters,
+        Function to return a list of all values in the parameter class,
         along with their current numerical values.
 
         Returns
         -------
-        dict
+        list
         """
 
         subs = self._parameter_values()
