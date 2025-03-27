@@ -1329,6 +1329,48 @@ class QgParams(Params):
             c = 24 * 3600 * 365
         return 1 / (self.scale_params.f0 * c)
 
+    def _parameter_values(self, obj=None):
+        """Function produces a dictionary of the symbol and the corresponding numerical value"""
+
+        subs = list()
+        iter_vals = obj.__dict__.values() if obj is not None else self.__dict__.values()
+        for val in iter_vals:
+            if isinstance(val, Parameter):
+                subs.append(val)
+
+            if isinstance(val, ScalingParameter):
+                subs.append(val)
+
+            if isinstance(val, ParametersArray):
+                for v in val:
+                    if v.symbol != 0:
+                        subs.append(v)
+        return subs
+
+    @property
+    def _all_items(self):
+        """
+        Function to return a dict of all symbols that represent parameters,
+        along with their current numerical values.
+
+        Returns
+        -------
+        dict
+        """
+
+        subs = self._parameter_values()
+
+        for _, obj in self.__dict__.items():
+            if issubclass(obj.__class__, Params):
+                for v in self._parameter_values(obj):
+                    subs.append(v)
+
+        # Manually add properties from scaling class
+        subs.append(self.scale_params.L)
+        subs.append(self.scale_params.beta)
+
+        return subs
+
     # -------------------------------------------------------------------
     # Config setters to be used with symbolic inner products
     # -------------------------------------------------------------------

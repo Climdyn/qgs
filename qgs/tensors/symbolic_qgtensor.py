@@ -1473,49 +1473,31 @@ def _shift_dict_keys(dic, shift):
 
 def _parameter_substitutions(params, continuation_variables):
     """
-    Returns the set of parameters values that are the be substitutes,
+    Returns the set of parameters values that are the be substituted,
     removing the parameters given in `continuation_variables`.
     """
-    subs = _parameter_values(params)
-    for _, obj in params.__dict__.items():
-        if issubclass(obj.__class__, Params):
-            subs.update(_parameter_values(obj))
 
-    # Manually add properties from scaling class
-    subs[params.scale_params.L.symbol] = params.scale_params.L
-    subs[params.scale_params.beta.symbol] = params.scale_params.beta
+    subs = params._all_items
+
+    if continuation_variables is None:
+        continuation_variables = list()
 
     # Remove variables in continuation variables
     for cv in continuation_variables:
         if isinstance(cv, ParametersArray):
-            for cv_i in cv.symbols:
-                subs.pop(cv_i)
-        elif hasattr(cv, "symbol"):
-            subs.pop(cv.symbol)
+            for cv_i in cv:
+                subs.remove(cv_i)
+        elif isinstance(cv, Parameter):
+            subs.remove(cv)
         else:  # Try ... who knows...
-            subs.pop(cv)
+            subs.remove(cv)
 
-    return subs
-
-
-def _parameter_values(pars):
-    """Function takes a parameter class and produces a dictionary of the symbol and the corresponding numerical value"""
-
-    subs = dict()
-    for val in pars.__dict__.values():
-        if isinstance(val, Parameter):
-            if val.symbol is not None:
-                subs[val.symbol] = val
-
-        if isinstance(val, ScalingParameter):
-            if val.symbol is not None:
-                subs[val.symbol] = val
-
-        if isinstance(val, ParametersArray):
-            for v in val:
-                if v.symbol is not None or v.symbol != 0:
-                    subs[v.symbol] = v
-    return subs
+    # make the remaining items into a dict
+    sub_dic = {}
+    for p in subs:
+        if p.symbol is not None:
+            sub_dic[p.symbol] = float(p)
+    return sub_dic
 
 
 if __name__ == "__main__":

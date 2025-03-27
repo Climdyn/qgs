@@ -88,6 +88,10 @@ def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, co
 
     if continuation_variables is None:
         make_ip_subs = False
+
+        # Generates list of all available parameters
+        continuation_variables = params._all_items
+
     else:
         for cv in continuation_variables:
             try:
@@ -601,7 +605,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
-        Variables that are not substituted with numerical values. If `None`, all symbols are substituted
+        Variables that are not substituted with numerical values. If `None`, no symbols are substituted
     auto_main_template: str, optional
         The template to be used to generate the main AUTO file.
         If not provided, use the default template.
@@ -621,8 +625,6 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     auto_config: str
         Auto configuration file as a string
     """
-
-    # TODO: There is some weird double tab spacings in the output, and I am not sure why
 
     if (len(continuation_variables) < 1) or (len(continuation_variables) > 10):
         raise ValueError("Too many variables for auto file")
