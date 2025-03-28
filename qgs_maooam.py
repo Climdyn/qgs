@@ -54,7 +54,7 @@ if __name__ == "__main__":
         UNDERLINE = '\033[4m'
 
 
-    print("\n" + Bcolors.HEADER + Bcolors.BOLD + "Model qgs v0.9.9 (Atmosphere + ocean (MAOOAM) configuration)" + Bcolors.ENDC)
+    print("\n" + Bcolors.HEADER + Bcolors.BOLD + "Model qgs v1.0.0 (Atmosphere + ocean (MAOOAM) configuration)" + Bcolors.ENDC)
     print(Bcolors.HEADER + "============================================================" + Bcolors.ENDC + "\n")
     print(Bcolors.OKBLUE + "Initialization ..." + Bcolors.ENDC)
     # ## Systems definition
