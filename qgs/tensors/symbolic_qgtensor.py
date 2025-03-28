@@ -807,7 +807,7 @@ class SymbolicQgsTensor(object):
             - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
             - or a sparse Sympy tensor
 
-        continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
+        continuation_variables: list(Parameter, ScalingParameter or ParametersArray) or `None`
             Variables which remain symbolic, all other variables are substituted with numerical values.
             If `None` all variables are substituted.
 

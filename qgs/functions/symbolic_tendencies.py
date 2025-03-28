@@ -48,8 +48,9 @@ def create_symbolic_tendencies(params, continuation_variables, atm_ip=None, ocn_
     ----------
     params: QgParams
         The parameters fully specifying the model configuration.
-    continuation_variables: list(Parameter, ScalingParameter or ParametersArray) or None
-        The variables to not substitute and to leave in the equations, if `None`, no variables are substituted.
+    continuation_variables: list(Parameter, ScalingParameter or ParametersArray)  or `None`
+        The variables to not substitute and to leave in the equations.
+        if `None`, no variables are substituted.
         If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
     atm_ip: AtmosphericSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
