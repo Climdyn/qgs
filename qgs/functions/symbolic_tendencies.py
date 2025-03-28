@@ -39,7 +39,7 @@ mathematica_lang_translation = {
 }
 
 
-def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None,
+def create_symbolic_tendencies(params, continuation_variables, atm_ip=None, ocn_ip=None, gnd_ip=None,
                                language='python', return_inner_products=False, return_jacobian=False,
                                return_symbolic_eqs=False, return_symbolic_qgtensor=False):
     """Function to output the raw symbolic tendencies of the qgs model.
@@ -48,16 +48,16 @@ def create_symbolic_tendencies(params, atm_ip=None, ocn_ip=None, gnd_ip=None, co
     ----------
     params: QgParams
         The parameters fully specifying the model configuration.
+    continuation_variables: list(Parameter, ScalingParameter or ParametersArray)  or `None`
+        The variables to not substitute and to leave in the equations.
+        if `None`, no variables are substituted.
+        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
     atm_ip: AtmosphericSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
     ocn_ip: OceanSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
     gnd_ip: GroundSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
-    continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
-        The variables to not substitute and to leave in the equations, if `None`, no variables are substituted.
-        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
-        Default to `None'.
     language: str
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
         Default to 'python'.
@@ -374,7 +374,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
         - `mathematica`
 
         Default to `python`.
-    continuation_variables: list(Parameter, ScalingParameter, ParametersArray)
+    continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or `None`
         Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
 
     Returns
@@ -493,7 +493,7 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         - `mathematica`
 
         Default to `python`.
-    continuation_variables: list(Parameter, ScalingParameter, ParametersArray)
+    continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or `None`
         Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
 
     Returns
@@ -604,7 +604,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
         Dictionary of the substituted symbolic model equations
     params: QgParams
         The parameters fully specifying the model configuration.
-    continuation_variables: list(Parameter, ScalingParameter or ParametersArray)
+    continuation_variables: list(Parameter, ScalingParameter or ParametersArray) or `None`
         Variables that are not substituted with numerical values. If `None`, no symbols are substituted
     auto_main_template: str, optional
         The template to be used to generate the main AUTO file.
