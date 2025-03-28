@@ -47,7 +47,7 @@ qgs is licensed under the `MIT`_ license:
 
    The MIT License (MIT)
 
-   Copyright (c) 2020-2023 qgs Developers and Contributors
+   Copyright (c) 2020-2025 qgs Developers and Contributors
 
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
