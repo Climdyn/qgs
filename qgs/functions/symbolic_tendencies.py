@@ -49,7 +49,7 @@ def create_symbolic_tendencies(params, continuation_variables, atm_ip=None, ocn_
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: list(Parameter, ScalingParameter or ParametersArray)  or None
-        The variables to not substitute and to leave in the equations.
+        The variables to not substitute by their numerical value and to leave in the equations.
         If `None`, no variables are substituted.
         If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
     atm_ip: AtmosphericSymbolicInnerProducts, optional
@@ -365,7 +365,7 @@ def equation_as_function(equations, params, continuation_variables, language='py
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or None
-        The variables to not substitute and to leave in the equations.
+        The variables to not substitute by their numerical value and to leave in the equations.
         If `None`, no variables are substituted.
         If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
     language: str, optional
@@ -486,7 +486,7 @@ def jacobian_as_function(equations, params, continuation_variables, language='py
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or None
-        The variables to not substitute and to leave in the equations.
+        The variables to not substitute by their numerical value and to leave in the equations.
         If `None`, no variables are substituted.
         If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
     language: str, optional
@@ -609,7 +609,7 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
     params: QgParams
         The parameters fully specifying the model configuration.
     continuation_variables: list(Parameter, ScalingParameter, ParametersArray)
-        The variables to not substitute and to leave in the equations.
+        The variables to not substitute by their numerical value and to leave in the equations.
         There must be at least one variable in this list and, due to AUTO constraints, its maximum length is 10.
     auto_main_template: str, optional
         The template to be used to generate the main AUTO file.
