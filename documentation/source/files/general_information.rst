@@ -137,9 +137,8 @@ Forthcoming developments
     + Non-autonomous equation (seasonality, etc...)
     + Energy diagnostics
 
-* Technical mid-term developments
+* Technical midterm developments
 
-    + Dimensionally robust Parameter class operation
     + Vectorization of the tensor computation
 
 * Long-term development track
@@ -147,7 +146,6 @@ Forthcoming developments
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean
-    + Symbolic PDE equation specification
     + Numerical basis of function
 
 Contributing to qgs

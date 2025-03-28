@@ -182,14 +182,12 @@ Forthcoming developments
 * Scientific development (short-to-mid-term developments)
     + Non-autonomous equation (seasonality, etc...)
     + Energy diagnostics
-* Technical mid-term developments
-    + Dimensionally robust Parameter class operation
+* Technical midterm developments
     + Vectorization of the tensor computation
 * Long-term development track
     + Active advection
     + True quasi-geostrophic ocean when using ocean model version
     + Salinity in the ocean 
-    + Symbolic PDE equation specification
     + Numerical basis of function
   
 Contributing to qgs
