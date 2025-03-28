@@ -7,8 +7,7 @@
 
 """
 
-import numpy as np
-from sympy import Symbol, lambdify
+from sympy import Symbol
 
 import warnings
 from qgs.functions.symbolic_mul import symbolic_sparse_mult2, symbolic_sparse_mult3, symbolic_sparse_mult4, \
@@ -19,19 +18,16 @@ from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensor, SymbolicQgsTensorDy
 
 python_lang_translation = {
     'sqrt': 'math.sqrt',
-    'pi': 'math.pi',
-    'lambda': 'lmda' # Remove conflict for lambda function in python
+    'lambda': 'lmda'  # Remove conflict for lambda function in python
 }
 
 fortran_lang_translation = {
     'conjugate': 'CONJG',
     'epsilon': 'eps'  # Remove conflict for EPSILON function in fortran
-    # TODO: may need to add variable for pi
 }
 
 julia_lang_translation = {
     '**': '^',
-    'pi': 'pi()',
     'conjugate': 'conj'
 }
 
@@ -40,33 +36,35 @@ mathematica_lang_translation = {
 }
 
 
-def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, continuation_variables=None,
-                              language='python', return_inner_products=False, return_jacobian=False,
-                              return_symbolic_eqs=False, return_symbolic_qgtensor=False):
-    """Function to output the raw symbolic functions of the qgs model.
+def create_symbolic_tendencies(params, continuation_variables, atm_ip=None, ocn_ip=None, gnd_ip=None,
+                               language='python', return_inner_products=False, return_jacobian=False,
+                               return_symbolic_eqs=False, return_symbolic_qgtensor=False):
+    """Function to output the raw symbolic tendencies of the qgs model.
 
     Parameters
     ----------
     params: QgParams
         The parameters fully specifying the model configuration.
-    atm_ip: SymbolicAtmosphericInnerProducts, optional
+    continuation_variables: list(Parameter, ScalingParameter or ParametersArray)  or None
+        The variables to not substitute by their numerical value and to leave in the equations.
+        If `None`, no variables are substituted.
+        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
+    atm_ip: AtmosphericSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
-    ocn_ip: SymbolicOceanInnerProducts, optional
+    ocn_ip: OceanSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
-    gnd_ip: SymbolicGroundInnerProducts, optional
+    gnd_ip: GroundSymbolicInnerProducts, optional
         Allows for stored inner products to be input.
-    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        The variables to not substitute and to leave in the equations, if `None` all variables are substituted.
-    language: str
+    language: str, optional
         Options for the output language syntax: 'python', 'julia', 'fortran', 'auto', 'mathematica'.
         Default to 'python'.
-    return_inner_products: bool
+    return_inner_products: bool, optional
         If `True`, return the inner products of the model. Default to `False`.
-    return_jacobian: bool
+    return_jacobian: bool, optional
         If `True`, return the Jacobian of the model. Default to `False`.
-    return_symbolic_eqs: bool
+    return_symbolic_eqs: bool, optional
         If `True`, return the substituted symbolic equations.
-    return_symbolic_qgtensor: bool
+    return_symbolic_qgtensor: bool, optional
         If `True`, return the symbolic tendencies tensor of the model. Default to `False`.
 
     Returns
@@ -75,7 +73,7 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
         The substituted functions in the language syntax specified, as a string.
     dict_eq_simplified: dict(~sympy.core.expr.Expr)
         Dictionary of the substituted Jacobian matrix.
-    inner_products: tuple(SymbolicAtmosphericInnerProducts, SymbolicOceanicInnerProducts, SymbolicGroundInnerProducts)
+    inner_products: tuple(AtmosphericSymbolicInnerProducts, OceanicSymbolicInnerProducts, GroundSymbolicInnerProducts)
         If `return_inner_products` is `True`, the inner products of the system.
     eq_simplified: dict(~sympy.core.expr.Expr)
         If `return_symbolic_eqs` is `True`, dictionary of the model tendencies symbolic functions.
@@ -86,7 +84,11 @@ def create_symbolic_equations(params, atm_ip=None, ocn_ip=None, gnd_ip=None, con
     make_ip_subs = True
 
     if continuation_variables is None:
-        make_ip_subs = False   # TODO: check this !!! For me it should be True because if no cv then all subs are done.
+        make_ip_subs = False
+
+        # Generates list of all available parameters
+        continuation_variables = params._all_items
+
     else:
         for cv in continuation_variables:
             try:
@@ -198,15 +200,17 @@ def translate_equations(equations, language='python'):
 
     Parameters
     ----------
-    equations: dict(string), list, string
+    equations: dict(str), list, str
         Dictionary, list, or string of the symbolic model equations.
-    language: string
+    language: str, optional
         Language syntax that the equations are returned in. Options are:
+
         - `python`
         - `fortran`
         - `julia`
         - `auto`
         - `mathematica`
+
         Default to `python`.
 
     Returns
@@ -243,7 +247,7 @@ def translate_equations(equations, language='python'):
         for k in translator.keys():
             str_eq = str_eq.replace(k, translator[k])
     else:
-        raise warnings.warn("Expected a dict, list, or string input")
+        raise ValueError("Expected a dict, list, or string input")
 
     return str_eq
 
@@ -258,17 +262,19 @@ def format_equations(equations, params, save_loc=None, language='python', print_
         Dictionary of symbolic model equations.
     params: QgParams
         The parameters fully specifying the model configuration.
-    save_loc: str
+    save_loc: str, optional
         Location to save the outputs as a .txt file.
-    language: str
+    language: str, optional
         Language syntax that the equations are returned in. Options are:
+
         - `python`
         - `fortran`
         - `julia`
         - `auto`
         - `mathematica`
+
         Default to `python`.
-    print_equations: bool
+    print_equations: bool, optional
         If `True`, equations are printed by the function, if `False`, equation strings are returned by the function.
         Defaults to `False`
 
@@ -335,7 +341,7 @@ def equations_to_string(equations):
 
     Returns
     -------
-    dict(~string)
+    dict(str)
         Dictionary of the substituted symbolic model equations.
     """
 
@@ -345,7 +351,7 @@ def equations_to_string(equations):
     return str_eq
 
 
-def equation_as_function(equations, params, language='python', continuation_variables=None):
+def equation_as_function(equations, params, continuation_variables, language='python'):
     """Converts the symbolic equations to a function in string format in the language syntax specified,
     or a lambdified python function.
     
@@ -355,23 +361,28 @@ def equation_as_function(equations, params, language='python', continuation_vari
         Dictionary of the substituted symbolic model equations.
     params: QgParams
         The parameters fully specifying the model configuration.
-    language: str
+    continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or None
+        The variables to not substitute by their numerical value and to leave in the equations.
+        If `None`, no variables are substituted.
+        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
+    language: str, optional
         Language syntax that the equations are returned in. Options are:
+
         - `python`
         - `fortran`
         - `julia`
         - `auto`
         - `mathematica`
+
         Default to `python`.
-    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
 
     Returns
     -------
-    f_output: callable or str
+    f_output: str
         Output is a function as a string in the specified language syntax.
     
     """
+
     if continuation_variables is None:
         continuation_variables = list()
 
@@ -446,6 +457,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
         f_output = ['\n'.join(auto_file), '\n'.join(auto_config)]
 
     if language == 'mathematica':
+        raise NotImplemented("Mathematica code output is not yet available.")
         # TODO: This function needs testing before release
         f_output.append('F = Array[' + str(len(eq_dict)) + ']')
 
@@ -460,7 +472,7 @@ def equation_as_function(equations, params, language='python', continuation_vari
     return f_output
 
 
-def jacobian_as_function(equations, params, language='python', continuation_variables=None):
+def jacobian_as_function(equations, params, continuation_variables, language='python'):
     """Converts the symbolic equations of the jacobain to a function in string format in the language syntax specified,
     or a lambdified python function.
 
@@ -470,23 +482,28 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
         Dictionary of the substituted symbolic model equations.
     params: QgParams
         The parameters fully specifying the model configuration.
-    language: str
+    continuation_variables: list(Parameter, ScalingParameter, ParametersArray) or None
+        The variables to not substitute by their numerical value and to leave in the equations.
+        If `None`, no variables are substituted.
+        If an empty list is provided, then all variables are substituted, providing fully numerical tendencies.
+    language: str, optional
         Language syntax that the equations are returned in. Options are:
+
         - `python`
         - `fortran`
         - `julia`
         - `auto`
         - `mathematica`
+
         Default to `python`.
-    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        Variables that are not substituted with numerical values. If `None`, all symbols are substituted.
 
     Returns
     -------
-    f_output: callable or str
+    f_output: str
         Output is a function as a string in the specified language syntax
 
     """
+
     if continuation_variables is None:
         continuation_variables = list()
 
@@ -562,6 +579,7 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
 
     if language == 'mathematica':
         # TODO: This function needs testing before release
+        raise NotImplemented("Mathematica code output is not yet available.")
 
         f_output.append('jac = Array[' + str(len(eq_dict)) + ']')
 
@@ -578,7 +596,7 @@ def jacobian_as_function(equations, params, language='python', continuation_vari
 
 def create_auto_file(equations, params, continuation_variables, auto_main_template=None, auto_c_template=None,
                      initialize_params=False, initialize_solution=False):
-    """Creates the auto configuration file and the model file.
+    """Creates the AUTO configuration file and the model file.
     Saves files to specified folder.
 
     Parameters
@@ -587,8 +605,9 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
         Dictionary of the substituted symbolic model equations
     params: QgParams
         The parameters fully specifying the model configuration.
-    continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
-        Variables that are not substituted with numerical values. If `None`, all symbols are substituted
+    continuation_variables: list(Parameter, ScalingParameter, ParametersArray)
+        The variables to not substitute by their numerical value and to leave in the equations.
+        There must be at least one variable in this list and, due to AUTO constraints, its maximum length is 10.
     auto_main_template: str, optional
         The template to be used to generate the main AUTO file.
         If not provided, use the default template.
@@ -602,19 +621,12 @@ def create_auto_file(equations, params, continuation_variables, auto_main_templa
 
     Returns
     -------
-    auto_file: Str
+    auto_file: str
         The auto model file as a string
 
-    auto_config: Str
+    auto_config: str
         Auto configuration file as a string
     """
-
-    # TODO: There is some weird double tab spacings in the output, and I am not sure why
-
-    # User passes the equations, with the variables to leave as variables.
-    # The existing model parameters are used to populate the auto file
-    # The variables given as `continuation_variables` remain in the equations.
-    # There is a limit of 1-10 remaining variables
 
     if (len(continuation_variables) < 1) or (len(continuation_variables) > 10):
         raise ValueError("Too many variables for auto file")

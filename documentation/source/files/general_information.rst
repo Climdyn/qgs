@@ -161,7 +161,7 @@ A review of your pull request will follow with possibly suggestions of changes b
 Please consider the following guidelines before submitting:
 
 * Before submitting a pull request, double check that the branch to be merged contains only changes you wish to add to the master branch. This will save time in reviewing the code.
-* For any changes to the core model files, please check your submission by running the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid (see the section :ref:`files/user_guide:5. Developers information` of the :ref:`files/user_guide:User guide`). Please do not make changes to existing test cases.
+* For any changes to the core model files, please check your submission by running the tests found in the folder `model_test <../../../../model_test>`_ to ensure that the model tensors are still valid (see the section :ref:`files/user_guide:6. Developers information` of the :ref:`files/user_guide:User guide`). Please do not make changes to existing test cases.
 * For substantial additions of code, including a test case (using `unittest`_) in the folder `model_test <../../../../model_test>`_ is recommended.
 * Please document the new functionalities in the documentation. Code addition without documentation addition will not be accepted. The documentation is done with `sphinx`_ and follows the Numpy conventions. Please take a look to the actual code to get an idea about how to document the code.
 * If your addition can be considered as a tool not directly related to the core of the model, please develop it in the toolbox folder.
@@ -182,7 +182,7 @@ Non-exhaustive list:
 
 * `Q-GCM <http://q-gcm.org/>`_: A mid-latitude grid based ocean-atmosphere model like MAOOAM. Code in Fortran,
   interface is in Python.
-* `pyqg <https://github.com/pyqg/pyqg>`_: A pseudo-spectral python solver for quasi-geostrophic systems.
+* `pyqg <https://github.com/pyqg/pyqg>`_: A pseudo-spectral Python solver for quasi-geostrophic systems.
 * `Isca <https://execlim.github.io/IscaWebsite/index.html>`_: Research GCM written in Fortran and largely
   configured with Python scripts, with internal coding changes required for non-standard cases.
 

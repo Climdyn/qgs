@@ -6,7 +6,8 @@
     equations.
 
 """
-from qgs.functions.symbolic_mul import add_to_dict, symbolic_tensordot
+from qgs.functions.symbolic_mul import symbolic_tensordot
+from qgs.functions.util import add_to_dict
 from qgs.params.params import Parameter, ScalingParameter, ParametersArray, Params
 
 import numpy as np
@@ -54,9 +55,9 @@ class SymbolicQgsTensor(object):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -800,16 +801,20 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
+        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray
+            Tensor of model tendencies, either as
 
-        continuation_variables: Iterable(Parameter, ScalingParameter, ParametersArray)
+            - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
+            - or a sparse Sympy tensor
+
+        continuation_variables: list(Parameter, ScalingParameter or ParametersArray) or `None`
             Variables which remain symbolic, all other variables are substituted with numerical values.
             If `None` all variables are substituted.
 
         Returns
         -------
-        ten_out: dict
-            Dictionary of the substituted tensor of the model tendencies, with coordinates and value
+        ten_out: dict(float)
+            Dictionary of the substituted tensor of the model tendencies, with coordinates and numerical values
         """
 
         if continuation_variables is None:
@@ -842,14 +847,21 @@ class SymbolicQgsTensor(object):
 
         Parameters
         ----------
-        tensor: dict or ~sympy.tensor.array.ImmutableSparseNDimArray
-            Tensor of model tendencies, either as a dictionary with keys of non-zero coordinates, and values of ~sympy.core.symbol.Symbol or floats, or as a
-            ~sympy.tensor.array.ImmutableSparseNDimArray .
+        tensor: dict(~sympy.core.expr.Expr or float) or ~sympy.tensor.array.ImmutableSparseNDimArray or `None`
+            Tensor of model tendencies, either as
+
+            - a dictionary with keys of non-zero coordinates, and values of Sympy expressions or floats
+            - or a sparse Sympy tensor
+
+            If `None`, defaults to the stored tensor.
+            Defaults to `None`.
+
         dict_opp: bool
-            ...
+            If `True`, returns the unsimplified symbolic expressions, if `False` the simplified expressions are returned.
         tol: float
-            ...
+            The tolerance to allow for numerical errors when finding non-zero values.
         """
+
         if tensor is None:
             if dict_opp:
                 temp_ten = self.tensor_dic
@@ -910,9 +922,9 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -1220,7 +1232,6 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
     def compute_tensor(self):
         """Routine to compute the tensor."""
-        # gathering
         if self.params.T4:
             # TODO: Make a proper error message for here
             raise ValueError("Parameters are set for T4 version, set dynamic_T=True")
@@ -1238,9 +1249,6 @@ class SymbolicQgsTensorDynamicT(SymbolicQgsTensor):
 
 
 class SymbolicQgsTensorT4(SymbolicQgsTensor):
-    # TODO: this takes a long time (>1hr) to run. I think we need a better way to run the non-stored z, v, Z, V IPs. Maybe do not allow `n` as a continuation parameter for this version?
-    # TODO: Create a warning about long run-times.
-
     """qgs dynamical temperature first order (linear) symbolic tendencies tensor class.
 
     Parameters
@@ -1270,9 +1278,9 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
     ground_inner_products: None or GroundInnerProducts
         The inner products of the ground basis functions on which the model's PDE ground equations are projected.
         If `None`, disable the ground tendencies. Default to `None`.
-    tensor: sparse.COO(float)
+    tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The tensor :math:`\\mathcal{T}_{i,j,k}` :math:`i`-th components.
-    jacobian_tensor: sparse.COO(float)
+    jacobian_tensor: ~sympy.tensor.array.ImmutableSparseNDimArray
         The jacobian tensor :math:`\\mathcal{T}_{i,j,k} + \\mathcal{T}_{i,k,j}` :math:`i`-th components.
     """
 
@@ -1420,7 +1428,6 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
 
     def compute_tensor(self):
         """Routine to compute the tensor."""
-        # gathering
         if not self.params.T4:
             raise ValueError("Parameters are not set for T4 version")
 
@@ -1437,10 +1444,8 @@ class SymbolicQgsTensorT4(SymbolicQgsTensor):
 
 
 def _kronecker_delta(i, j):
-
     if i == j:
         return 1
-
     else:
         return 0
 
@@ -1451,9 +1456,11 @@ def _shift_dict_keys(dic, shift):
 
     Parameters
     ----------
-    dic: dictionary
+    dic: dict
+        Dictionary representing a tensor.
 
-    shift: Tuple
+    shift: tuple
+        A tuple that represents the shift in the tensor indices.
     """
 
     shifted_dic = dict()
@@ -1465,47 +1472,32 @@ def _shift_dict_keys(dic, shift):
 
 
 def _parameter_substitutions(params, continuation_variables):
-        
-    subs = _parameter_values(params)
-    for _, obj in params.__dict__.items():
-        if issubclass(obj.__class__, Params):
-            subs.update(_parameter_values(obj))
+    """
+    Returns a dict of parameters values that are to be substituted,
+    removing the parameters given in `continuation_variables`.
+    """
 
-    # Manually add properties from class
-    subs[params.scale_params.L.symbol] = params.scale_params.L
-    subs[params.scale_params.beta.symbol] = params.scale_params.beta
+    subs = params._all_items
+
+    if continuation_variables is None:
+        continuation_variables = list()
 
     # Remove variables in continuation variables
     for cv in continuation_variables:
         if isinstance(cv, ParametersArray):
-            for cv_i in cv.symbols:
-                subs.pop(cv_i)
-        elif hasattr(cv, "symbol"):
-            subs.pop(cv.symbol)
+            for cv_i in cv:
+                subs.remove(cv_i)
+        elif isinstance(cv, Parameter):
+            subs.remove(cv)
         else:  # Try ... who knows...
-            subs.pop(cv)
+            subs.remove(cv)
 
-    return subs
-
-
-def _parameter_values(pars):
-    """Function takes a parameter class and produces a dictionary of the symbol and the corresponding numerical value"""
-
-    subs = dict()
-    for val in pars.__dict__.values():
-        if isinstance(val, Parameter):
-            if val.symbol is not None:
-                subs[val.symbol] = val
-
-        if isinstance(val, ScalingParameter):
-            if val.symbol is not None:
-                subs[val.symbol] = val
-
-        if isinstance(val, ParametersArray):
-            for v in val:
-                if v.symbol is not None or v.symbol != 0:
-                    subs[v.symbol] = v
-    return subs
+    # make the remaining items into a dict to pass to sympy subs function
+    sub_dic = {}
+    for p in subs:
+        if p.symbol is not None:
+            sub_dic[p.symbol] = float(p)
+    return sub_dic
 
 
 if __name__ == "__main__":

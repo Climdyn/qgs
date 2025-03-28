@@ -101,11 +101,11 @@ Using `Sympy`_ qgs offers the functionality to return the ordinary differential 
 
 * Python
 * Julia
-* Fortran-90
-* Mathematica
-* AUTO-p07 continuation software
+* Fortran 90
+* `AUTO-p07 <https://github.com/auto-07p/auto-07p>`_ continuation software
+* `Mathematica <https://www.wolfram.com/mathematica/>`_ (still being tested)
 
-This also allows the user to specify their own integration method for solving the model equations in python.
+This also allows the user to specify their own integration method for solving the model equations in Python.
 
 
 Additional technical information
@@ -117,7 +117,9 @@ Additional technical information
 * qgs has a `tangent linear model`_ optimized to run ensembles of initial conditions as well, with a broadcast
   integration of the tangent model thanks to `Numpy`_.
 
-* The symbolic output functionality of the qgs model relies on `Sympy`_ to perform the tensor calculations. This library is significantly slower than the numerical equivilent and as a result it is currently only feasible to generate the symbolic model equations for model resolutions up to :math:`4x4`. 
+* The symbolic output functionality of the qgs model relies on `Sympy`_ to perform the tensor calculations.
+  This library is significantly slower than the numerical equivalent and as a result it is currently only feasible to
+  generate the symbolic model equations for model resolutions up to :math:`4x4`.
 
 References
 ----------
@@ -131,3 +133,4 @@ References
 .. _multiprocessing: https://docs.python.org/3.7/library/multiprocessing.html#module-multiprocessing
 .. _tangent linear model: http://glossary.ametsoc.org/wiki/Tangent_linear_model
 .. _ordinary differential equations: https://en.wikipedia.org/wiki/Ordinary_differential_equation
+.. _Sympy: https://www.sympy.org/

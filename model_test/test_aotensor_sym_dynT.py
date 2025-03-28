@@ -22,6 +22,7 @@ from model_test.test_base_symbolic import TestBaseSymbolic
 
 real_eps = np.finfo(np.float64).eps
 
+
 class TestSymbolicAOTensorDynT(TestBaseSymbolic):
     '''
         Test class for the Dynamic T Symbolic Tensor
@@ -85,6 +86,7 @@ class TestSymbolicAOTensorDynT(TestBaseSymbolic):
         for coo, val in zip(num_aotensor.tensor.coords.T, num_aotensor.tensor.data):
             _ip_string_format(tfunc, 'num_aotensor', coo, val)
 
+
 def _ip_string_format(func, symbol, indices, value):
     if abs(value) >= real_eps:
         s = symbol
@@ -92,6 +94,7 @@ def _ip_string_format(func, symbol, indices, value):
             s += "["+str(i)+"]"
         s += " = % .5E" % value
         func(s)
+
 
 if __name__ == "__main__":
     unittest.main()

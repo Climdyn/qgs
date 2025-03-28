@@ -11,6 +11,26 @@ import numpy as np
 from numba import njit
 
 
+def add_to_dict(dic, loc, value):
+    """Adds `value` to dictionary `dic`, with the dictionary key of `loc`.
+    If the dictionary did not have a key of `loc` before, a new key is made.
+
+    Parameters
+    ----------
+    dic: dict
+        Dictionary to add the value to.
+    loc:
+        Item of the dictionary to add the value to.
+    value:
+        Value to add.
+    """
+    try:
+        dic[loc] += value
+    except:
+        dic[loc] = value
+    return dic
+
+
 @njit
 def reverse(a):
     """Numba-jitted function to reverse a 1D array.

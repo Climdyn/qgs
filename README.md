@@ -115,7 +115,7 @@ Note that the Jupyter notebooks are not concerned by this recommendation and wor
 #### Activating DifferentialEquations.jl optional support
 
 In addition to the qgs builtin Runge-Kutta integrator, the qgs model can alternatively be integrated with a package called [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) written in [Julia](https://julialang.org/), and available through the
-[diffeqpy](https://github.com/SciML/diffeqpy) python package.
+[diffeqpy](https://github.com/SciML/diffeqpy) Python package.
 The diffeqpy package first installation step is done by Anaconda in the qgs environment but then you must [install Julia](https://julialang.org/downloads/) and follow the final manual installation instruction found in the [diffeqpy README](https://github.com/SciML/diffeqpy).
 
 These can be summed up as opening a terminal and doing:
@@ -208,7 +208,7 @@ Non-exhaustive list:
 
 * [Q-GCM](http://q-gcm.org/): A mid-latitude grid based ocean-atmosphere model like MAOOAM. Code in Fortran,
                                 interface is in Python.
-* [pyqg](https://github.com/pyqg/pyqg): A pseudo-spectral python solver for quasi-geostrophic systems.
+* [pyqg](https://github.com/pyqg/pyqg): A pseudo-spectral Python solver for quasi-geostrophic systems.
 * [Isca](https://execlim.github.io/IscaWebsite/index.html): Research GCM written in Fortran and largely
             configured with Python scripts, with internal coding changes required for non-standard cases.
             

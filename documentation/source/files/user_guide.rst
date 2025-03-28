@@ -18,7 +18,7 @@ This guide provides:
 
 1. The different ways to configure qgs in order to obtain the function :math:`\boldsymbol{f}` are explained in the section :ref:`files/user_guide:2. Configuration of qgs`.
 2. Some specific ways to configure qgs detailed in the section :ref:`files/user_guide:3. Using user-defined symbolic basis`.
-3. Examples of usages of the model's tendencies function :math:`\boldsymbol{f}` are given in the section :ref:`files/user_guide:4. Using qgs (once configured)`.
+3. Examples of usages of the model's tendencies function :math:`\boldsymbol{f}` are given in the section :ref:`files/user_guide:5. Using qgs (once configured)`.
 
 2. Configuration of qgs
 -----------------------
@@ -227,7 +227,7 @@ Jacobian matrix :math:`\boldsymbol{\mathrm{Df}}`. Just pass it to the function :
     f, Df = create_tendencies(model_parameters)
 
 The function :meth:`f` hence produced can be used to generate the model's trajectories.
-See the section :ref:`files/user_guide:4. Using qgs (once configured)` for the possible usages.
+See the section :ref:`files/user_guide:5. Using qgs (once configured)` for the possible usages.
 
 2.5 Saving your model
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -466,29 +466,37 @@ See also the following section for the possible usages.
 4. Symbolic outputs 
 -------------------
 
-If the user wants to generate the model tendencies with non-fixed parameters, use the tendencies in another programming language, or use their own integrator in python, the qgs framework can use `Sympy`_ to proform the above calculations symbolically rather than numerically.  
+If the user wants to generate the model tendencies with non-fixed parameters, or use the tendencies in another programming language,
+the qgs framework can use `Sympy`_ to perform the above calculations symbolically rather than numerically.
 
-To return the tendencies including specified parameter values, or to format the tendencies in another programming language, the qgs model is configured as shown in section :ref:`files/user_guide:Configuration of qgs`, however the **Symbolic** inner product is always used in this pipeline. To create the symbolic tendencies, the instance of :class:`.QgParams` is passed to the function :func:`.create_symbolic_tendencies`:
+To return the tendencies including specified parameter values, or to format the tendencies in another programming language,
+the qgs model is configured as shown in section :ref:`files/user_guide:2. Configuration of qgs`, however the **Symbolic** inner
+product is always used in this pipeline.
+To create the symbolic tendencies, the instance of :class:`.QgParams` is passed to the function :func:`.create_symbolic_tendencies`:
 
 .. code:: ipython3
 
-    from qgs.functions.symbolic_tendencies import create_symbolic_equations
+    from qgs.functions.symbolic_tendencies import create_symbolic_tendencies
 
     parameters = [model_parameters.par1, model_parameters.par2, model_parameters.par3]
 
-    f = create_symbolic_equations(model_parameters, continuation_variables=parameters, language='python')
+    f = create_symbolic_tendencies(model_parameters, continuation_variables=parameters, language='python')
 
-The varibale :meth:`f` is a string of the model tendencies, formatted in the programming language specified by the keyword :meth:`language`. The model tendencies will contain the specified :meth:`continuation_variables` as free parameters. 
+The variable :code:`f` is a string of the model tendencies, formatted in the programming language specified by the
+keyword :code:`language`. The model tendencies will contain the specified :code:`continuation_variables` as free parameters.
 
 Currently the framework can format the equations in the following programming languages:
-* :meth:`python`
-* :meth:`julia`
-* :meth:`fortran`
-* :meth:`mathematica`
-* :meth:`auto`
 
+* :code:`python`
+* :code:`julia`
+* :code:`fortran`
+* :code:`auto`
+* :code:`mathematica` (still under test)
 
-1. Using qgs (once configured)
+Some example on how to use this functionality are provided in the
+`notebooks/symbolic_outputs <../../../../notebooks/symbolic_outputs>`_ folder.
+
+5. Using qgs (once configured)
 ---------------------------------
 
 Once the function :math:`\boldsymbol{f}` giving the model's tendencies has been obtained, it is possible to use it with
