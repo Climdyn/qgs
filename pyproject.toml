@@ -5,9 +5,9 @@
 requires = ["setuptools", "wheel"]
 
 [project]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 name = "qgs"
-version = "0.2.8"
+version = "1.0.0"
 description = "A 2-layer quasi-geostrophic atmospheric model. Can be coupled to a simple land or shallow-water ocean component."
 readme = "README.md"
 authors = [
