@@ -18,19 +18,16 @@ from qgs.tensors.symbolic_qgtensor import SymbolicQgsTensor, SymbolicQgsTensorDy
 
 python_lang_translation = {
     'sqrt': 'math.sqrt',
-    'pi': 'math.pi',
     'lambda': 'lmda'  # Remove conflict for lambda function in python
 }
 
 fortran_lang_translation = {
     'conjugate': 'CONJG',
     'epsilon': 'eps'  # Remove conflict for EPSILON function in fortran
-    # TODO: may need to add variable for pi
 }
 
 julia_lang_translation = {
     '**': '^',
-    'pi': 'pi()',
     'conjugate': 'conj'
 }
 
