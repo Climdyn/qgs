@@ -6,6 +6,15 @@
 # Required
 version: 2
 
+# Set the OS and Miniconda
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "mambaforge-latest"
+
+sphinx:
+  configuration: documentation/source/conf.py
+
 conda:
   environment: environment.yml
 
