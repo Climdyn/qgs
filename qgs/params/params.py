@@ -363,7 +363,7 @@ class AtmosphericTemperatureParams(Params):
 
         self._scale_params = scale_params
 
-        self.hd = Parameter(0.045, input_dimensional=False, units='[s]', scale_object=scale_params,
+        self.hd = Parameter(0.045, input_dimensional=False, units='[s^-1]', scale_object=scale_params,
                             description="Newtonian cooling coefficient", symbol=Symbol('hd'))
         self.thetas = None  # Radiative equilibrium mean temperature decomposition on the model's modes
 
@@ -398,7 +398,7 @@ class AtmosphericTemperatureParams(Params):
             offset = 1
             if self.dynamic_T or dynamic_T:
                 offset = 0
-            self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
+            self.C[pos] = Parameter(value, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere",
                                     return_dimensional=True, symbol=Symbol('C_a'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
@@ -424,7 +424,7 @@ class AtmosphericTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the atmosphere" for pos in range(dim)]
         sy = [Symbol('C_a'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbols=sy)
 
     def set_thetas(self, value, pos=None):
@@ -569,7 +569,7 @@ class OceanicTemperatureParams(Params):
             offset = 1
             if self.dynamic_T or dynamic_T:
                 offset = 0
-            self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
+            self.C[pos] = Parameter(value, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean",
                                     return_dimensional=True, symbol=Symbol('C_go'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
@@ -595,7 +595,7 @@ class OceanicTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ocean" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbols=sy)
 
 
@@ -741,7 +741,7 @@ class GroundTemperatureParams(Params):
             offset = 1
             if self.dynamic_T or dynamic_T:
                 offset = 0
-            self.C[pos] = Parameter(value, units='[W][m^-2]', scale_object=self._scale_params,
+            self.C[pos] = Parameter(value, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                     description="spectral component "+str(pos+offset)+" of the short-wave radiation of the ground",
                                     return_dimensional=True, symbol=Symbol('C_go'+str(pos+offset)))
         elif hasattr(value, "__iter__"):
@@ -767,7 +767,7 @@ class GroundTemperatureParams(Params):
         d = ["spectral component "+str(pos+offset)+" of the short-wave radiation of the ground" for pos in range(dim)]
         sy = [Symbol('C_go'+str(pos+offset)) for pos in range(dim)]
 
-        self.C = ParametersArray(values, units='[W][m^-2]', scale_object=self._scale_params,
+        self.C = ParametersArray(values, units='[J][s^-1][m^-2]', scale_object=self._scale_params,
                                  description=d, return_dimensional=True, symbols=sy)
 
 
@@ -1439,7 +1439,7 @@ class QgParams(Params):
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
                                                     description="ratio of surface to atmosphere temperature",
                                                     symbol=Symbol('sc'))
-            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
+            self.atemperature_params.hlambda = Parameter(20.00, units='[J][m^-2][K^-1][s^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
                                                          description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
                                                          symbol=Symbol('lambda'))
@@ -1503,7 +1503,7 @@ class QgParams(Params):
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
                                                     description="ratio of surface to atmosphere temperature",
                                                     symbol=Symbol('sc'))
-            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
+            self.atemperature_params.hlambda = Parameter(20.00, units='[J][m^-2][K^-1][s^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
                                                          description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
                                                          symbol=Symbol('lambda'))
@@ -1884,7 +1884,7 @@ class QgParams(Params):
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
                                                     description="ratio of surface to atmosphere temperature",
                                                     symbol=Symbol('sc'))
-            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]', scale_object=self.scale_params,
+            self.atemperature_params.hlambda = Parameter(20.00, units='[J][m^-2][K^-1][s^-1]', scale_object=self.scale_params,
                                                          return_dimensional=True,
                                                          description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
                                                          symbol=Symbol('lambda'))
@@ -1937,7 +1937,7 @@ class QgParams(Params):
             self.atemperature_params.sc = Parameter(1., input_dimensional=False,
                                                     description="ratio of surface to atmosphere temperature",
                                                     symbol=Symbol('sc'))
-            self.atemperature_params.hlambda = Parameter(20.00, units='[W][m^-2][K^-1]',
+            self.atemperature_params.hlambda = Parameter(20.00, units='[J][m^-2][K^-1][s^-1]',
                                                          scale_object=self.scale_params,
                                                          return_dimensional=True,
                                                          description="sensible+turbulent heat exchange between ocean/ground and atmosphere",
