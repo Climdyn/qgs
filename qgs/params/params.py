@@ -41,6 +41,8 @@
     .. _nondimentionalize: https://en.wikipedia.org/wiki/Nondimensionalization
 """
 
+import os
+
 import numpy as np
 import pickle
 import warnings
@@ -51,6 +53,8 @@ from qgs.basis.fourier import contiguous_channel_basis, contiguous_basin_basis
 from qgs.basis.fourier import ChannelFourierBasis, BasinFourierBasis
 
 from sympy import simplify, Symbol
+
+os.environ["SPARSE_AUTO_DENSIFY"] = "1"
 
 
 # TODO: - store model version in a variable somewhere
