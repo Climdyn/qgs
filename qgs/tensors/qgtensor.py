@@ -695,7 +695,7 @@ class QgsTensor(object):
     @staticmethod
     def _shift_tensor_coordinates(tensor, shift):
         new_coords = tensor.coords.copy() + shift
-        return sp.COO(new_coords.astype(int), tensor.data)
+        return sp.COO(new_coords.astype(int), tensor.data, tensor.shape)
 
     @staticmethod
     def jacobian_from_tensor(tensor):
