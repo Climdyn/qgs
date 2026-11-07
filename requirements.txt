@@ -3,7 +3,7 @@ jupyter
 matplotlib>=3.4
 numba
 numpy
-python>=3.8
+python>=3.10
 scipy
 sympy
 sphinx

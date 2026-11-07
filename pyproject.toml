@@ -5,7 +5,7 @@
 requires = ["setuptools", "wheel"]
 
 [project]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 name = "qgs"
 version = "1.0.0"
 description = "A 2-layer quasi-geostrophic atmospheric model. Can be coupled to a simple land or shallow-water ocean component."
@@ -18,9 +18,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
     "Framework :: Jupyter",
