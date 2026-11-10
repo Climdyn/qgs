@@ -1226,7 +1226,7 @@ class QgParams(Params):
             if self.gotemperature_params is not None:
                 s += self.gotemperature_params._list_params() + "\n"
 
-        print("Qgs v1.0.1 parameters summary")
+        print("Qgs v1.0.2 parameters summary")
         print("=============================\n")
         print(s)
 
